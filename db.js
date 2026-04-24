@@ -57,21 +57,89 @@ const DB = (() => {
   function calcDuration(startISO, endISO) {
     return Math.round((new Date(endISO) - new Date(startISO)) / 1000);
   }
+  function isValidISO(value) {
+    return typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
+  }
+  function toFiniteNumber(value, fallback = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+  function sanitizeTaskRow(row) {
+    if (!row || typeof row !== 'object') return null;
+    const startISO = isValidISO(row.start_time) ? row.start_time : null;
+    if (!startISO) return null;
+    const safeName = String(row.name ?? '').trim();
+    if (!safeName) return null;
+    const safeCategory = String(row.category ?? 'other').trim() || 'other';
+    const safeEnd = row.end_time == null ? null : (isValidISO(row.end_time) ? row.end_time : null);
+    const safeDuration = row.duration == null ? null : Math.max(0, Math.round(toFiniteNumber(row.duration, 0)));
+    return {
+      name: safeName,
+      category: safeCategory,
+      start_time: startISO,
+      end_time: safeEnd,
+      duration: safeDuration,
+      is_active: row.is_active ? 1 : 0,
+      is_backfill: row.is_backfill ? 1 : 0,
+      created_at: isValidISO(row.created_at) ? row.created_at : toISO(),
+    };
+  }
+  function sanitizeHealthRow(row) {
+    if (!row || typeof row !== 'object') return null;
+    const type = String(row.type ?? '').trim();
+    if (!type) return null;
+    const timestamp = isValidISO(row.timestamp) ? row.timestamp : toISO();
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(row.date ?? '')) ? String(row.date) : toDateStr(new Date(timestamp));
+    return {
+      type,
+      value: row.value ?? 0,
+      unit: String(row.unit ?? ''),
+      note: String(row.note ?? ''),
+      calories: Math.max(0, Math.round(toFiniteNumber(row.calories, 0))),
+      timestamp,
+      date,
+    };
+  }
+  function sanitizeSleepRow(row) {
+    if (!row || typeof row !== 'object') return null;
+    const date = String(row.date ?? '').trim();
+    const bedtime = String(row.bedtime ?? '').trim();
+    const wakeTime = String(row.wakeTime ?? '').trim();
+    if (!date || !bedtime || !wakeTime) return null;
+    const durationMin = Math.max(0, Math.round(toFiniteNumber(row.durationMin, 0)));
+    const quality = Math.min(5, Math.max(1, Math.round(toFiniteNumber(row.quality, 3))));
+    return {
+      date,
+      bedtime,
+      wakeTime,
+      durationMin,
+      quality,
+      created_at: isValidISO(row.created_at) ? row.created_at : toISO(),
+    };
+  }
+  function sanitizeSettingRow(row) {
+    if (!row || typeof row !== 'object') return null;
+    const key = String(row.key ?? '').trim();
+    if (!key) return null;
+    return { key, value: row.value ?? null };
+  }
 
   // ── Task CRUD ────────────────────────────────────────────────────────────
 
   async function startTask(name, category) {
     await stopActiveTask();
-    const id = await dexie.tasks.add({
-      name:        name.trim(),
+    const row = sanitizeTaskRow({
+      name,
       category,
-      start_time:  toISO(),
-      end_time:    null,
-      duration:    null,
-      is_active:   1,
+      start_time: toISO(),
+      end_time: null,
+      duration: null,
+      is_active: 1,
       is_backfill: 0,
-      created_at:  toISO(),
+      created_at: toISO(),
     });
+    if (!row) throw new Error('Invalid task payload');
+    const id = await dexie.tasks.add(row);
     return dexie.tasks.get(id);
   }
 
@@ -100,13 +168,15 @@ const DB = (() => {
     const start = new Date(`${date}T${String(startHH).padStart(2,'0')}:${String(startMM).padStart(2,'0')}:00`);
     const durationSec = durationMinutes * 60;
     const end = new Date(start.getTime() + durationSec * 1000);
-    return dexie.tasks.add({
+    const row = sanitizeTaskRow({
       name: name.trim(), category,
       start_time:  start.toISOString(),
       end_time:    end.toISOString(),
       duration:    durationSec,
       is_active:   0, is_backfill: 1, created_at: toISO(),
     });
+    if (!row) throw new Error('Invalid backfill payload');
+    return dexie.tasks.add(row);
   }
 
   // ── Queries for analytics ─────────────────────────────────────────────────
@@ -142,11 +212,13 @@ const DB = (() => {
 
   async function logHealth({ type, value, unit = '', note = '', calories = 0 }) {
     const now = new Date();
-    return dexie.health.add({
+    const row = sanitizeHealthRow({
       type, value, unit, note, calories,
       timestamp: now.toISOString(),
       date:      toDateStr(now),
     });
+    if (!row) throw new Error('Invalid health payload');
+    return dexie.health.add(row);
   }
 
   async function getHealthForDay(dateStr) {
@@ -187,7 +259,9 @@ const DB = (() => {
   // ── Sleep CRUD ────────────────────────────────────────────────────────────
 
   async function logSleep({ date, bedtime, wakeTime, durationMin, quality = 3 }) {
-    return dexie.sleep.add({ date, bedtime, wakeTime, durationMin, quality, created_at: toISO() });
+    const row = sanitizeSleepRow({ date, bedtime, wakeTime, durationMin, quality, created_at: toISO() });
+    if (!row) throw new Error('Invalid sleep payload');
+    return dexie.sleep.add(row);
   }
 
   async function getSleepLogs(limit = 14) {
@@ -226,7 +300,9 @@ const DB = (() => {
   }
 
   async function setSetting(key, value) {
-    return dexie.settings.put({ key, value });
+    const row = sanitizeSettingRow({ key, value });
+    if (!row) throw new Error('Invalid setting key');
+    return dexie.settings.put(row);
   }
 
   // ── CSV Export ────────────────────────────────────────────────────────────
@@ -268,12 +344,31 @@ const DB = (() => {
         dexie.sleep.clear(),  dexie.settings.clear(),
       ]);
       const strip = arr => (arr || []).map(({ id, ...rest }) => rest);
-      await dexie.tasks.bulkAdd(strip(data.tasks));
-      await dexie.health.bulkAdd(strip(data.health || []));
-      await dexie.sleep.bulkAdd(strip(data.sleep || []));
-      for (const s of (data.settings || [])) await dexie.settings.put(s);
+      const tasks = strip(data.tasks).map(sanitizeTaskRow).filter(Boolean);
+      const health = strip(data.health || []).map(sanitizeHealthRow).filter(Boolean);
+      const sleep = strip(data.sleep || []).map(sanitizeSleepRow).filter(Boolean);
+      const settings = (data.settings || []).map(sanitizeSettingRow).filter(Boolean);
+      const hadHealthInput = Array.isArray(data.health) && data.health.length > 0;
+      const hadSleepInput = Array.isArray(data.sleep) && data.sleep.length > 0;
+      const hadSettingsInput = Array.isArray(data.settings) && data.settings.length > 0;
+      if (!tasks.length && (data.tasks || []).length) {
+        throw new Error('Backup zawiera nieprawidłowe rekordy zadań');
+      }
+      if (hadHealthInput && !health.length) {
+        throw new Error('Backup zawiera nieprawidłowe rekordy health');
+      }
+      if (hadSleepInput && !sleep.length) {
+        throw new Error('Backup zawiera nieprawidłowe rekordy sleep');
+      }
+      if (hadSettingsInput && !settings.length) {
+        throw new Error('Backup zawiera nieprawidłowe rekordy settings');
+      }
+      if (tasks.length) await dexie.tasks.bulkAdd(tasks);
+      if (health.length) await dexie.health.bulkAdd(health);
+      if (sleep.length) await dexie.sleep.bulkAdd(sleep);
+      for (const s of settings) await dexie.settings.put(s);
     });
-    return data.tasks.length;
+    return Array.isArray(data.tasks) ? data.tasks.length : 0;
   }
 
   // ── Public API ────────────────────────────────────────────────────────────

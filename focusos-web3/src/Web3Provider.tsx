@@ -81,8 +81,20 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
         if (!(window as any).ethereum) {
           throw new Error("Wallet provider not available");
         }
+        const amountSafe = Math.max(0, amount);
+        const issuedAt = Date.now();
+        const ttlMs = 2 * 60 * 1000;
+        const expiresAt = issuedAt + ttlMs;
         const nonce = `${Date.now()}:${Math.random().toString(16).slice(2)}`;
-        const message = `FocusOS admin mint authorization\nrequester:${address}\nto:${to}\namount:${Math.max(0, amount)}\nnonce:${nonce}`;
+        const message = [
+          "FocusOS admin mint authorization",
+          `requester:${address}`,
+          `to:${to}`,
+          `amount:${amountSafe}`,
+          `nonce:${nonce}`,
+          `issuedAt:${issuedAt}`,
+          `expiresAt:${expiresAt}`,
+        ].join("\n");
         const signature = await (window as any).ethereum.request({
           method: "personal_sign",
           params: [message, address],
@@ -93,8 +105,10 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
           body: JSON.stringify({
             requester: address,
             to,
-            amount: Math.max(0, amount),
+            amount: amountSafe,
             nonce,
+            issuedAt,
+            expiresAt,
             message,
             signature,
           }),

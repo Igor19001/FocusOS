@@ -1655,4 +1655,43 @@ const App = (() => {
 
 })();
 
-document.addEventListener('DOMContentLoaded', () => App.init().catch(console.error));
+function installRuntimeGuards() {
+  if (window.__focusosRuntimeGuardsInstalled) return;
+  window.__focusosRuntimeGuardsInstalled = true;
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event?.reason;
+    const message = String(reason?.message || reason || '');
+    if (message.includes('Data provided to an operation does not meet requirements') || message.includes('DataError')) {
+      console.warn('[FocusOS:runtime] intercepted IndexedDB DataError', reason);
+      event.preventDefault();
+      return;
+    }
+    if (message.includes('WeakMap key undefined')) {
+      console.warn('[FocusOS:runtime] intercepted SES WeakMap guard error', reason);
+      event.preventDefault();
+      return;
+    }
+  });
+
+  window.addEventListener('error', (event) => {
+    const message = String(event?.message || '');
+    if (message.includes("can't access property \"catch\"") || message.includes('WeakMap key undefined')) {
+      console.warn('[FocusOS:runtime] intercepted global error', message);
+      event.preventDefault();
+      return;
+    }
+  }, true);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  installRuntimeGuards();
+  try {
+    const initResult = App?.init?.();
+    Promise.resolve(initResult).catch((err) => {
+      console.error('[FocusOS:init] async bootstrap failed', err);
+    });
+  } catch (err) {
+    console.error('[FocusOS:init] bootstrap crashed before promise creation', err);
+  }
+});
