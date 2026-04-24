@@ -1117,8 +1117,15 @@ const App = (() => {
       if (saved) S.walletAddress = saved;
     }
     if ((!S.walletAddress || forceRequest) && window.ethereum) {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      S.walletAddress = accounts?.[0] || null;
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        S.walletAddress = accounts?.[0] || null;
+      } catch (e) {
+        console.warn('[FocusOS:web3] wallet request failed, falling back to demo mode', e);
+        if (!S.walletAddress) {
+          S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
+        }
+      }
     } else if (!S.walletAddress) {
       S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
     }
@@ -1655,6 +1662,11 @@ const App = (() => {
 
 })();
 
+// Ensure bootstrap can resolve App after directory/rewrite changes.
+if (typeof globalThis !== 'undefined' && typeof globalThis.App?.init !== 'function') {
+  globalThis.App = App;
+}
+
 function installRuntimeGuards() {
   if (window.__focusosRuntimeGuardsInstalled) return;
   window.__focusosRuntimeGuardsInstalled = true;
@@ -1687,10 +1699,11 @@ function installRuntimeGuards() {
 document.addEventListener('DOMContentLoaded', () => {
   installRuntimeGuards();
   try {
-    if (typeof globalThis.App?.init !== 'function') {
+    const appApi = globalThis.App || App;
+    if (typeof appApi?.init !== 'function') {
       throw new Error('App.init is not available (bootstrap aborted)');
     }
-    const initResult = globalThis.App.init();
+    const initResult = appApi.init();
     if (!initResult || typeof initResult.then !== 'function') {
       console.error('[FocusOS:init] App.init did not return a Promise/thenable', initResult);
       return;
