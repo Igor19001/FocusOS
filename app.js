@@ -230,7 +230,30 @@ const App = (() => {
 
   function initTabs() {
     document.querySelectorAll('[data-tab]').forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+        const headerInner = document.querySelector('.header-inner');
+        if (window.innerWidth <= 980 && headerInner) {
+          headerInner.classList.remove('nav-open');
+          $('btnNavToggle')?.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+  }
+
+  function initResponsiveHeader() {
+    const toggleBtn = $('btnNavToggle');
+    const headerInner = document.querySelector('.header-inner');
+    if (!toggleBtn || !headerInner) return;
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = headerInner.classList.toggle('nav-open');
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 980) {
+        headerInner.classList.remove('nav-open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
     });
   }
 
@@ -1205,6 +1228,7 @@ const App = (() => {
     await initModeSplash();
     startClock();
     initTabs();
+    initResponsiveHeader();
     initDateNav();
     initKeyboard();
     initBackfillModal();

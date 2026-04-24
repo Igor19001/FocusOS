@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { createWalletClient, custom, parseEther } from "viem";
 
 type AppMode = "local" | "monad";
-const ADMIN_WALLET = "TWÓJ_ADRES_PORTFELA";
+const ADMIN_WALLET = "0x9f972Dc4be6a3e0147B7360D5d807AA56f392fE1";
 
 type Web3ContextState = {
   mode: AppMode | null;
