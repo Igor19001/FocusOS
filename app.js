@@ -1202,6 +1202,7 @@ const App = (() => {
       setLS(key, items);
       loadDayPlan();
     });
+    updateDashboardCounters();
   }
 
   function loadSleepNotes() {
@@ -1212,6 +1213,7 @@ const App = (() => {
       setLS(key, items);
       loadSleepNotes();
     });
+    updateDashboardCounters();
   }
 
   function initExtendedSections() {
@@ -1283,6 +1285,19 @@ const App = (() => {
         ? `Połączony portfel: ${S.walletAddress}`
         : 'Brak połączonego portfela';
     }
+    updateDashboardCounters();
+  }
+
+  function updateDashboardCounters() {
+    const dayPlan = getLS(`${LS_KEYS.dayPlan}:${DB.toDateStr()}`, []);
+    const sleepNotes = getLS(`${LS_KEYS.sleepNotes}:${DB.toDateStr()}`, []);
+    const socials = getLS(LS_KEYS.socials, { twitter: '', discord: '' });
+    const socialsCount = Number(Boolean(socials.twitter)) + Number(Boolean(socials.discord));
+
+    if ($('cntDayPlan')) $('cntDayPlan').textContent = String(dayPlan.length);
+    if ($('cntSleepNotes')) $('cntSleepNotes').textContent = String(sleepNotes.length);
+    if ($('cntSocials')) $('cntSocials').textContent = `${socialsCount}/2`;
+    if ($('cntWallet')) $('cntWallet').textContent = S.walletAddress ? 'ON' : 'OFF';
   }
 
   function disconnectWalletFlow() {
