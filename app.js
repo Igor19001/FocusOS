@@ -32,6 +32,13 @@ const App = (() => {
     appMode:           null,
     walletAddress:     null,
     stakedFCS:         0,
+    resetConfirmStep:  0,
+  };
+  const LS_KEYS = {
+    sleepNotes: 'focusos_sleep_notes',
+    dayPlan: 'focusos_day_plan',
+    socials: 'focusos_socials',
+    wallet: 'focusos_wallet_address',
   };
 
   // ── Utilities ─────────────────────────────────────────────────────────────
@@ -226,6 +233,48 @@ const App = (() => {
     tick(); setInterval(tick, 1000);
   }
 
+  function initMatrixRain() {
+    const canvas = $('matrixRain');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const glyphs = '01アイウエオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const fontSize = 14;
+    let cols = 0;
+    let drops = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cols = Math.floor(canvas.width / fontSize);
+      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -80));
+    };
+
+    const draw = () => {
+      ctx.fillStyle = 'rgba(4, 7, 4, 0.075)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = `${fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono')}`;
+      ctx.fillStyle = 'rgba(57, 255, 20, 0.55)';
+
+      for (let i = 0; i < drops.length; i++) {
+        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        ctx.fillText(char, x, y);
+        if (y > canvas.height && Math.random() > 0.985) drops[i] = 0;
+        drops[i] += 0.23; // slow vertical movement
+      }
+
+      requestAnimationFrame(draw);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    requestAnimationFrame(draw);
+  }
+
   // ── Tab navigation ────────────────────────────────────────────────────────
 
   function initTabs() {
@@ -269,7 +318,16 @@ const App = (() => {
     if (view === 'weekly')  loadWeeklyView();
     if (view === 'health')  loadHealthView();
     if (view === 'tracker') loadTrackerView();
-    if (view === 'sleep')   { initSleepView(); loadSleepHistory(); }
+    if (view === 'sleep')   { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
+    if (view === 'profile') loadProfileView();
+  }
+
+  function getLS(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
+    catch { return fallback; }
+  }
+  function setLS(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -485,6 +543,7 @@ const App = (() => {
     renderDailyHourChart(analysis.hourlyData);
     renderDailyInsightsList(tasks, analysis);
     renderGoldenHoursDisplay(tasks);
+    loadDayPlan();
   }
 
   function renderDailyCatDonut(timeByCat) {
@@ -1051,13 +1110,18 @@ const App = (() => {
     el.textContent = 'Mode: Local Offline';
   }
 
-  async function connectMonadWallet() {
-    if (window.ethereum) {
+  async function connectMonadWallet(forceRequest = false) {
+    if (!forceRequest) {
+      const saved = localStorage.getItem(LS_KEYS.wallet);
+      if (saved) S.walletAddress = saved;
+    }
+    if ((!S.walletAddress || forceRequest) && window.ethereum) {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       S.walletAddress = accounts?.[0] || null;
-    } else {
+    } else if (!S.walletAddress) {
       S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
     }
+    if (S.walletAddress) localStorage.setItem(LS_KEYS.wallet, S.walletAddress);
     if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
   }
 
@@ -1094,6 +1158,10 @@ const App = (() => {
 
   async function initModeSplash() {
     document.body.classList.add('app-locked');
+    const remembered = localStorage.getItem(LS_KEYS.wallet);
+    if (remembered && $('btnModeMonad')) {
+      $('btnModeMonad').textContent = `Connect Monad Wallet (${remembered.slice(0,6)}...${remembered.slice(-4)})`;
+    }
     $('btnStakeTokens')?.addEventListener('click', stakeTokens);
     $('btnBurnTokens')?.addEventListener('click', burnTokens);
     $('btnSaveToChain')?.addEventListener('click', saveProgressToChain);
@@ -1105,6 +1173,168 @@ const App = (() => {
       $('btnModeLocal')?.addEventListener('click', () => onSelect('local'), { once: true });
       $('btnModeMonad')?.addEventListener('click', () => onSelect('monad'), { once: true });
     });
+  }
+
+  function renderList(containerId, items, emptyText, onDelete) {
+    const containerIds = Array.isArray(containerId) ? containerId : [containerId];
+    const html = !items.length
+      ? `<div class="health-empty">${emptyText}</div>`
+      : items.map((it, idx) => `
+      <div class="health-log-item">
+        <span>${escH(it.text)}</span>
+        <span class="log-time">${new Date(it.ts).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}</span>
+        <button class="log-del" data-del="${idx}">×</button>
+      </div>
+    `).join('');
+    containerIds.forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.innerHTML = html;
+      el.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', e => onDelete(Number(e.currentTarget.dataset.del))));
+    });
+  }
+
+  function loadDayPlan() {
+    const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
+    const items = getLS(key, []);
+    renderList(['dayPlanList', 'dayPlanListProfile'], items, 'Brak punktów planu na dziś', idx => {
+      items.splice(idx, 1);
+      setLS(key, items);
+      loadDayPlan();
+    });
+  }
+
+  function loadSleepNotes() {
+    const key = `${LS_KEYS.sleepNotes}:${DB.toDateStr()}`;
+    const items = getLS(key, []);
+    renderList(['sleepNotesList', 'sleepNotesListProfile'], items, 'Brak notatek snów', idx => {
+      items.splice(idx, 1);
+      setLS(key, items);
+      loadSleepNotes();
+    });
+  }
+
+  function initExtendedSections() {
+    const bindAddDayPlan = (btnId, inputId) => $(btnId)?.addEventListener('click', () => {
+      const input = $(inputId);
+      const text = input.value.trim();
+      if (!text) return;
+      const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
+      const items = getLS(key, []);
+      items.unshift({ text, ts: Date.now() });
+      setLS(key, items);
+      input.value = '';
+      loadDayPlan();
+    });
+    bindAddDayPlan('btnAddDayPlan', 'dayPlanInput');
+    bindAddDayPlan('btnAddDayPlanProfile', 'dayPlanInputProfile');
+    const bindAddSleepNote = (btnId, inputId) => $(btnId)?.addEventListener('click', () => {
+      const input = $(inputId);
+      const text = input.value.trim();
+      if (!text) return;
+      const key = `${LS_KEYS.sleepNotes}:${DB.toDateStr()}`;
+      const items = getLS(key, []);
+      items.unshift({ text, ts: Date.now() });
+      setLS(key, items);
+      input.value = '';
+      loadSleepNotes();
+    });
+    bindAddSleepNote('btnAddSleepNote', 'sleepNoteInput');
+    bindAddSleepNote('btnAddSleepNoteProfile', 'sleepNoteInputProfile');
+    $('btnSaveSocials')?.addEventListener('click', () => {
+      const data = {
+        twitter: $('socialTwitter').value.trim(),
+        discord: $('socialDiscord').value.trim(),
+      };
+      setLS(LS_KEYS.socials, data);
+      showToast('Socials zapisane', 'success');
+      loadProfileView();
+    });
+    $('btnDisconnectWallet')?.addEventListener('click', () => disconnectWalletFlow());
+    $('btnResetData')?.addEventListener('click', () => openResetDataModal());
+    $('btnResetDataCancel')?.addEventListener('click', () => closeResetDataModal());
+    $('btnResetDataConfirm')?.addEventListener('click', () => advanceResetConfirmation());
+    $('resetDataModal')?.addEventListener('click', e => {
+      if (e.target === $('resetDataModal')) closeResetDataModal();
+    });
+    initProfileDashboardNav();
+  }
+
+  function initProfileDashboardNav() {
+    const navBtns = document.querySelectorAll('[data-dashboard-section]');
+    const panels = document.querySelectorAll('[data-dashboard-panel]');
+    navBtns.forEach(btn => btn.addEventListener('click', () => {
+      const section = btn.dataset.dashboardSection;
+      navBtns.forEach(b => b.classList.toggle('active', b === btn));
+      panels.forEach(p => p.classList.toggle('active', p.dataset.dashboardPanel === section));
+    }));
+  }
+
+  function loadProfileView() {
+    const socials = getLS(LS_KEYS.socials, { twitter: '', discord: '' });
+    if ($('socialTwitter')) $('socialTwitter').value = socials.twitter || '';
+    if ($('socialDiscord')) $('socialDiscord').value = socials.discord || '';
+    const preview = [];
+    if (socials.twitter) preview.push(`Twitter: ${socials.twitter}`);
+    if (socials.discord) preview.push(`Discord: ${socials.discord}`);
+    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : 'Brak zapisanych linków.';
+    if ($('walletProfileInfo')) {
+      $('walletProfileInfo').textContent = S.walletAddress
+        ? `Połączony portfel: ${S.walletAddress}`
+        : 'Brak połączonego portfela';
+    }
+  }
+
+  function disconnectWalletFlow() {
+    if (!S.walletAddress) {
+      showToast('Brak aktywnego portfela', 'warn');
+      return;
+    }
+    if (!window.confirm('Krok 1/2: Czy na pewno chcesz rozpocząć rozłączanie portfela?')) return;
+    if (!window.confirm('Krok 2/2: Potwierdź ostatecznie rozłączenie portfela.')) return;
+    S.walletAddress = null;
+    localStorage.removeItem(LS_KEYS.wallet);
+    if ($('walletAddressView')) $('walletAddressView').textContent = 'Not connected';
+    updateModeIndicator();
+    loadProfileView();
+    showToast('Portfel rozłączony', 'success');
+  }
+
+  function openResetDataModal() {
+    S.resetConfirmStep = 0;
+    $('resetDataModal')?.classList.add('open');
+    updateResetModalUI();
+  }
+
+  function closeResetDataModal() {
+    $('resetDataModal')?.classList.remove('open');
+    S.resetConfirmStep = 0;
+  }
+
+  function updateResetModalUI() {
+    const step = S.resetConfirmStep + 1;
+    if ($('resetDataStepText')) $('resetDataStepText').textContent = `To usunie notatki, plan dnia, socials i zapisany portfel. Potwierdź krok ${step}/3.`;
+    if ($('btnResetDataConfirm')) $('btnResetDataConfirm').textContent = `Potwierdź ${step}/3`;
+  }
+
+  function advanceResetConfirmation() {
+    S.resetConfirmStep++;
+    if (S.resetConfirmStep < 3) {
+      updateResetModalUI();
+      return;
+    }
+    Object.values(LS_KEYS).forEach(k => {
+      Object.keys(localStorage).forEach(lsKey => {
+        if (lsKey === k || lsKey.startsWith(`${k}:`)) localStorage.removeItem(lsKey);
+      });
+    });
+    S.walletAddress = null;
+    closeResetDataModal();
+    loadDayPlan();
+    loadSleepNotes();
+    loadProfileView();
+    updateModeIndicator();
+    showToast('Dane użytkownika zostały zresetowane', 'success', 5000);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1167,6 +1397,33 @@ const App = (() => {
   // EXPORT / IMPORT (Phase 5)
   // ─────────────────────────────────────────────────────────────────────────
 
+  function getExtendedLocalDataSnapshot() {
+    const dayPlan = {};
+    const sleepNotes = {};
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(`${LS_KEYS.dayPlan}:`)) dayPlan[k] = getLS(k, []);
+      if (k.startsWith(`${LS_KEYS.sleepNotes}:`)) sleepNotes[k] = getLS(k, []);
+    });
+    return {
+      dayPlan,
+      sleepNotes,
+      socials: getLS(LS_KEYS.socials, { twitter: '', discord: '' }),
+      walletAddress: localStorage.getItem(LS_KEYS.wallet) || null,
+    };
+  }
+
+  function applyExtendedLocalData(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(`${LS_KEYS.dayPlan}:`) || k.startsWith(`${LS_KEYS.sleepNotes}:`)) localStorage.removeItem(k);
+    });
+    Object.entries(payload.dayPlan || {}).forEach(([k, v]) => setLS(k, v));
+    Object.entries(payload.sleepNotes || {}).forEach(([k, v]) => setLS(k, v));
+    setLS(LS_KEYS.socials, payload.socials || { twitter: '', discord: '' });
+    if (payload.walletAddress) localStorage.setItem(LS_KEYS.wallet, payload.walletAddress);
+    else localStorage.removeItem(LS_KEYS.wallet);
+  }
+
   async function handleExport() {
     try {
       const csv  = await DB.exportCSV();
@@ -1181,20 +1438,35 @@ const App = (() => {
 
   async function handleExportJSON() {
     try {
-      const json = await DB.exportJSON();
-      const blob = new Blob([json], { type:'application/json' });
+      const dbPayload = JSON.parse(await DB.exportJSON());
+      dbPayload.extended_local = getExtendedLocalDataSnapshot();
+      dbPayload.version = Math.max(Number(dbPayload.version || 0), 3);
+      const blob = new Blob([JSON.stringify(dbPayload, null, 2)], { type:'application/json' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url; a.download = `focusos_backup_${DB.toDateStr()}.json`; a.click();
       URL.revokeObjectURL(url);
-      showToast('📦 Backup JSON gotowy — możesz przenieść na inne urządzenie.', 'success', 5000);
+      showToast('📦 Backup JSON (z planem, notesami i profilem) gotowy.', 'success', 5000);
     } catch (e) { showToast('❌ Błąd eksportu JSON: ' + e.message, 'error'); }
   }
 
   async function handleImportJSON(file) {
     try {
       const text  = await file.text();
+      const parsed = JSON.parse(text);
+      const backupVersion = Number(parsed?.version || 0);
       const count = await DB.importJSON(text);
+      if (parsed?.extended_local && typeof parsed.extended_local === 'object') {
+        applyExtendedLocalData(parsed.extended_local);
+      } else {
+        showToast(
+          backupVersion > 0
+            ? `⚠ Backup v${backupVersion} nie zawiera sekcji extended_local — przywrócono tylko dane DB.`
+            : '⚠ Backup nie zawiera metadanych wersji/extended_local — przywrócono tylko dane DB.',
+          'warn',
+          7000
+        );
+      }
       showToast(`✅ Zaimportowano ${count} zadań. Odświeżam...`, 'success', 5000);
       setTimeout(() => location.reload(), 1500);
     } catch (e) { showToast('❌ Import nieudany: ' + e.message, 'error'); }
@@ -1214,6 +1486,7 @@ const App = (() => {
       if (e.key === '3') switchTab('weekly');
       if (e.key === '4') switchTab('health');
       if (e.key === '5') switchTab('sleep');
+      if (e.key === '6') switchTab('profile');
     });
     $('taskName').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleStart();
@@ -1225,7 +1498,9 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function init() {
+    S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
     await initModeSplash();
+    initMatrixRain();
     startClock();
     initTabs();
     initResponsiveHeader();
@@ -1234,6 +1509,7 @@ const App = (() => {
     initBackfillModal();
     await initNotifications();
     initHealthButtons();
+    initExtendedSections();
     initSleepView();
 
     $('btnStart').addEventListener('click', handleStart);
@@ -1273,6 +1549,9 @@ const App = (() => {
     });
 
     await loadTrackerView();
+    loadDayPlan();
+    loadSleepNotes();
+    loadProfileView();
     updateModeIndicator();
     await maybeShowWelcome();
 

@@ -9,7 +9,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
 
 <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -20,6 +20,7 @@
 
 <div class="noise"></div>
 <div class="scanline"></div>
+<canvas id="matrixRain" aria-hidden="true"></canvas>
 <section id="modeSplash" class="mode-splash">
   <div class="splash-grid"></div>
   <div class="splash-card">
@@ -55,6 +56,7 @@
       <button class="tab-btn" data-tab="weekly">📊 Tygodniowy</button>
       <button class="tab-btn" data-tab="health">🩺 Zdrowie</button>
       <button class="tab-btn" data-tab="sleep">🌙 Sen</button>
+      <button class="tab-btn" data-tab="profile">👤 Profil</button>
     </nav>
 
     <div class="header-controls">
@@ -255,6 +257,15 @@
       </ul>
     </section>
 
+    <section class="panel panel--day-plan">
+      <div class="panel-label">Plan Dnia</div>
+      <div class="meal-input-row">
+        <input class="form-input" id="dayPlanInput" type="text" placeholder="Dodaj punkt planu dnia..." />
+        <button class="btn-primary" id="btnAddDayPlan" style="width:auto;white-space:nowrap">+ Dodaj</button>
+      </div>
+      <div id="dayPlanList"><div class="health-empty">Brak punktów planu na dziś</div></div>
+    </section>
+
   </div><!-- /view--daily -->
 
 
@@ -438,7 +449,88 @@
       <div id="sleepHistory"><div class="health-empty">Brak danych snu</div></div>
     </section>
 
+    <section class="panel panel--sleep-notes" style="grid-column:1/-1">
+      <div class="panel-label">Notes Snów</div>
+      <div class="meal-input-row">
+        <input class="form-input" id="sleepNoteInput" type="text" placeholder="Dodaj notatkę snu..." />
+        <button class="btn-primary" id="btnAddSleepNote" style="width:auto;white-space:nowrap">+ Dodaj</button>
+      </div>
+      <div id="sleepNotesList"><div class="health-empty">Brak notatek snów</div></div>
+    </section>
+
   </div><!-- /view--sleep -->
+
+  <div class="view view--profile hidden" data-view="profile">
+    <section class="panel profile-dashboard">
+      <aside class="profile-sidebar">
+        <button class="profile-nav-btn active" data-dashboard-section="dayplan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          Plan Dnia
+        </button>
+        <button class="profile-nav-btn" data-dashboard-section="notes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Notes Snów
+        </button>
+        <button class="profile-nav-btn" data-dashboard-section="socials">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 01-12 0 6 6 0 0112 0z"/><path d="M22 20a6 6 0 00-8-5.7"/><path d="M10 14.3A6 6 0 002 20"/></svg>
+          Socials
+        </button>
+        <button class="profile-nav-btn" data-dashboard-section="wallet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="16" cy="12" r="2"/></svg>
+          Portfel
+        </button>
+      </aside>
+
+      <div class="profile-content">
+        <section class="dash-section active" data-dashboard-panel="dayplan">
+          <div class="panel-label">Plan Dnia</div>
+          <div class="meal-input-row">
+            <input class="form-input" id="dayPlanInputProfile" type="text" placeholder="Dodaj punkt planu dnia..." />
+            <button class="btn-primary" id="btnAddDayPlanProfile" style="width:auto;white-space:nowrap">+ Dodaj</button>
+          </div>
+          <div id="dayPlanListProfile"><div class="health-empty">Brak punktów planu na dziś</div></div>
+        </section>
+
+        <section class="dash-section" data-dashboard-panel="notes">
+          <div class="panel-label">Notes Snów</div>
+          <div class="meal-input-row">
+            <input class="form-input" id="sleepNoteInputProfile" type="text" placeholder="Dodaj notatkę snu..." />
+            <button class="btn-primary" id="btnAddSleepNoteProfile" style="width:auto;white-space:nowrap">+ Dodaj</button>
+          </div>
+          <div id="sleepNotesListProfile"><div class="health-empty">Brak notatek snów</div></div>
+        </section>
+
+        <section class="dash-section" data-dashboard-panel="socials">
+          <div class="panel-label">Socials</div>
+          <div class="form-grid cols-1">
+            <div class="form-group">
+              <label class="form-label">Twitter URL</label>
+              <input class="form-input" id="socialTwitter" type="url" placeholder="https://twitter.com/..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Discord URL</label>
+              <input class="form-input" id="socialDiscord" type="url" placeholder="https://discord.gg/..." />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" id="btnSaveSocials">Zapisz Socials</button>
+          </div>
+          <div id="socialsPreview" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Brak zapisanych linków.</div>
+        </section>
+
+        <section class="dash-section" data-dashboard-panel="wallet">
+          <div class="panel-label">Portfel</div>
+          <div id="walletProfileInfo" style="font-family:var(--font-mono);font-size:12px;margin-bottom:10px;color:var(--accent5)">Brak połączonego portfela</div>
+          <div class="danger-zone">
+            <button class="btn-secondary" id="btnDisconnectWallet" style="width:auto;padding:8px 14px">Rozłącz Portfel</button>
+          </div>
+          <div class="danger-zone danger-zone--critical">
+            <button class="btn-stop" id="btnResetData" style="width:auto;padding:8px 14px">Resetuj Dane</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div><!-- /view--profile -->
 
 </main>
 
@@ -603,6 +695,17 @@
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
+
+<div class="modal" id="resetDataModal">
+  <div class="modal-card">
+    <div class="modal-title"><span>⚠</span> Potwierdź reset danych</div>
+    <p id="resetDataStepText" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">To usunie dane użytkownika. Potwierdź krok 1/3.</p>
+    <div class="form-actions">
+      <button class="btn-primary" id="btnResetDataConfirm">Potwierdź 1/3</button>
+      <button class="btn-primary" id="btnResetDataCancel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text-muted)">Anuluj</button>
+    </div>
+  </div>
+</div>
 
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
