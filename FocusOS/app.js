@@ -1687,7 +1687,14 @@ function installRuntimeGuards() {
 document.addEventListener('DOMContentLoaded', () => {
   installRuntimeGuards();
   try {
-    const initResult = App?.init?.();
+    if (typeof globalThis.App?.init !== 'function') {
+      throw new Error('App.init is not available (bootstrap aborted)');
+    }
+    const initResult = globalThis.App.init();
+    if (!initResult || typeof initResult.then !== 'function') {
+      console.error('[FocusOS:init] App.init did not return a Promise/thenable', initResult);
+      return;
+    }
     Promise.resolve(initResult).catch((err) => {
       console.error('[FocusOS:init] async bootstrap failed', err);
     });
