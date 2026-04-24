@@ -1121,7 +1121,11 @@ const App = (() => {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         S.walletAddress = accounts?.[0] || null;
       } catch (e) {
-        console.warn('[FocusOS:web3] wallet request failed, falling back to demo mode', e);
+        const msg = String(e?.message || '');
+        const rejected = e?.code === 4001 || /rejected/i.test(msg);
+        if (!rejected) {
+          console.warn('[FocusOS:web3] wallet request failed, falling back to demo mode', e);
+        }
         if (!S.walletAddress) {
           S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
         }
@@ -1696,8 +1700,10 @@ function installRuntimeGuards() {
   }, true);
 }
 
+// Install as early as possible (before DOMContentLoaded) to catch extension noise.
+installRuntimeGuards();
+
 document.addEventListener('DOMContentLoaded', () => {
-  installRuntimeGuards();
   try {
     const appApi = globalThis.App || App;
     if (typeof appApi?.init !== 'function') {
