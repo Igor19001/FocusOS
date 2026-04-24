@@ -36,12 +36,18 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
   };
 
   const setMode = async (nextMode: AppMode) => {
-    setModeState(nextMode);
-    if (nextMode === "monad" && (window as any).ethereum) {
-      const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
-      setAddress(accounts?.[0] ?? null);
+    try {
+      setModeState(nextMode);
+      if (nextMode === "monad" && (window as any).ethereum) {
+        const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+        setAddress(accounts?.[0] ?? null);
+      }
+      if (nextMode === "local") setAddress(null);
+    } catch (e) {
+      console.error('Failed to set mode', e);
+      setModeState(null);
+      setAddress(null);
     }
-    if (nextMode === "local") setAddress(null);
   };
 
   const value = useMemo<Web3ContextState>(
@@ -56,54 +62,62 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
       burnTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
       buyFCS: async (amount) => {
         if (amount <= 0) return;
-        if (!TREASURY_WALLET) throw new Error("Missing VITE_TREASURY_WALLET configuration");
-        if ((window as any).ethereum && address) {
-          const walletClient = await getWalletClient();
-          const [account] = await walletClient.getAddresses();
-          await walletClient.sendTransaction({
-            account,
-            chain: null,
-            to: TREASURY_WALLET as `0x${string}`,
-            value: parseEther((0.0001 * amount).toString()),
-          });
+        try {
+          if (!TREASURY_WALLET) throw new Error("Missing VITE_TREASURY_WALLET configuration");
+          if ((window as any).ethereum && address) {
+            const walletClient = await getWalletClient();
+            const [account] = await walletClient.getAddresses();
+            await walletClient.sendTransaction({
+              account,
+              chain: null,
+              to: TREASURY_WALLET as `0x${string}`,
+              value: parseEther((0.0001 * amount).toString()),
+            });
+          }
+          setFcsBalance((v) => v + amount);
+        } catch (e) {
+          console.error('Failed to buy FCS', e);
         }
-        setFcsBalance((v) => v + amount);
       },
       sellFCS: async (amount) => {
         if (amount <= 0) return;
         setFcsBalance((v) => Math.max(0, v - amount));
       },
       adminMint: async (to, amount) => {
-        if (!address) throw new Error("Wallet not connected");
-        if (!ADMIN_API_BASE_URL) {
-          throw new Error("Missing VITE_ADMIN_API_BASE_URL configuration");
+        try {
+          if (!address) throw new Error("Wallet not connected");
+          if (!ADMIN_API_BASE_URL) {
+            throw new Error("Missing VITE_ADMIN_API_BASE_URL configuration");
+          }
+          if (!(window as any).ethereum) {
+            throw new Error("Wallet provider not available");
+          }
+          const nonce = `${Date.now()}:${Math.random().toString(16).slice(2)}`;
+          const message = `FocusOS admin mint authorization\nrequester:${address}\nto:${to}\namount:${Math.max(0, amount)}\nnonce:${nonce}`;
+          const signature = await (window as any).ethereum.request({
+            method: "personal_sign",
+            params: [message, address],
+          });
+          const response = await fetch(`${ADMIN_API_BASE_URL}/admin/mint`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              requester: address,
+              to,
+              amount: Math.max(0, amount),
+              nonce,
+              message,
+              signature,
+            }),
+          });
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || "Admin mint rejected by backend");
+          }
+          setFcsBalance((v) => v + Math.max(0, amount));
+        } catch (e) {
+          console.error('Admin mint failed', e);
         }
-        if (!(window as any).ethereum) {
-          throw new Error("Wallet provider not available");
-        }
-        const nonce = `${Date.now()}:${Math.random().toString(16).slice(2)}`;
-        const message = `FocusOS admin mint authorization\nrequester:${address}\nto:${to}\namount:${Math.max(0, amount)}\nnonce:${nonce}`;
-        const signature = await (window as any).ethereum.request({
-          method: "personal_sign",
-          params: [message, address],
-        });
-        const response = await fetch(`${ADMIN_API_BASE_URL}/admin/mint`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            requester: address,
-            to,
-            amount: Math.max(0, amount),
-            nonce,
-            message,
-            signature,
-          }),
-        });
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || "Admin mint rejected by backend");
-        }
-        setFcsBalance((v) => v + Math.max(0, amount));
       },
       saveProgressToChain: async (payload) => {
         if ((window as any).ethereum && address) {
