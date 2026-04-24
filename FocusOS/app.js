@@ -1708,9 +1708,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('[FocusOS:init] App.init did not return a Promise/thenable', initResult);
       return;
     }
-    Promise.resolve(initResult).catch((err) => {
-      console.error('[FocusOS:init] async bootstrap failed', err);
-    });
+    (async () => {
+      try {
+        await initResult;
+      } catch (err) {
+        console.error('[FocusOS:init] async bootstrap failed', err);
+      }
+    })();
   } catch (err) {
     console.error('[FocusOS:init] bootstrap crashed before promise creation', err);
   }
