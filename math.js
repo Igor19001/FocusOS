@@ -508,3 +508,9 @@ const MATH = (() => {
   };
 
 })();
+
+// Ensure both uppercase/lowercase global aliases are available for legacy callers.
+if (typeof globalThis !== 'undefined') {
+  globalThis.MATH = MATH;
+  globalThis.math = MATH;
+}

@@ -23,15 +23,24 @@ const DB = (() => {
     sleep:    '++id, date',
   });
 
+  // v3: anti-cheat water slot tracker (non-refundable daily slots)
+  dexie.version(3).stores({
+    tasks:    '++id, category, is_active, is_backfill, [start_time+category]',
+    health:   '++id, type, date',
+    settings: 'key',
+    sleep:    '++id, date',
+    waterSlots: 'date, usedSlots',
+  });
+
   // ── Category constants ───────────────────────────────────────────────────
   const PRODUCTIVE   = new Set(['work','coding','learning','planning','reading','exercise']);
   const UNPRODUCTIVE = new Set(['social_media','entertainment','distraction','break']);
 
   const CAT_LABELS = {
-    work:'💼 Praca', coding:'💻 Kodowanie', learning:'📚 Nauka',
-    planning:'🗂️ Planowanie', reading:'📖 Czytanie', exercise:'🏃 Sport',
-    break:'☕ Przerwa', entertainment:'🎮 Rozrywka', social_media:'📱 Social Media',
-    distraction:'🌀 Rozproszenie', other:'⬜ Inne',
+    work:'Praca', coding:'Kodowanie', learning:'Nauka',
+    planning:'Planowanie', reading:'Czytanie', exercise:'Sport',
+    break:'Przerwa', entertainment:'Rozrywka', social_media:'Social Media',
+    distraction:'Rozproszenie', other:'Inne',
   };
 
   const CAT_COLORS = {
@@ -159,6 +168,22 @@ const DB = (() => {
     return true;
   }
 
+  // ── Anti-cheat water slots (12/day, non-refundable) ─────────────────────
+
+  async function getTodayWaterSlotsInfo() {
+    const today = toDateStr();
+    const row = await dexie.waterSlots.get(today);
+    return { date: today, usedSlots: row?.usedSlots || 0, maxSlots: 12 };
+  }
+
+  async function consumeWaterSlot() {
+    const { date, usedSlots, maxSlots } = await getTodayWaterSlotsInfo();
+    if (usedSlots >= maxSlots) return { ok: false, usedSlots, maxSlots };
+    const next = usedSlots + 1;
+    await dexie.waterSlots.put({ date, usedSlots: next });
+    return { ok: true, usedSlots: next, maxSlots };
+  }
+
   // ── Sleep CRUD ────────────────────────────────────────────────────────────
 
   async function logSleep({ date, bedtime, wakeTime, durationMin, quality = 3 }) {
@@ -262,6 +287,7 @@ const DB = (() => {
     getTasksForDay, getTasksForWeek, getTasksLast30Days, getAllCompletedTasks,
     // health
     logHealth, getHealthForDay, deleteHealthLog, getTodayWaterCount, undoLastWater,
+    getTodayWaterSlotsInfo, consumeWaterSlot,
     // sleep
     logSleep, getSleepLogs, deleteSleepLog,
     // xp

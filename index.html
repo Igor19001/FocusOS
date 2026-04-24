@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="description" content="FocusOS 2.0 — Local-First Personal Productivity Intelligence"/>
 <meta name="theme-color" content="#0a0a0f"/>
-<title>⚡ FocusOS 2.0 — Local Productivity Intelligence</title>
+<title>FocusOS 2.0 — Local Productivity Intelligence</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -20,6 +20,18 @@
 
 <div class="noise"></div>
 <div class="scanline"></div>
+<section id="modeSplash" class="mode-splash">
+  <div class="splash-grid"></div>
+  <div class="splash-card">
+    <h1 class="splash-title glitch-text">FocusOS // Dual-Mode Boot</h1>
+    <p class="splash-sub">Select execution layer before loading the dashboard.</p>
+    <div class="splash-actions">
+      <button class="btn-primary splash-btn" id="btnModeLocal">Local Demo</button>
+      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad">Connect Monad Wallet</button>
+    </div>
+    <p class="splash-footnote">Local stores data in IndexedDB. Monad mode enables staking, burning and chain save placeholders.</p>
+  </div>
+</section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      HEADER
@@ -43,6 +55,7 @@
     </nav>
 
     <div class="header-controls">
+      <div id="modeIndicator" class="mode-indicator">Mode: Offline</div>
       <div class="live-clock" id="clock">00:00:00</div>
       <button class="btn-icon" id="btnOpenBackfill" title="Dodaj retro-wpis">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -79,6 +92,20 @@
        ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--tracker" data-view="tracker">
 
+    <section class="panel panel--web3 hidden" id="web3Panel">
+      <div class="panel-label">Web3 Dashboard</div>
+      <div class="web3-grid">
+        <div><span class="web3-k">Wallet</span><span class="web3-v" id="walletAddressView">Not connected</span></div>
+        <div><span class="web3-k">Network</span><span class="web3-v">Monad Testnet (simulated)</span></div>
+        <div><span class="web3-k">Staked</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
+      </div>
+      <div class="web3-actions">
+        <button class="btn-secondary" id="btnStakeTokens">Stake Tokens</button>
+        <button class="btn-secondary" id="btnBurnTokens">Burn Tokens</button>
+        <button class="btn-secondary" id="btnSaveToChain">Save Progress To Chain</button>
+      </div>
+    </section>
+
     <section class="panel panel--tracker-main">
       <div class="panel-label">Aktywny timer</div>
 
@@ -105,17 +132,17 @@
       <div class="input-group">
         <input type="text" id="taskName" placeholder="Co teraz robisz?" maxlength="80" autocomplete="off"/>
         <select id="taskCategory">
-          <option value="work">💼 Praca</option>
-          <option value="coding">💻 Kodowanie</option>
-          <option value="learning">📚 Nauka</option>
-          <option value="planning">🗂️ Planowanie</option>
-          <option value="reading">📖 Czytanie</option>
-          <option value="exercise">🏃 Sport</option>
-          <option value="break">☕ Przerwa</option>
-          <option value="entertainment">🎮 Rozrywka</option>
-          <option value="social_media">📱 Social Media</option>
-          <option value="distraction">🌀 Rozproszenie</option>
-          <option value="other">⬜ Inne</option>
+          <option value="work">Praca</option>
+          <option value="coding">Kodowanie</option>
+          <option value="learning">Nauka</option>
+          <option value="planning">Planowanie</option>
+          <option value="reading">Czytanie</option>
+          <option value="exercise">Sport</option>
+          <option value="break">Przerwa</option>
+          <option value="entertainment">Rozrywka</option>
+          <option value="social_media">Social Media</option>
+          <option value="distraction">Rozproszenie</option>
+          <option value="other">Inne</option>
         </select>
       </div>
 
@@ -310,7 +337,7 @@
       <div class="water-glasses" id="waterGlasses"></div>
       <div class="water-actions">
         <button class="btn-secondary" id="btnWaterUndo" style="width:auto;padding:6px 14px">↩ Cofnij ostatnią</button>
-        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">Maks: 15 szklanek/dzień</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">Maks: 12 szklanek/dzień</span>
       </div>
     </section>
 
@@ -477,17 +504,17 @@
         <div class="form-group">
           <label class="form-label">Kategoria</label>
           <select class="form-input" id="backfillCategory">
-            <option value="work">💼 Praca</option>
-            <option value="coding">💻 Kodowanie</option>
-            <option value="learning">📚 Nauka</option>
-            <option value="planning">🗂️ Planowanie</option>
-            <option value="reading">📖 Czytanie</option>
-            <option value="exercise">🏃 Sport</option>
-            <option value="break">☕ Przerwa</option>
-            <option value="entertainment">🎮 Rozrywka</option>
-            <option value="social_media">📱 Social Media</option>
-            <option value="distraction">🌀 Rozproszenie</option>
-            <option value="other">⬜ Inne</option>
+            <option value="work">Praca</option>
+            <option value="coding">Kodowanie</option>
+            <option value="learning">Nauka</option>
+            <option value="planning">Planowanie</option>
+            <option value="reading">Czytanie</option>
+            <option value="exercise">Sport</option>
+            <option value="break">Przerwa</option>
+            <option value="entertainment">Rozrywka</option>
+            <option value="social_media">Social Media</option>
+            <option value="distraction">Rozproszenie</option>
+            <option value="other">Inne</option>
           </select>
         </div>
         <div class="form-group">

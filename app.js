@@ -29,6 +29,9 @@ const App = (() => {
     totalXP:           0,
     userLevel:         1,
     tutorialStep:      0,
+    appMode:           null,
+    walletAddress:     null,
+    stakedFCS:         0,
   };
 
   // ── Utilities ─────────────────────────────────────────────────────────────
@@ -46,6 +49,7 @@ const App = (() => {
   const escH        = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const catLabel    = cat => DB.CAT_LABELS[cat] || cat;
   const catColor    = cat => DB.CAT_COLORS[cat] || '#888';
+  const FATIGUE_ZERO_XP_THRESHOLD = 40;
 
   function getMonday(d) {
     const day = d.getDay(), diff = (day === 0 ? -6 : 1) - day;
@@ -93,9 +97,11 @@ const App = (() => {
   }
 
   function calcTaskXP(task) {
+    if (!task || task.is_backfill === 1 || task.is_backfill === true) return 0;
     if (!task.duration || !DB.PRODUCTIVE.has(task.category)) return 0;
     const sessionMin = task.duration / 60;
     const fatigue = MATH.fatigueCurve(sessionMin);
+    if (fatigue.currentEfficiency <= FATIGUE_ZERO_XP_THRESHOLD) return 0;
     // XP = productive_minutes × efficiency_factor (0.5–1.0)
     return Math.round(sessionMin * (fatigue.currentEfficiency / 100) * 1.2);
   }
@@ -673,7 +679,7 @@ const App = (() => {
   }
 
   function renderWaterTracker(waterLogs) {
-    const WATER_CAP    = 15;
+    const WATER_CAP    = 12;
     const GOAL         = 8;
     const totalGlasses = waterLogs.reduce((s, l) => s + (l.value || 1), 0);
     const pct          = Math.min(Math.round(totalGlasses / GOAL * 100), 100);
@@ -688,11 +694,11 @@ const App = (() => {
       const btn = document.createElement('button');
       btn.className = `glass-btn ${i <= totalGlasses ? 'filled' : ''}`;
       btn.title     = `${i * 250}ml`;
-      btn.textContent = i <= totalGlasses ? '🥛' : '💧';
+      btn.textContent = i <= totalGlasses ? '250ml' : '+';
       btn.addEventListener('click', async () => {
-        const current = await DB.getTodayWaterCount();
-        if (current >= WATER_CAP) {
-          showToast('🚨 Rekord pobity! Ale ciało nie może wchłonąć więcej — odpuść na dziś.', 'warn', 6000);
+        const slotState = await DB.consumeWaterSlot();
+        if (!slotState.ok) {
+          showToast(`Dzienne sloty nawodnienia wykorzystane: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
           return;
         }
         await DB.logHealth({ type:'water', value:1, unit:'glass', note:'250ml' });
@@ -700,7 +706,7 @@ const App = (() => {
         await DB.addXP(20);
         await refreshXPBar();
         await loadHealthView();
-        showToast('💧 +20 XP za nawodnienie!', 'success');
+        showToast('+20 XP za nawodnienie', 'success');
       });
       glasses.appendChild(btn);
     }
@@ -715,7 +721,7 @@ const App = (() => {
     if (undoBtn) {
       undoBtn.onclick = async () => {
         const ok = await DB.undoLastWater();
-        if (ok) { await loadHealthView(); showToast('↩ Cofnięto ostatnią szklankę', 'info'); }
+        if (ok) { await loadHealthView(); showToast('Cofnięto ostatnią szklankę (slot pozostaje zużyty)', 'info'); }
         else showToast('Brak wpisów do cofnięcia', 'warn');
       };
     }
@@ -993,6 +999,92 @@ const App = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // MODE SPLASH + WEB3 PLACEHOLDERS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  async function selectMode(mode) {
+    S.appMode = mode;
+    await DB.setSetting('app_mode', mode);
+    if (mode === 'monad') {
+      await connectMonadWallet();
+      $('web3Panel')?.classList.remove('hidden');
+    } else {
+      S.walletAddress = null;
+      $('web3Panel')?.classList.add('hidden');
+    }
+    updateModeIndicator();
+    document.body.classList.remove('app-locked');
+    $('modeSplash')?.classList.add('hidden');
+  }
+
+  function updateModeIndicator() {
+    const el = $('modeIndicator');
+    if (!el) return;
+    if (S.appMode === 'monad') {
+      const short = S.walletAddress ? `${S.walletAddress.slice(0, 6)}...${S.walletAddress.slice(-4)}` : 'Not connected';
+      el.textContent = `Mode: Monad Network connected to ${short}`;
+      return;
+    }
+    el.textContent = 'Mode: Local Offline';
+  }
+
+  async function connectMonadWallet() {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      S.walletAddress = accounts?.[0] || null;
+    } else {
+      S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
+    }
+    if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
+  }
+
+  async function stakeTokens() {
+    if (S.appMode !== 'monad') return showToast('Staking is available in Monad mode only', 'warn');
+    S.stakedFCS += 25;
+    $('stakedAmountView').textContent = `${S.stakedFCS} FCS`;
+    showToast(`Staked 25 FCS. Total staked: ${S.stakedFCS} FCS`, 'success');
+  }
+
+  async function burnTokens() {
+    if (S.appMode !== 'monad') return showToast('Burn is available in Monad mode only', 'warn');
+    showToast('Burn simulation complete. Fatigue-penalty bypass hook can be implemented on-chain.', 'info');
+  }
+
+  async function saveProgressToChain() {
+    if (S.appMode !== 'monad') return showToast('On-chain save is available in Monad mode only', 'warn');
+    const payload = { day: DB.toDateStr(), xp: S.totalXP, ts: Date.now() };
+    if (window.ethereum && S.walletAddress) {
+      try {
+        await window.ethereum.request({
+          method: 'personal_sign',
+          params: [JSON.stringify(payload), S.walletAddress],
+        });
+        showToast('Progress signed and submitted (simulation)', 'success');
+        return;
+      } catch (e) {
+        showToast(`Signature canceled: ${e.message}`, 'warn');
+        return;
+      }
+    }
+    showToast('No wallet detected, local chain-save simulation completed', 'info');
+  }
+
+  async function initModeSplash() {
+    document.body.classList.add('app-locked');
+    $('btnStakeTokens')?.addEventListener('click', stakeTokens);
+    $('btnBurnTokens')?.addEventListener('click', burnTokens);
+    $('btnSaveToChain')?.addEventListener('click', saveProgressToChain);
+    return new Promise(resolve => {
+      const onSelect = async mode => {
+        await selectMode(mode);
+        resolve();
+      };
+      $('btnModeLocal')?.addEventListener('click', () => onSelect('local'), { once: true });
+      $('btnModeMonad')?.addEventListener('click', () => onSelect('monad'), { once: true });
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // HEALTH BUTTONS
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1110,6 +1202,7 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function init() {
+    await initModeSplash();
     startClock();
     initTabs();
     initDateNav();
@@ -1156,6 +1249,7 @@ const App = (() => {
     });
 
     await loadTrackerView();
+    updateModeIndicator();
     await maybeShowWelcome();
 
     setInterval(async () => {
