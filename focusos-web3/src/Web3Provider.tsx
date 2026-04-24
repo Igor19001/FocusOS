@@ -2,7 +2,9 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { createWalletClient, custom, parseEther } from "viem";
 
 type AppMode = "local" | "monad";
-const ADMIN_WALLET = "0x9f972Dc4be6a3e0147B7360D5d807AA56f392fE1";
+const ADMIN_WALLET = (import.meta.env.VITE_ADMIN_WALLET ?? "").trim();
+const TREASURY_WALLET = (import.meta.env.VITE_TREASURY_WALLET ?? ADMIN_WALLET).trim();
+const ADMIN_API_BASE_URL = (import.meta.env.VITE_ADMIN_API_BASE_URL ?? "").trim();
 
 type Web3ContextState = {
   mode: AppMode | null;
@@ -54,13 +56,14 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
       burnTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
       buyFCS: async (amount) => {
         if (amount <= 0) return;
+        if (!TREASURY_WALLET) throw new Error("Missing VITE_TREASURY_WALLET configuration");
         if ((window as any).ethereum && address) {
           const walletClient = await getWalletClient();
           const [account] = await walletClient.getAddresses();
           await walletClient.sendTransaction({
             account,
             chain: null,
-            to: ADMIN_WALLET as `0x${string}`,
+            to: TREASURY_WALLET as `0x${string}`,
             value: parseEther((0.0001 * amount).toString()),
           });
         }
@@ -70,9 +73,35 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
         if (amount <= 0) return;
         setFcsBalance((v) => Math.max(0, v - amount));
       },
-      adminMint: async (_to, amount) => {
-        if (!address || address.toLowerCase() !== ADMIN_WALLET.toLowerCase()) {
-          throw new Error("Only admin can mint");
+      adminMint: async (to, amount) => {
+        if (!address) throw new Error("Wallet not connected");
+        if (!ADMIN_API_BASE_URL) {
+          throw new Error("Missing VITE_ADMIN_API_BASE_URL configuration");
+        }
+        if (!(window as any).ethereum) {
+          throw new Error("Wallet provider not available");
+        }
+        const nonce = `${Date.now()}:${Math.random().toString(16).slice(2)}`;
+        const message = `FocusOS admin mint authorization\nrequester:${address}\nto:${to}\namount:${Math.max(0, amount)}\nnonce:${nonce}`;
+        const signature = await (window as any).ethereum.request({
+          method: "personal_sign",
+          params: [message, address],
+        });
+        const response = await fetch(`${ADMIN_API_BASE_URL}/admin/mint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requester: address,
+            to,
+            amount: Math.max(0, amount),
+            nonce,
+            message,
+            signature,
+          }),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || "Admin mint rejected by backend");
         }
         setFcsBalance((v) => v + Math.max(0, amount));
       },

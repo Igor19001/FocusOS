@@ -1254,6 +1254,7 @@ const App = (() => {
       loadProfileView();
     });
     $('btnDisconnectWallet')?.addEventListener('click', () => disconnectWalletFlow());
+    $('btnRestartOnboarding')?.addEventListener('click', () => restartOnboarding());
     $('btnResetData')?.addEventListener('click', () => openResetDataModal());
     $('btnResetDataCancel')?.addEventListener('click', () => closeResetDataModal());
     $('btnResetDataConfirm')?.addEventListener('click', () => advanceResetConfirmation());
@@ -1337,6 +1338,11 @@ const App = (() => {
     $('btnOnboardingNext').onclick = () => { step++; render(); };
     overlay.style.display = 'block';
     render();
+  }
+
+  function restartOnboarding() {
+    localStorage.removeItem(ONBOARDING_KEY);
+    startOnboardingIfNeeded();
   }
 
   function loadProfileView() {
