@@ -1,10 +1,30 @@
-## Admin API Example
+## FocusOS Backend
 
+<<<<<<< HEAD
 This is a backend example for secure admin authorization and real on-chain mint execution.
+=======
+Express.js backend for FocusOS with admin mint endpoint.
+
+### Setup
+
+1. Install dependencies:
+   ```bash
+   cd focusos-web3/server
+   npm install
+   ```
+
+2. Copy `.env.example` to `.env` and fill in your values:
+   - `RPC_URL`: Your Ethereum RPC endpoint
+   - `PRIVATE_KEY`: Private key of the signer wallet (without 0x)
+   - `CONTRACT_ADDRESS`: Deployed FocusToken contract address
+   - `ADMIN_ALLOWLIST`: Comma-separated list of admin wallet addresses
+   - `PORT`: Port to run the server (default 3001)
+>>>>>>> b0521bb852d2c9429bb864ddf3f1b308d0bf0739
 
 ### Run
 
 ```bash
+<<<<<<< HEAD
 cd focusos-web3
 set PORT=3001
 set ADMIN_ALLOWLIST=0xYourAdminWalletAddress
@@ -27,10 +47,14 @@ set NONCE_STORE_FILE_PATH=./server/.nonce-store.json
 # set REDIS_URL=redis://localhost:6379
 # set REDIS_NONCE_PREFIX=focusos:nonce
 npm run server:admin
+=======
+npm start
+>>>>>>> b0521bb852d2c9429bb864ddf3f1b308d0bf0739
 ```
 
-### Why this exists
+### Endpoint
 
+<<<<<<< HEAD
 - Frontend checks are not security.
 - Backend verifies wallet signature, nonce freshness (replay protection), and TTL.
 - Nonce replay protection persists across restarts (`file` or `redis` backend).
@@ -61,3 +85,24 @@ Required JSON body fields:
 Message format must match exactly:
 
 `FocusOS admin mint authorization\nrequester:{requester}\nto:{to}\namount:{amount}\nnonce:{nonce}\nissuedAt:{issuedAt}\nexpiresAt:{expiresAt}`
+=======
+- `POST /admin/mint`: Mints tokens to a specified address after verifying admin signature.
+
+Request body:
+```json
+{
+  "requester": "0x...",
+  "to": "0x...",
+  "amount": 100,
+  "nonce": "unique-nonce",
+  "message": "FocusOS admin mint authorization\nrequester:0x...\nto:0x...\namount:100\nnonce:unique-nonce",
+  "signature": "0x..."
+}
+```
+
+### Security
+
+- Verifies signature matches requester
+- Checks requester is in admin allowlist
+- Uses backend signer for contract calls
+>>>>>>> b0521bb852d2c9429bb864ddf3f1b308d0bf0739

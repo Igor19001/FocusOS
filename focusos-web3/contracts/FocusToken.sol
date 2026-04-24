@@ -7,6 +7,8 @@ contract FocusToken {
     uint8 public constant decimals = 18;
     uint256 public totalSupply;
 
+    address public owner;
+
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
     mapping(address => uint256) public staked;
@@ -16,6 +18,25 @@ contract FocusToken {
     event FaucetClaim(address indexed user, uint256 amount);
     event Staked(address indexed user, uint256 amount);
     event Unstaked(address indexed user, uint256 amount);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "not owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function _mint(address to, uint256 amount) internal {
+        totalSupply += amount;
+        balanceOf[to] += amount;
+        emit Transfer(address(0), to, amount);
+    }
+
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
 
     function _mint(address to, uint256 amount) internal {
         totalSupply += amount;
