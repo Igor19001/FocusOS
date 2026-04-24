@@ -1703,25 +1703,28 @@ function installRuntimeGuards() {
 // Install as early as possible (before DOMContentLoaded) to catch extension noise.
 installRuntimeGuards();
 
-document.addEventListener('DOMContentLoaded', () => {
+function waitForAppInit() {
   try {
     const appApi = globalThis.App || App;
-    if (typeof appApi?.init !== 'function') {
-      throw new Error('App.init is not available (bootstrap aborted)');
-    }
-    const initResult = appApi.init();
-    if (!initResult || typeof initResult.then !== 'function') {
-      console.error('[FocusOS:init] App.init did not return a Promise/thenable', initResult);
-      return;
-    }
-    (async () => {
-      try {
-        await initResult;
-      } catch (err) {
-        console.error('[FocusOS:init] async bootstrap failed', err);
+    if (typeof appApi?.init === 'function') {
+      const initResult = appApi.init() || Promise.resolve();
+      if (!initResult || typeof initResult.then !== 'function') {
+        console.error('[FocusOS:init] App.init did not return a Promise/thenable', initResult);
+        return;
       }
-    })();
+      (async () => {
+        try {
+          await initResult;
+        } catch (err) {
+          console.error('[FocusOS:init] async bootstrap failed', err);
+        }
+      })();
+    } else {
+      requestAnimationFrame(waitForAppInit);
+    }
   } catch (err) {
     console.error('[FocusOS:init] bootstrap crashed before promise creation', err);
   }
-});
+}
+
+document.addEventListener('DOMContentLoaded', waitForAppInit);
