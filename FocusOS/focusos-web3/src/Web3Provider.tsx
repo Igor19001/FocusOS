@@ -29,10 +29,15 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [fcsBalance, setFcsBalance] = useState(0);
 
   const getWalletClient = async () => {
-    if (!(window as any).ethereum) throw new Error("Wallet provider not available");
-    return createWalletClient({
-      transport: custom((window as any).ethereum),
-    });
+    if (!(window as any).ethereum) return null;
+    try {
+      return createWalletClient({
+        transport: custom((window as any).ethereum),
+      });
+    } catch (e) {
+      console.error('Failed to create wallet client', e);
+      return null;
+    }
   };
 
   const setMode = async (nextMode: AppMode) => {
@@ -66,6 +71,7 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
           if (!TREASURY_WALLET) throw new Error("Missing VITE_TREASURY_WALLET configuration");
           if ((window as any).ethereum && address) {
             const walletClient = await getWalletClient();
+            if (!walletClient) throw new Error("Wallet client not available");
             const [account] = await walletClient.getAddresses();
             await walletClient.sendTransaction({
               account,
