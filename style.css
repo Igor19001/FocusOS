@@ -663,6 +663,47 @@ body.app-locked .main {
   padding-top: 14px;
 }
 
+/* ── Onboarding tooltips ───────────────────────────────────────────────── */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+}
+.onboarding-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 2, 0.75);
+}
+.onboarding-tooltip {
+  position: fixed;
+  max-width: 320px;
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glow);
+  padding: 14px;
+  animation: slideDown .24s ease;
+}
+.onboarding-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.onboarding-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.onboarding-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 /* ── Tutorial Tooltips ─────────────────────────────────────────────────── */
 .tut-backdrop { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.55); pointer-events: none; }
 .tut-bubble {

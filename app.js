@@ -40,6 +40,7 @@ const App = (() => {
     socials: 'focusos_socials',
     wallet: 'focusos_wallet_address',
   };
+  const ONBOARDING_KEY = 'hasCompletedOnboarding';
 
   // ── Utilities ─────────────────────────────────────────────────────────────
 
@@ -1272,6 +1273,72 @@ const App = (() => {
     }));
   }
 
+  const ONBOARDING_STEPS = [
+    {
+      title: 'Pasek boczny',
+      text: 'Tutaj szybko przełączasz sekcje dashboardu: Plan, Notes, Socials i Portfel.',
+      before: () => { switchTab('profile'); },
+      target: () => document.querySelector('.profile-sidebar'),
+    },
+    {
+      title: 'Przycisk portfela',
+      text: 'W tej sekcji możesz sprawdzić status portfela i bezpiecznie go rozłączyć.',
+      before: () => {
+        switchTab('profile');
+        const btn = document.querySelector('[data-dashboard-section="wallet"]');
+        btn && btn.click();
+      },
+      target: () => $('btnDisconnectWallet'),
+    },
+    {
+      title: 'Sekcja planu dnia',
+      text: 'Dodawaj punkty planu dnia i śledź wykonanie z poziomu kart.',
+      before: () => {
+        switchTab('profile');
+        const btn = document.querySelector('[data-dashboard-section="dayplan"]');
+        btn && btn.click();
+      },
+      target: () => $('dayPlanInputProfile') || $('dayPlanInput'),
+    },
+  ];
+
+  function startOnboardingIfNeeded() {
+    if (localStorage.getItem(ONBOARDING_KEY) === 'true') return;
+    let step = 0;
+    const overlay = $('onboardingOverlay');
+    const tooltip = $('onboardingTooltip');
+    if (!overlay || !tooltip) return;
+
+    const placeTooltip = targetEl => {
+      const r = targetEl.getBoundingClientRect();
+      const top = Math.min(window.innerHeight - 180, r.bottom + 10);
+      const left = Math.min(window.innerWidth - 340, Math.max(12, r.left));
+      tooltip.style.top = `${top}px`;
+      tooltip.style.left = `${left}px`;
+    };
+
+    const complete = () => {
+      localStorage.setItem(ONBOARDING_KEY, 'true');
+      overlay.style.display = 'none';
+    };
+
+    const render = () => {
+      const s = ONBOARDING_STEPS[step];
+      if (!s) return complete();
+      s.before && s.before();
+      $('onboardingTitle').textContent = s.title;
+      $('onboardingText').textContent = s.text;
+      const target = s.target();
+      if (target) placeTooltip(target);
+      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? 'Zakończ' : 'Dalej';
+    };
+
+    $('btnOnboardingSkip').onclick = complete;
+    $('btnOnboardingNext').onclick = () => { step++; render(); };
+    overlay.style.display = 'block';
+    render();
+  }
+
   function loadProfileView() {
     const socials = getLS(LS_KEYS.socials, { twitter: '', discord: '' });
     if ($('socialTwitter')) $('socialTwitter').value = socials.twitter || '';
@@ -1569,6 +1636,7 @@ const App = (() => {
     loadProfileView();
     updateModeIndicator();
     await maybeShowWelcome();
+    setTimeout(startOnboardingIfNeeded, 450);
 
     setInterval(async () => {
       if (S.currentView === 'tracker') await loadQuickStats();
