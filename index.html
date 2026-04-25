@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="/FocusOS/icons/icon-192.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
 
 <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -104,10 +104,20 @@
 
     <section class="panel panel--tracker-main">
       <div class="panel-label">Aktywny timer</div>
+      <h1 class="tracker-hero-title">FocusOS helps you track focused work with clarity.</h1>
+      <p class="tracker-hero-sub">Start a timer and track your first task. Local-first • Your data stays on your device.</p>
+      <div class="quick-start" id="quickStartChecklist">
+        <div class="quick-start-title">Quick Start</div>
+        <ol class="quick-start-list">
+          <li>Add a task</li>
+          <li>Start timer</li>
+          <li>Complete your first session</li>
+        </ol>
+      </div>
 
       <div class="tracker-status">
         <div class="status-dot idle" id="statusDot"></div>
-        <span id="statusLabel">Bezczynny</span>
+        <span id="statusLabel">Idle</span>
       </div>
 
       <div class="active-task-card" id="activeCard" style="display:none">
@@ -126,7 +136,7 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="taskName" placeholder="Co teraz robisz?" maxlength="80" autocomplete="off"/>
+        <input type="text" id="taskName" placeholder="What are you working on?" maxlength="80" autocomplete="off"/>
         <select id="taskCategory">
           <option value="work">Praca</option>
           <option value="coding">Kodowanie</option>
@@ -143,11 +153,11 @@
       </div>
 
       <div class="btn-row">
-        <button class="btn-start" id="btnStart">▶ START</button>
-        <button class="btn-stop" id="btnStop" disabled>⏹ STOP</button>
+        <button class="btn-start" id="btnStart">Start</button>
+        <button class="btn-stop" id="btnStop" disabled>Stop</button>
       </div>
 
-      <button class="btn-secondary" id="btnRefresh">↻ Odśwież dane</button>
+      <button class="btn-secondary" id="btnRefresh">Refresh data</button>
     </section>
 
     <!-- Quick stats + XP bar + Leaderboard -->
@@ -160,42 +170,42 @@
         </div>
         <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
       </div>
-      <div class="panel-label" style="margin-top:14px">Podsumowanie dnia</div>
+      <div class="panel-label" style="margin-top:14px">Today at a glance</div>
       <div class="qs-grid">
         <div class="qs-card">
           <span class="qs-value" id="qsTodayTime">—</span>
-          <span class="qs-key">Czas dziś</span>
+          <span class="qs-key">Focus time</span>
         </div>
         <div class="qs-card">
           <span class="qs-value" id="qsEfficiency">—</span>
-          <span class="qs-key">Efektywność</span>
+          <span class="qs-key">Efficiency</span>
         </div>
         <div class="qs-card">
           <span class="qs-value" id="qsTaskCount">—</span>
-          <span class="qs-key">Zadania</span>
+          <span class="qs-key">Sessions</span>
         </div>
         <div class="qs-card">
           <span class="qs-value" id="qsStreak">0</span>
-          <span class="qs-key">Passa (dni)</span>
+          <span class="qs-key">Streak</span>
         </div>
         <div class="qs-card">
           <span id="qsEMA" class="qs-ema">—</span>
-          <span class="qs-key">Trend EMA</span>
+          <span class="qs-key">Trend</span>
         </div>
       </div>
       <div class="leaderboard-strip">
-        <div class="lb-title">🌍 Ty vs Świat</div>
+        <div class="lb-title">You vs world average</div>
         <div id="lbRows"></div>
       </div>
     </section>
 
     <section class="panel panel--log">
       <div class="panel-header">
-        <div class="panel-label">Ostatnie zadania</div>
-        <button class="btn-refresh" id="btnRefreshLog" title="Odśwież">↻</button>
+        <div class="panel-label">Recent sessions</div>
+        <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
       </div>
       <div class="log-list" id="recentLog">
-        <div class="log-empty">Brak zadań — zacznij śledzić czas!</div>
+        <div class="log-empty">No sessions yet. Start your first focus session.</div>
       </div>
     </section>
 

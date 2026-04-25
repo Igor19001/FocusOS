@@ -40,7 +40,7 @@ const App = (() => {
     },
     deferredInstallPrompt: null,
     installAvailable: false,
-    language: 'pl',
+    language: 'en',
     theme: 'cyberpunk',
     googleTokenClient: null,
   };
@@ -493,7 +493,7 @@ const App = (() => {
   function getAppSettings() {
     const saved = getLS(APP_SETTINGS_KEY, {});
     return {
-      language: saved.language || 'pl',
+      language: saved.language || 'en',
       theme: saved.theme || 'cyberpunk',
     };
   }
@@ -618,13 +618,16 @@ const App = (() => {
 
   function setActiveUI(task) {
     $('statusDot').className = 'status-dot running';
-    $('statusLabel').textContent = 'Śledzenie...';
+    $('statusLabel').textContent = 'Tracking';
     $('activeCard').style.display = 'block';
+    $('activeCard').classList.add('timer-emphasis');
+    setTimeout(() => $('activeCard')?.classList.remove('timer-emphasis'), 220);
     $('activeName').textContent = task.name;
     $('activeCat').textContent = catLabel(task.category);
     $('btnStart').disabled = true;
     $('btnStop').disabled  = false;
     $('taskName').value    = '';
+    $('quickStartChecklist')?.classList.add('hidden');
   }
 
   function clearActiveUI() {
@@ -632,8 +635,11 @@ const App = (() => {
     S.sessionStart = null;
     clearInterval(S.timerInterval); S.timerInterval = null;
     $('statusDot').className     = 'status-dot idle';
-    $('statusLabel').textContent = 'Bezczynny';
-    $('activeCard').style.display = 'none';
+    $('statusLabel').textContent = 'Idle';
+    $('activeCard').style.display = 'block';
+    $('activeCard').classList.remove('timer-emphasis');
+    $('activeName').textContent   = 'Ready to focus';
+    $('activeCat').textContent    = 'Focus Session';
     $('activeTimer').textContent  = '00:00:00';
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
@@ -762,7 +768,7 @@ const App = (() => {
     const tasks     = await DB.getTasks({ limit: 40 });
     const container = $('recentLog');
     if (!tasks.length) {
-      container.innerHTML = '<div class="log-empty">Brak zadań — zacznij śledzić czas!</div>';
+      container.innerHTML = '<div class="log-empty">No sessions yet. Start your first focus session.</div>';
       return;
     }
     container.innerHTML = tasks.map(t => {
@@ -1630,22 +1636,11 @@ const App = (() => {
   }
 
   async function initModeSplash() {
-    document.body.classList.add('app-locked');
-    const remembered = localStorage.getItem(LS_KEYS.wallet);
-    if (remembered && $('btnModeMonad')) {
-      $('btnModeMonad').textContent = `Connect Monad Wallet (${remembered.slice(0,6)}...${remembered.slice(-4)})`;
-    }
     $('btnStakeTokens')?.addEventListener('click', stakeTokens);
     $('btnBurnTokens')?.addEventListener('click', burnTokens);
     $('btnSaveToChain')?.addEventListener('click', saveProgressToChain);
-    return new Promise(resolve => {
-      const onSelect = async mode => {
-        await selectMode(mode);
-        resolve();
-      };
-      $('btnModeLocal')?.addEventListener('click', () => onSelect('local'), { once: true });
-      $('btnModeMonad')?.addEventListener('click', () => onSelect('monad'), { once: true });
-    });
+    // Calm default experience: boot directly in Local mode.
+    await selectMode('local');
   }
 
   function renderList(containerId, items, emptyText, onDelete) {
