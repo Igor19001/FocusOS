@@ -1,13 +1,13 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   FocusOS 2.0 — app.js
-   Main UI controller. Orchestrates DB ↔ MATH ↔ DOM.
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FocusOS 2.0 â€” app.js
+   Main UI controller. Orchestrates DB â†” MATH â†” DOM.
    Phase 1-5: Onboarding, XP, Level Locks, Sleep, Idle/Toxic alerts,
               Water cap, Calories, JSON export/import, Leaderboard.
-   ═══════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const App = (() => {
 
-  // ── State ─────────────────────────────────────────────────────────────────
+  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const S = {
     activeTask:        null,
     timerInterval:     null,
@@ -59,6 +59,7 @@ const App = (() => {
     hardcoreMode: false,
     zeusStyle: 'balanced',
     missionRewarded: new Set(),
+    guidedEntryStarted: false,
   };
   const LS_KEYS = {
     sleepNotes: 'focusos_sleep_notes',
@@ -100,18 +101,18 @@ const App = (() => {
     ],
   };
 
-  // ── Utilities ─────────────────────────────────────────────────────────────
+  // â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const $ = id => document.getElementById(id);
   const fmtSec = s => {
-    if (!s || s < 0) return '—';
+    if (!s || s < 0) return 'â€”';
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m ${sec}s`;
     return `${sec}s`;
   };
-  const fmtTime     = iso => iso ? new Date(iso).toLocaleTimeString('pl-PL', { hour:'2-digit', minute:'2-digit' }) : '—';
-  const fmtDateShort = iso => iso ? new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' }) : '—';
+  const fmtTime     = iso => iso ? new Date(iso).toLocaleTimeString('pl-PL', { hour:'2-digit', minute:'2-digit' }) : 'â€”';
+  const fmtDateShort = iso => iso ? new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' }) : 'â€”';
   const escH        = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const catLabel    = cat => DB.CAT_LABELS[cat] || cat;
   const catColor    = cat => DB.CAT_COLORS[cat] || '#888';
@@ -135,15 +136,15 @@ const App = (() => {
     if (S.charts[id]) { S.charts[id].destroy(); delete S.charts[id]; }
   }
 
-  // ── XP & Level System ─────────────────────────────────────────────────────
+  // â”€â”€ XP & Level System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   //
   //  Levels:  1=0 XP | 2=1000 | 3=5000 | 4=12000 | 5=25000
-  //  Titles:  Novice → Apprentice → Analyst → Architect → Master
+  //  Titles:  Novice â†’ Apprentice â†’ Analyst â†’ Architect â†’ Master
   //
   //  XP earning:
-  //    • Task stop: productive_minutes × efficiency_weight × fatigue_factor
-  //    • Water: +20 XP per glass
-  //    • Sleep log: +50 XP
+  //    â€˘ Task stop: productive_minutes Ă— efficiency_weight Ă— fatigue_factor
+  //    â€˘ Water: +20 XP per glass
+  //    â€˘ Sleep log: +50 XP
 
   const LEVEL_REWARDS = {
     2:  { feature: 'basic_stats', title: 'Acolyte', text: 'Basic stats unlocked.' },
@@ -319,7 +320,7 @@ const App = (() => {
     if ($('hardcoreModeToggle')) $('hardcoreModeToggle').disabled = !has('hardcore_mode');
     if ($('zeusStyleSelect')) $('zeusStyleSelect').disabled = !has('zeus_style');
     document.querySelector('.panel--achievements')?.classList.toggle('hidden', !has('achievements'));
-    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = !has('deep_work');
+    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = false;
   }
 
   async function initLevelProgression() {
@@ -347,9 +348,9 @@ const App = (() => {
           overlay = document.createElement('div');
           overlay.className = 'level-lock-overlay';
           overlay.innerHTML = `
-            <div class="lock-icon">🔒</div>
+            <div class="lock-icon">đź”’</div>
             <div class="lock-title">Zaawansowana Analityka</div>
-            <div class="lock-sub">Osiągnij <strong>Poziom 3</strong> (5 000 XP)<br>aby odblokować Bayesian &amp; Markov.</div>
+            <div class="lock-sub">OsiÄ…gnij <strong>Poziom 3</strong> (5 000 XP)<br>aby odblokowaÄ‡ Bayesian &amp; Markov.</div>
             <div class="lock-progress">
               <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent4)">${S.totalXP.toLocaleString()} / 5 000 XP</div>
               <div class="lock-progress-track"><div class="lock-progress-fill" style="width:${Math.min(100,Math.round(S.totalXP/5000*100))}%"></div></div>
@@ -362,7 +363,7 @@ const App = (() => {
     });
   }
 
-  // ── Welcome Modal (Phase 1) ───────────────────────────────────────────────
+  // â”€â”€ Welcome Modal (Phase 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function maybeShowWelcome() {
     const seen = await DB.getSetting('onboarding_done');
@@ -377,144 +378,145 @@ const App = (() => {
     }, { once: true });
   }
 
-  // ── Tutorial (Phase 1) ────────────────────────────────────────────────────
+  // â”€â”€ Tutorial (Phase 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const TUTORIAL_STEPS = [
     {
       targetSelector: '[data-tab="tracker"]',
       arrow: 'down',
-      text: '👋 Witaj w FocusOS. To pełny przewodnik po wszystkich kluczowych opcjach aplikacji.',
+      text: 'đź‘‹ Witaj w FocusOS. To peĹ‚ny przewodnik po wszystkich kluczowych opcjach aplikacji.',
       before: () => switchTab('tracker'),
     },
     {
       targetId: 'taskName',
       arrow: 'down',
-      text: '✍️ Tu wpisujesz nazwę aktualnego zadania. Im bardziej konkretna nazwa, tym lepsze analizy.',
+      text: 'âśŤď¸Ź Tu wpisujesz nazwÄ™ aktualnego zadania. Im bardziej konkretna nazwa, tym lepsze analizy.',
       before: () => switchTab('tracker'),
     },
     {
       targetId: 'taskCategory',
       arrow: 'down',
-      text: '🏷️ Wybierz kategorię pracy. Kategorie wpływają na statystyki produktywności, EMA i wnioski.',
+      text: 'đźŹ·ď¸Ź Wybierz kategoriÄ™ pracy. Kategorie wpĹ‚ywajÄ… na statystyki produktywnoĹ›ci, EMA i wnioski.',
       before: () => switchTab('tracker'),
     },
     {
       targetId: 'btnStart',
       arrow: 'down',
-      text: '▶️ START rozpoczyna sesję i timer. STOP zapisuje czas i nalicza XP dla produktywnych kategorii.',
+      text: 'â–¶ď¸Ź START rozpoczyna sesjÄ™ i timer. STOP zapisuje czas i nalicza XP dla produktywnych kategorii.',
       before: () => switchTab('tracker'),
     },
     {
       targetId: 'xpBarWrap',
       arrow: 'down',
-      text: '🎮 Pasek XP pokazuje progres poziomu. Wyższe poziomy odblokowują zaawansowaną analitykę.',
+      text: 'đźŽ® Pasek XP pokazuje progres poziomu. WyĹĽsze poziomy odblokowujÄ… zaawansowanÄ… analitykÄ™.',
       before: () => switchTab('tracker'),
     },
     {
       targetSelector: '[data-tab="daily"]',
       arrow: 'down',
-      text: '📅 Zakładka Dzienny: analiza jednego dnia, wykresy kategorii i rozkład godzinowy.',
+      text: 'đź“… ZakĹ‚adka Dzienny: analiza jednego dnia, wykresy kategorii i rozkĹ‚ad godzinowy.',
       before: () => switchTab('daily'),
     },
     {
       targetId: 'dailyCatChart',
       arrow: 'up',
-      text: '🧩 Ten wykres pokazuje, gdzie realnie znika Twój czas w ciągu dnia.',
+      text: 'đź§© Ten wykres pokazuje, gdzie realnie znika TwĂłj czas w ciÄ…gu dnia.',
       before: () => switchTab('daily'),
     },
     {
       targetSelector: '[data-tab="weekly"]',
       arrow: 'down',
-      text: '📊 Zakładka Tygodniowy: trendy 7-dniowe, EMA i sekwencje aktywności.',
+      text: 'đź“Š ZakĹ‚adka Tygodniowy: trendy 7-dniowe, EMA i sekwencje aktywnoĹ›ci.',
       before: () => switchTab('weekly'),
     },
     {
       targetId: 'emaChart',
       arrow: 'up',
-      text: '📈 EMA wygładza wahania i pokazuje realny kierunek Twojej produktywności.',
+      text: 'đź“ EMA wygĹ‚adza wahania i pokazuje realny kierunek Twojej produktywnoĹ›ci.',
       before: () => switchTab('weekly'),
     },
     {
       targetSelector: '[data-tab="health"]',
       arrow: 'down',
-      text: '🩺 Zakładka Zdrowie: nawodnienie, ruch i posiłki, które wspierają jakość pracy.',
+      text: 'đź©ş ZakĹ‚adka Zdrowie: nawodnienie, ruch i posiĹ‚ki, ktĂłre wspierajÄ… jakoĹ›Ä‡ pracy.',
       before: () => switchTab('health'),
     },
     {
       targetId: 'waterGlasses',
       arrow: 'up',
-      text: '💧 Klikaj szklanki, aby logować wodę i budować nawyk regularnego nawodnienia.',
+      text: 'đź’§ Klikaj szklanki, aby logowaÄ‡ wodÄ™ i budowaÄ‡ nawyk regularnego nawodnienia.',
       before: () => switchTab('health'),
     },
     {
       targetSelector: '[data-tab="sleep"]',
       arrow: 'down',
-      text: '🌙 Zakładka Sen: kalkulator cykli, log snu, notatki oraz lokalny budzik.',
+      text: 'đźŚ™ ZakĹ‚adka Sen: kalkulator cykli, log snu, notatki oraz lokalny budzik.',
       before: () => switchTab('sleep'),
     },
     {
       targetId: 'btnCalcSleep',
       arrow: 'up',
-      text: '🛌 Kalkulator snu wylicza najlepsze godziny zaśnięcia na bazie cykli 90 minut + 15 min zasypiania.',
+      text: 'đź›Ś Kalkulator snu wylicza najlepsze godziny zaĹ›niÄ™cia na bazie cykli 90 minut + 15 min zasypiania.',
       before: () => switchTab('sleep'),
     },
     {
       targetId: 'btnSetAlarm',
       arrow: 'up',
-      text: '⏰ Budzik działa lokalnie: sprawdza czas i uruchamia sygnał + alert bez backendu.',
+      text: 'âŹ° Budzik dziaĹ‚a lokalnie: sprawdza czas i uruchamia sygnaĹ‚ + alert bez backendu.',
       before: () => switchTab('sleep'),
     },
     {
       targetSelector: '[data-tab="settings"]',
       arrow: 'down',
-      text: '⚙️ Ustawienia: personalizacja aplikacji, instalacja PWA i kopie zapasowe.',
+      text: 'âš™ď¸Ź Ustawienia: personalizacja aplikacji, instalacja PWA i kopie zapasowe.',
       before: () => switchTab('settings'),
     },
     {
       targetId: 'languageSelect',
       arrow: 'up',
-      text: '🌐 Tu zmienisz język interfejsu (PL/EN). Ustawienie zapisuje się lokalnie.',
+      text: 'đźŚ Tu zmienisz jÄ™zyk interfejsu (PL/EN). Ustawienie zapisuje siÄ™ lokalnie.',
       before: () => switchTab('settings'),
     },
     {
       targetId: 'themeSelect',
       arrow: 'up',
-      text: '🎨 Tu przełączysz motyw (Cyberpunk / Light / Retro) oparty o CSS variables.',
+      text: 'đźŽ¨ Tu przeĹ‚Ä…czysz motyw (Cyberpunk / Light / Retro) oparty o CSS variables.',
       before: () => switchTab('settings'),
     },
     {
       targetId: 'installButton',
       arrow: 'up',
-      text: '📲 Ten przycisk pokazuje instalację systemową PWA, gdy przeglądarka zgłosi beforeinstallprompt.',
+      text: 'đź“˛ Ten przycisk pokazuje instalacjÄ™ systemowÄ… PWA, gdy przeglÄ…darka zgĹ‚osi beforeinstallprompt.',
       before: () => switchTab('settings'),
     },
     {
       targetId: 'btnExportJSON',
       arrow: 'up',
-      text: '💾 Eksport/Import JSON służy do lokalnego backupu i odtworzenia danych na innym urządzeniu.',
+      text: 'đź’ľ Eksport/Import JSON sĹ‚uĹĽy do lokalnego backupu i odtworzenia danych na innym urzÄ…dzeniu.',
       before: () => switchTab('settings'),
     },
     {
       targetId: 'btnGoogleBackup',
       arrow: 'up',
-      text: '☁️ Backup Google wysyła plik FocusOS_Backup.json na Twój Google Drive (po OAuth).',
+      text: 'âď¸Ź Backup Google wysyĹ‚a plik FocusOS_Backup.json na TwĂłj Google Drive (po OAuth).',
       before: () => switchTab('settings'),
     },
     {
       targetSelector: '[data-tab="about"]',
       arrow: 'down',
-      text: 'ℹ️ Zakładka O nas opisuje filozofię Local-First i kanały społecznościowe FocusOS.',
+      text: 'â„ąď¸Ź ZakĹ‚adka O nas opisuje filozofiÄ™ Local-First i kanaĹ‚y spoĹ‚ecznoĹ›ciowe FocusOS.',
       before: () => switchTab('about'),
     },
     {
       targetSelector: '[data-tab="profile"]',
       arrow: 'down',
-      text: '👤 Profil to panel pomocniczy: plan dnia, notatki snu, socials i zarządzanie portfelem.',
+      text: 'đź‘¤ Profil to panel pomocniczy: plan dnia, notatki snu, socials i zarzÄ…dzanie portfelem.',
       before: () => switchTab('profile'),
     },
   ];
 
   async function startTutorial() {
+    if (document.body.classList.contains('app-locked')) return;
     if (localStorage.getItem(TUTORIAL_COMPLETED_KEY) === 'true') return;
     S.tutorialStep = 0;
     showTutorialStep();
@@ -544,8 +546,8 @@ const App = (() => {
     $('tutStep').textContent = `${S.tutorialStep + 1} / ${steps.length}`;
     const isLast = S.tutorialStep === steps.length - 1;
     $('tutNext').textContent = isLast
-      ? (S.language === 'en' ? 'Done ✓' : 'Rozumiem ✓')
-      : (S.language === 'en' ? 'Next →' : 'Dalej →');
+      ? (S.language === 'en' ? 'Done âś“' : 'Rozumiem âś“')
+      : (S.language === 'en' ? 'Next â†’' : 'Dalej â†’');
 
     const arrow = $('tutArrow');
     arrow.className = `tut-arrow tut-arrow--${step.arrow}`;
@@ -589,7 +591,7 @@ const App = (() => {
     };
   }
 
-  // ── Clock ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Clock â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function startClock() {
     const el = $('clock');
@@ -603,7 +605,7 @@ const App = (() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const glyphs = '01アイウエオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const glyphs = '01ă‚˘ă‚¤ă‚¦ă‚¨ă‚Şă‚«ă‚­ă‚Żă‚±ă‚łă‚µă‚·ă‚ąă‚»ă‚˝ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const fontSize = 14;
     let cols = 0;
     let drops = [];
@@ -639,7 +641,7 @@ const App = (() => {
     requestAnimationFrame(draw);
   }
 
-  // ── Tab navigation ────────────────────────────────────────────────────────
+  // â”€â”€ Tab navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function initTabs() {
     document.querySelectorAll('[data-tab]').forEach(btn => {
@@ -695,6 +697,53 @@ const App = (() => {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function getZeusVisualState(mood = 'Observing', intensity = 'normal', message = '') {
+    const moodKey = String(mood || '').toLowerCase();
+    const text = String(message || '').toLowerCase();
+    if (intensity === 'high' || /wrath|demanding|triumphant|fired up/.test(moodKey)) return 'wrath';
+    if (/disappointed|judging|warning/.test(moodKey) || /failure|skipped|penalty/.test(text)) return 'disappointed';
+    if (/approving|proud|success/.test(moodKey)) return 'proud';
+    if (/tired|sleep|recovery/.test(moodKey) || /recover/.test(text)) return 'tired';
+    return 'neutral';
+  }
+
+  function applyZeusVisualState(state) {
+    const card = $('zeusCard');
+    if (!card) return;
+    card.dataset.zeusState = state;
+    const states = {
+      neutral: { browLeft: 'M150 188 Q183 177 216 184', browRight: 'M296 184 Q329 177 362 188', mouth: 'M228 330 Q256 338 284 330', eyeOpacity: 0.52, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
+      proud: { browLeft: 'M150 186 Q183 176 216 182', browRight: 'M296 182 Q329 176 362 186', mouth: 'M226 326 Q256 347 286 326', eyeOpacity: 0.9, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
+      disappointed: { browLeft: 'M150 190 Q183 184 216 192', browRight: 'M296 192 Q329 184 362 190', mouth: 'M226 338 Q256 325 286 338', eyeOpacity: 0.28, eyeCy: 236, eyeRy: 11, sparkCy: 234 },
+      wrath: { browLeft: 'M150 199 Q183 168 216 174', browRight: 'M296 174 Q329 168 362 199', mouth: 'M220 335 Q256 346 292 335', eyeOpacity: 1, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
+      tired: { browLeft: 'M150 190 Q183 186 216 190', browRight: 'M296 190 Q329 186 362 190', mouth: 'M228 333 Q256 331 284 333', eyeOpacity: 0.34, eyeCy: 241, eyeRy: 10, sparkCy: 237 },
+    };
+    const cfg = states[state] || states.neutral;
+    $('zeusBrowLeft')?.setAttribute('d', cfg.browLeft);
+    $('zeusBrowRight')?.setAttribute('d', cfg.browRight);
+    $('zeusMouth')?.setAttribute('d', cfg.mouth);
+    [['zeusEyeLeftBg', 40], ['zeusEyeRightBg', 40]].forEach(([id, rx]) => {
+      const el = $(id);
+      if (!el) return;
+      el.setAttribute('cy', String(cfg.eyeCy));
+      el.setAttribute('ry', String(cfg.eyeRy + 8));
+      el.setAttribute('rx', String(rx));
+    });
+    ['zeusEyeLeft', 'zeusEyeRight'].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.setAttribute('cy', String(cfg.eyeCy));
+      el.setAttribute('ry', String(cfg.eyeRy));
+      el.setAttribute('fill', `rgba(82,220,255,${cfg.eyeOpacity})`);
+    });
+    ['zeusEyeLeftSpark', 'zeusEyeRightSpark'].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.setAttribute('cy', String(cfg.sparkCy));
+      el.setAttribute('opacity', String(Math.min(1, cfg.eyeOpacity + 0.15)));
+    });
+  }
+
   function zeusSpeak(message, mood = 'Observing', intensity = 'normal') {
     const negativeMoods = new Set(['Warning', 'Judging', 'Disappointed']);
     const context = negativeMoods.has(mood) ? 'negative' : 'positive';
@@ -705,6 +754,7 @@ const App = (() => {
     if (!msgEl || !moodEl || !card) return;
     msgEl.textContent = message;
     moodEl.textContent = mood;
+    applyZeusVisualState(getZeusVisualState(mood, intensity, message));
     card.classList.remove('zeus-anim');
     void card.offsetWidth;
     card.classList.add('zeus-anim');
@@ -728,6 +778,7 @@ const App = (() => {
     }
     return base;
   }
+
 
   function calculateSleepDurationHours(bedtime, wakeTime) {
     const [bh, bm] = bedtime.split(':').map(Number);
@@ -809,26 +860,26 @@ const App = (() => {
 
   const I18N = {
     pl: {
-      installUnavailable: 'Instalacja nie jest teraz dostępna. Otwórz aplikację przez HTTPS lub już jest zainstalowana.',
-      installReady: 'Możesz teraz zainstalować aplikację.',
+      installUnavailable: 'Instalacja nie jest teraz dostÄ™pna. OtwĂłrz aplikacjÄ™ przez HTTPS lub juĹĽ jest zainstalowana.',
+      installReady: 'MoĹĽesz teraz zainstalowaÄ‡ aplikacjÄ™.',
       installDone: 'Instalacja uruchomiona.',
       installDismissed: 'Instalacja anulowana.',
       alarmSet: 'Budzik ustawiony na',
       alarmCancelled: 'Budzik anulowany.',
       alarmIdle: 'Budzik nieaktywny.',
-      backupMissingClient: 'Wklej swój Google Client ID w GOOGLE_CLIENT_ID.',
-      backupDone: 'Backup wysłany na Google Drive jako FocusOS_Backup.json',
-      backupFailed: 'Błąd backupu Google: ',
-      tutorialDone: 'Samouczek zakończony',
+      backupMissingClient: 'Wklej swĂłj Google Client ID w GOOGLE_CLIENT_ID.',
+      backupDone: 'Backup wysĹ‚any na Google Drive jako FocusOS_Backup.json',
+      backupFailed: 'BĹ‚Ä…d backupu Google: ',
+      tutorialDone: 'Samouczek zakoĹ„czony',
       tabs: {
-        tracker: '⏱ Tracker',
-        daily: '📅 Dzienny',
-        weekly: '📊 Tygodniowy',
-        health: '🩺 Zdrowie',
-        sleep: '🌙 Sen',
-        settings: '⚙ Ustawienia',
-        about: 'ℹ O nas',
-        profile: '👤 Profil',
+        tracker: 'Tracker',
+        daily: 'Daily',
+        weekly: 'Weekly',
+        health: 'Health',
+        sleep: 'Sleep',
+        settings: 'Settings',
+        about: 'About',
+        profile: 'Profile',
       },
     },
     en: {
@@ -844,14 +895,14 @@ const App = (() => {
       backupFailed: 'Google backup failed: ',
       tutorialDone: 'Tutorial completed',
       tabs: {
-        tracker: '⏱ Tracker',
-        daily: '📅 Daily',
-        weekly: '📊 Weekly',
-        health: '🩺 Health',
-        sleep: '🌙 Sleep',
-        settings: '⚙ Settings',
-        about: 'ℹ About',
-        profile: '👤 Profile',
+        tracker: 'Tracker',
+        daily: 'Daily',
+        weekly: 'Weekly',
+        health: 'Health',
+        sleep: 'Sleep',
+        settings: 'Settings',
+        about: 'About',
+        profile: 'Profile',
       },
     },
   };
@@ -870,13 +921,13 @@ const App = (() => {
     });
     const nextBtn = $('tutNext');
     if (nextBtn) {
-      nextBtn.textContent = lang === 'en' ? 'Next →' : 'Dalej →';
+      nextBtn.textContent = lang === 'en' ? 'Next â†’' : 'Dalej â†’';
     }
     const installHint = $('installHint');
     if (installHint && !S.installAvailable) {
       installHint.textContent = lang === 'en'
         ? 'PWA install appears when browser allows it.'
-        : 'Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.';
+        : 'Instalacja PWA bÄ™dzie dostÄ™pna, gdy przeglÄ…darka zgĹ‚osi moĹĽliwoĹ›Ä‡ instalacji.';
     }
     if ($('alarmStatus') && !S.alarm.time) {
       updateAlarmStatus(t('alarmIdle'));
@@ -892,9 +943,9 @@ const App = (() => {
   // Apply local-first appearance settings immediately on startup.
   applyPersistedSettings();
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // TRACKER VIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function loadTrackerView() {
     await refreshActiveTask();
@@ -938,7 +989,7 @@ const App = (() => {
     $('activeCard').style.display = 'block';
     $('activeCard').classList.remove('timer-emphasis');
     $('activeName').textContent   = 'Ready to focus';
-    $('activeCat').textContent    = 'Focus Session';
+    $('activeCat').textContent    = 'Focus Sprint';
     $('activeTimer').textContent  = '00:00:00';
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
@@ -994,7 +1045,7 @@ const App = (() => {
       const fatigue = MATH.fatigueCurve(Math.floor(elapsed / 60));
       const pct     = Math.round(100 - fatigue.currentEfficiency);
       $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
-      $('fatigueLabel').textContent = `Wydajność: ${fatigue.currentEfficiency}%`;
+      $('fatigueLabel').textContent = `WydajnoĹ›Ä‡: ${fatigue.currentEfficiency}%`;
       $('fatigueBarWrap').classList.toggle('fatigue--warn', fatigue.shouldBreak);
     }, 1000);
   }
@@ -1002,7 +1053,7 @@ const App = (() => {
   async function handleStart() {
     const name     = $('taskName').value.trim();
     const category = $('taskCategory').value;
-    if (!name) { showToast('⚠️ Wpisz nazwę zadania', 'warn'); $('taskName').focus(); return; }
+    if (!name) { showToast('âš ď¸Ź Wpisz nazwÄ™ zadania', 'warn'); $('taskName').focus(); return; }
     try {
       const task = await DB.startTask(name, category);
       S.sessionStart = new Date(task.start_time);
@@ -1011,10 +1062,10 @@ const App = (() => {
       markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
-      showToast(`▶ Start: "${name}"`, 'success');
+      showToast(`â–¶ Start: "${name}"`, 'success');
       zeusSpeak('Discipline initiated. Olympus expects consistency.', 'Demanding', 'high');
       await loadRecentLog(); await loadQuickStats();
-    } catch (e) { showToast('❌ Błąd: ' + e.message, 'error'); }
+    } catch (e) { showToast('âťŚ BĹ‚Ä…d: ' + e.message, 'error'); }
   }
 
   async function handleStop() {
@@ -1025,13 +1076,21 @@ const App = (() => {
     try {
       const stopped = await DB.stopActiveTask();
       localStorage.removeItem(HARDCORE_ACTIVE_KEY);
+      if (S.pomodoro.running && S.pomodoro.phase === 'focus') {
+        if (S.pomodoro.interval) clearInterval(S.pomodoro.interval);
+        S.pomodoro.interval = null;
+        S.pomodoro.running = false;
+        S.pomodoro.phase = 'focus';
+        S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
+        updatePomodoroUI();
+      }
       clearActiveUI();
       if (stopped) {
         const stoppedMin = Math.round((stopped.duration || 0) / 60);
         const interrupted = stoppedMin < 15;
         const xp = await calcTaskXP(stopped, { interrupted, hardcoreFail: false });
         if (xp > 0) {
-          const prevLevel  = getLevelInfo(S.totalXP).level;
+          const prevLevel = getLevelInfo(S.totalXP).level;
           let bonusXP = 0;
           const todayTasks = await DB.getTasksForDay(DB.toDateStr());
           const goalMin = await DB.getSetting('daily_goal_min', 0);
@@ -1043,18 +1102,18 @@ const App = (() => {
               await DB.setSetting('perfect_day_bonus_date', DB.toDateStr());
             }
           }
-          const newTotal   = await DB.addXP(xp + bonusXP);
-          const nextLevel  = getLevelInfo(newTotal).level;
+          const newTotal = await DB.addXP(xp + bonusXP);
+          const nextLevel = getLevelInfo(newTotal).level;
           await refreshXPBar();
           if (nextLevel > prevLevel) {
-            showToast(`🎉 LEVEL UP! Osiągnąłeś Poziom ${nextLevel} — ${getLevelInfo(newTotal).title}!`, 'success', 6000);
+            showToast(`Level up! You reached level ${nextLevel} - ${getLevelInfo(newTotal).title}.`, 'success', 6000);
             zeusSpeak(`You ascended to level ${nextLevel}. Olympus acknowledges your rise.`, 'Triumphant', 'high');
           } else {
-            showToast(`⏹ Zatrzymano: "${stopped.name}" (+${xp + bonusXP} XP)`, 'info');
+            showToast(`Session completed: "${stopped.name}" (+${xp + bonusXP} XP)`, 'info');
             zeusSpeak('Another session completed. Olympus is watching.', 'Approving', 'high');
           }
         } else {
-          showToast(`⏹ Zatrzymano: "${stopped.name}"`, 'info');
+          showToast(`Session stopped: "${stopped.name}"`, 'info');
           if (interrupted) {
             const penalty = S.hardcoreMode ? 20 : 35;
             await applyXPPenalty(penalty);
@@ -1067,9 +1126,13 @@ const App = (() => {
         }
       }
       S.lastActivity = Date.now();
-      await loadRecentLog(); await loadQuickStats();
-    } catch (e) { showToast('❌ Błąd: ' + e.message, 'error'); }
+      await loadRecentLog();
+      await loadQuickStats();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
   }
+
 
   async function loadQuickStats() {
     const todayTasks = await DB.getTasksForDay(DB.toDateStr());
@@ -1115,8 +1178,8 @@ const App = (() => {
 
     // EMA badge
     const ema = MATH.emaProductivityTrend(all);
-    const trendMap = { improving:'📈 Wzrost', declining:'📉 Spadek', stable:'➡️ Stabilny' };
-    $('qsEMA').textContent = `${trendMap[ema.trend] || '—'} (${ema.currentScore}%)`;
+    const trendMap = { improving:'đź“ Wzrost', declining:'đź“‰ Spadek', stable:'âžˇď¸Ź Stabilny' };
+    $('qsEMA').textContent = `${trendMap[ema.trend] || 'â€”'} (${ema.currentScore}%)`;
     $('qsEMA').className   = `qs-ema ema--${ema.trend}`;
 
     // XP bar
@@ -1130,7 +1193,7 @@ const App = (() => {
     await renderAdvancedStats();
   }
 
-  // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
+  // â”€â”€ Leaderboard (Phase 5) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function renderLeaderboard(allTasks) {
     const el = $('lbRows');
@@ -1146,8 +1209,8 @@ const App = (() => {
       ? Math.round(Object.values(dayMap).reduce((a,b)=>a+b,0) / days.length / 360) / 10
       : 0;
     const benchmarks = [
-      { name:'Przeciętny pracownik biurowy', h:2.8 },
-      { name:'Student IB (średnia globalna)', h:4.2 },
+      { name:'PrzeciÄ™tny pracownik biurowy', h:2.8 },
+      { name:'Student IB (Ĺ›rednia globalna)', h:4.2 },
       { name:'Top 10% produktywnych', h:6.1 },
     ];
     const maxH = Math.max(userAvgH, 6.1);
@@ -1158,7 +1221,7 @@ const App = (() => {
         <span class="lb-val" style="color:var(--text-muted)">${b.h}h</span>
       </div>`).join('') +
     `<div class="lb-row lb-row-you">
-        <span class="lb-name"><strong>⚡ Ty (${days.length}d śr.)</strong></span>
+        <span class="lb-name"><strong>âšˇ Ty (${days.length}d Ĺ›r.)</strong></span>
         <div class="lb-bar-wrap"><div class="lb-bar" style="width:${Math.round(userAvgH/maxH*100)}%"></div></div>
         <span class="lb-val">${userAvgH}h</span>
       </div>`;
@@ -1177,7 +1240,7 @@ const App = (() => {
       return;
     }
     container.innerHTML = tasks.map(t => {
-      const dur          = t.duration ? fmtSec(t.duration) : (t.is_active ? '⏳' : '—');
+      const dur          = t.duration ? fmtSec(t.duration) : (t.is_active ? 'âŹł' : 'â€”');
       const backfillBadge = t.is_backfill ? '<span class="badge-backfill">RETRO</span>' : '';
       return `
         <div class="log-item cat-border--${t.category}">
@@ -1188,14 +1251,14 @@ const App = (() => {
           <div class="log-item-footer">
             <span class="log-cat cat-${t.category}">${catLabel(t.category)}</span>
             <span class="log-time">${fmtTime(t.start_time)}</span>
-            <button class="log-del" data-id="${t.id}" title="Usuń">×</button>
+            <button class="log-del" data-id="${t.id}" title="UsuĹ„">Ă—</button>
           </div>
         </div>`;
     }).join('');
     container.querySelectorAll('.log-del').forEach(btn =>
       btn.addEventListener('click', async e => {
         await DB.deleteTask(Number(e.currentTarget.dataset.id));
-        showToast('🗑 Usunięto', 'info');
+        showToast('đź—‘ UsuniÄ™to', 'info');
         await loadRecentLog(); await loadQuickStats();
       })
     );
@@ -1219,9 +1282,9 @@ const App = (() => {
     applyFilterVisual();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // DAILY VIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function loadDailyView() {
     $('dailyDateLabel').textContent = new Date(S.dailyDate).toLocaleDateString('pl-PL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -1230,7 +1293,7 @@ const App = (() => {
 
     $('dTotalTime').textContent  = fmtSec(analysis.totalSec);
     $('dEfficiency').textContent = analysis.efficiencyPct + '%';
-    $('dTaskCount').textContent  = analysis.taskCount + ' zadań';
+    $('dTaskCount').textContent  = analysis.taskCount + ' zadaĹ„';
 
     renderDailyCatDonut(analysis.timeByCat);
     renderDailyHourChart(analysis.hourlyData);
@@ -1271,7 +1334,7 @@ const App = (() => {
         labels: active.map(h => `${h.hour}:00`),
         datasets: [
           { label:'Produktywne', data: active.map(h => Math.round(h.productive/60)), backgroundColor:'rgba(99,255,180,0.7)', borderWidth:0, borderRadius:3 },
-          { label:'Pozostałe',  data: active.map(h => Math.round((h.total-h.productive)/60)), backgroundColor:'rgba(255,107,107,0.4)', borderWidth:0, borderRadius:3 },
+          { label:'PozostaĹ‚e',  data: active.map(h => Math.round((h.total-h.productive)/60)), backgroundColor:'rgba(255,107,107,0.4)', borderWidth:0, borderRadius:3 },
         ],
       },
       options: {
@@ -1292,9 +1355,9 @@ const App = (() => {
     const full     = MATH.analyzeAll(allTasks);
     const today    = [
       analysis.efficiencyPct >= 70
-        ? { icon:'⭐', text:`Dziś: ${analysis.efficiencyPct}% produktywności — świetny dzień!` }
-        : { icon:'📊', text:`Dziś: ${analysis.efficiencyPct}% produktywności. Cel: 70%+` },
-      { icon:'⏱️', text:`Łączny czas pracy: ${fmtSec(analysis.totalSec)} w ${analysis.taskCount} sesjach.` },
+        ? { icon:'â­', text:`DziĹ›: ${analysis.efficiencyPct}% produktywnoĹ›ci â€” Ĺ›wietny dzieĹ„!` }
+        : { icon:'đź“Š', text:`DziĹ›: ${analysis.efficiencyPct}% produktywnoĹ›ci. Cel: 70%+` },
+      { icon:'âŹ±ď¸Ź', text:`ĹÄ…czny czas pracy: ${fmtSec(analysis.totalSec)} w ${analysis.taskCount} sesjach.` },
     ];
     container.innerHTML = [...today, ...full.insights.slice(0,3)]
       .map(i => `<li><span class="insight-icon">${i.icon}</span>${escH(i.text)}</li>`)
@@ -1307,7 +1370,7 @@ const App = (() => {
     const allTasks = await DB.getTasksLast30Days();
     const km       = MATH.kMeansGoldenHours([...allTasks, ...tasks]);
     if (!km.goldenHours.length) {
-      el.innerHTML = '<span class="text-muted">Za mało danych dla K-Means...</span>';
+      el.innerHTML = '<span class="text-muted">Za maĹ‚o danych dla K-Means...</span>';
       return;
     }
     el.innerHTML =
@@ -1316,15 +1379,15 @@ const App = (() => {
       km.shadowHours.slice(0,6).map(h => `<span class="hour-chip hour-chip--shadow">${h}:00</span>`).join('');
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // WEEKLY VIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function loadWeeklyView() {
     const monday = new Date(S.weekStart);
     const sunday = new Date(monday.getTime() + 6 * 86400000);
     $('weekLabel').textContent =
-      `${monday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short'})} — ${sunday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short',year:'numeric'})}`;
+      `${monday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short'})} â€” ${sunday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short',year:'numeric'})}`;
 
     const tasks    = await DB.getTasksForWeek(S.weekStart);
     const allTasks = await DB.getTasksLast30Days();
@@ -1338,8 +1401,8 @@ const App = (() => {
     renderWeeklyInsights(analysis.insights);
 
     const trendEl  = $('weekTrendBadge');
-    const trendMap = { improving:'📈 WZROST', declining:'📉 SPADEK', stable:'➡️ STABILNY' };
-    trendEl.textContent = trendMap[emaData.trend] || '—';
+    const trendMap = { improving:'đź“ WZROST', declining:'đź“‰ SPADEK', stable:'âžˇď¸Ź STABILNY' };
+    trendEl.textContent = trendMap[emaData.trend] || 'â€”';
     trendEl.className   = `trend-badge trend--${emaData.trend}`;
   }
 
@@ -1347,7 +1410,7 @@ const App = (() => {
     destroyChart('weeklyBarsChart');
     const ctx = $('weeklyBarsChart');
     if (!ctx) return;
-    const dayNames = ['Pn','Wt','Śr','Cz','Pt','So','Nd'];
+    const dayNames = ['Pn','Wt','Ĺšr','Cz','Pt','So','Nd'];
     const labels = [], values = [];
     for (let i = 0; i < 7; i++) {
       const d   = new Date(new Date(weekStart).getTime() + i * 86400000);
@@ -1382,7 +1445,7 @@ const App = (() => {
         labels: emaData.dayLabels,
         datasets: [
           { label:'Raw', data:emaData.rawScores, borderColor:'rgba(99,255,180,0.25)', backgroundColor:'transparent', borderWidth:1, pointRadius:2, tension:0 },
-          { label:'EMA (α=0.3)', data:emaData.smoothed, borderColor:'#63ffb4', backgroundColor:'rgba(99,255,180,0.06)', borderWidth:2, pointRadius:3, fill:true, tension:0.4 },
+          { label:'EMA (Î±=0.3)', data:emaData.smoothed, borderColor:'#63ffb4', backgroundColor:'rgba(99,255,180,0.06)', borderWidth:2, pointRadius:3, fill:true, tension:0.4 },
         ],
       },
       options: {
@@ -1403,11 +1466,11 @@ const App = (() => {
     const el = $('markovTable');
     if (!el) return;
     const transitions = MATH.topTransitions(matrix, 8);
-    if (!transitions.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za mało danych</td></tr>'; return; }
+    if (!transitions.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za maĹ‚o danych</td></tr>'; return; }
     el.innerHTML = transitions.map(t => `
       <tr>
         <td><span class="log-cat cat-${t.from}">${catLabel(t.from)}</span></td>
-        <td class="markov-arrow">→</td>
+        <td class="markov-arrow">â†’</td>
         <td><span class="log-cat cat-${t.to}">${catLabel(t.to)}</span></td>
         <td class="markov-prob">
           <div class="prob-bar" style="width:${Math.round(t.prob*100)}%"></div>
@@ -1420,27 +1483,27 @@ const App = (() => {
     const el = $('bayesTable');
     if (!el) return;
     const rows = Object.entries(bayesian).sort((a,b) => b[1].totalSeconds - a[1].totalSeconds);
-    if (!rows.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za mało danych</td></tr>'; return; }
+    if (!rows.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za maĹ‚o danych</td></tr>'; return; }
     el.innerHTML = rows.map(([cat, s]) => `
       <tr>
         <td><span class="log-cat cat-${cat}">${catLabel(cat)}</span></td>
         <td class="mono">${fmtSec(s.bayesMean)}</td>
-        <td class="mono text-muted">±${fmtSec(s.bayesStd)}</td>
-        <td class="mono">${s.sampleCount}×</td>
+        <td class="mono text-muted">Â±${fmtSec(s.bayesStd)}</td>
+        <td class="mono">${s.sampleCount}Ă—</td>
       </tr>`).join('');
   }
 
   function renderWeeklyInsights(insights) {
     const el = $('weeklyInsights');
     if (!el) return;
-    el.innerHTML = (insights.length ? insights : [{ icon:'📊', text:'Za mało danych...' }])
+    el.innerHTML = (insights.length ? insights : [{ icon:'đź“Š', text:'Za maĹ‚o danych...' }])
       .map(i => `<li><span class="insight-icon">${i.icon}</span>${escH(i.text)}</li>`)
       .join('');
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // HEALTH VIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function loadHealthView() {
     const today = DB.toDateStr();
@@ -1496,8 +1559,8 @@ const App = (() => {
     if (undoBtn) {
       undoBtn.onclick = async () => {
         const ok = await DB.undoLastWater();
-        if (ok) { await loadHealthView(); showToast('Cofnięto ostatnią szklankę (slot pozostaje zużyty)', 'info'); }
-        else showToast('Brak wpisów do cofnięcia', 'warn');
+        if (ok) { await loadHealthView(); showToast('CofniÄ™to ostatniÄ… szklankÄ™ (slot pozostaje zuĹĽyty)', 'info'); }
+        else showToast('Brak wpisĂłw do cofniÄ™cia', 'warn');
       };
     }
   }
@@ -1509,7 +1572,7 @@ const App = (() => {
     const calSum    = $('mealCalSum');
 
     if (!mealLogs.length) {
-      container.innerHTML = '<div class="health-empty">Brak posiłków dziś</div>';
+      container.innerHTML = '<div class="health-empty">Brak posiĹ‚kĂłw dziĹ›</div>';
       if (calTotal) calTotal.style.display = 'none';
       return;
     }
@@ -1517,11 +1580,11 @@ const App = (() => {
 
     container.innerHTML = mealLogs.map(l => `
       <div class="health-log-item">
-        <span class="health-emoji">🍽️</span>
+        <span class="health-emoji">đźŤ˝ď¸Ź</span>
         <span>${escH(l.note || l.value)}</span>
         ${l.calories ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--accent4)">${l.calories} kcal</span>` : ''}
         <span class="log-time">${fmtTime(l.timestamp)}</span>
-        <button class="log-del" data-hid="${l.id}">×</button>
+        <button class="log-del" data-hid="${l.id}">Ă—</button>
       </div>`).join('');
     container.querySelectorAll('.log-del').forEach(btn =>
       btn.addEventListener('click', async e => {
@@ -1533,18 +1596,18 @@ const App = (() => {
 
   function renderMovementLog(moveLogs) {
     const totalMin  = moveLogs.reduce((s, l) => s + (l.value || 0), 0);
-    $('movementTotal').textContent = totalMin + ' min ruchu dziś';
+    $('movementTotal').textContent = totalMin + ' min ruchu dziĹ›';
     const container = $('movementLog');
     if (!moveLogs.length) {
-      container.innerHTML = '<div class="health-empty">Brak aktywności fizycznej dziś</div>';
+      container.innerHTML = '<div class="health-empty">Brak aktywnoĹ›ci fizycznej dziĹ›</div>';
       return;
     }
     container.innerHTML = moveLogs.map(l => `
       <div class="health-log-item">
-        <span class="health-emoji">🏃</span>
+        <span class="health-emoji">đźŹ</span>
         <span>${l.value} min ${escH(l.note || '')}</span>
         <span class="log-time">${fmtTime(l.timestamp)}</span>
-        <button class="log-del" data-hid="${l.id}">×</button>
+        <button class="log-del" data-hid="${l.id}">Ă—</button>
       </div>`).join('');
     container.querySelectorAll('.log-del').forEach(btn =>
       btn.addEventListener('click', async e => {
@@ -1554,9 +1617,9 @@ const App = (() => {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SLEEP VIEW (Phase 3)
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function calcSleepTimes(wakeTimeStr) {
     const [wh, wm]   = wakeTimeStr.split(':').map(Number);
@@ -1601,7 +1664,7 @@ const App = (() => {
         const bedtime  = $('sleepBedtime').value;
         const wakeTime = $('sleepWakeLog').value;
         const quality  = parseInt($('sleepQuality').value) || 3;
-        if (!date || !bedtime || !wakeTime) { showToast('⚠️ Uzupełnij datę i godziny', 'warn'); return; }
+        if (!date || !bedtime || !wakeTime) { showToast('âš ď¸Ź UzupeĹ‚nij datÄ™ i godziny', 'warn'); return; }
         const [bh,bm] = bedtime.split(':').map(Number);
         const [wh,wm] = wakeTime.split(':').map(Number);
         let bedMin = bh*60+bm, wakeMin = wh*60+wm;
@@ -1610,7 +1673,7 @@ const App = (() => {
         await DB.logSleep({ date, bedtime, wakeTime, durationMin, quality });
         await DB.addXP(50);
         await refreshXPBar();
-        showToast(`🌙 Sen zapisany (${Math.round(durationMin/60*10)/10}h) — +50 XP`, 'success');
+        showToast(`đźŚ™ Sen zapisany (${Math.round(durationMin/60*10)/10}h) â€” +50 XP`, 'success');
         const sleepHours = calculateSleepDurationHours(bedtime, wakeTime);
         if (sleepHours < 6) {
           zeusSpeak(`You slept ${sleepHours.toFixed(1)} hours. Even gods require more.`, 'Warning', 'high');
@@ -1629,14 +1692,14 @@ const App = (() => {
     if (!el) return;
     if (!logs.length) { el.innerHTML = '<div class="health-empty">Brak danych snu</div>'; return; }
     el.innerHTML = logs.map(l => {
-      const stars = '★'.repeat(l.quality) + '☆'.repeat(5 - l.quality);
+      const stars = 'â…'.repeat(l.quality) + 'â†'.repeat(5 - l.quality);
       const h     = Math.round(l.durationMin / 60 * 10) / 10;
       return `<div class="sleep-hist-item">
         <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${l.date}</span>
-        <span>${l.bedtime} → ${l.wakeTime}</span>
+        <span>${l.bedtime} â†’ ${l.wakeTime}</span>
         <span style="color:var(--accent)">${h}h</span>
-        <span class="sleep-quality-stars" title="Jakość ${l.quality}/5">${stars}</span>
-        <button class="log-del" data-sid="${l.id}">×</button>
+        <span class="sleep-quality-stars" title="JakoĹ›Ä‡ ${l.quality}/5">${stars}</span>
+        <button class="log-del" data-sid="${l.id}">Ă—</button>
       </div>`;
     }).join('');
     el.querySelectorAll('[data-sid]').forEach(btn =>
@@ -1647,9 +1710,9 @@ const App = (() => {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SETTINGS, ALARM, PWA INSTALL, GOOGLE BACKUP
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function loadSettingsView() {
     const languageSelect = $('languageSelect');
@@ -1664,7 +1727,7 @@ const App = (() => {
       const lang = e.target.value === 'en' ? 'en' : 'pl';
       applyLanguage(lang);
       saveAppSettings({ language: lang });
-      showToast(lang === 'en' ? 'Language switched to English.' : 'Zmieniono język na polski.', 'success');
+      showToast(lang === 'en' ? 'Language switched to English.' : 'Zmieniono jÄ™zyk na polski.', 'success');
     });
 
     $('themeSelect')?.addEventListener('change', e => {
@@ -1786,11 +1849,25 @@ const App = (() => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
 
+  function syncFocusSoundButton() {
+    const btn = $('btnFocusSound');
+    const label = $('focusSoundLabel');
+    const icon = $('focusSoundIcon');
+    if (btn) btn.setAttribute('aria-pressed', String(!!S.pomodoro.sound));
+    if (label) label.textContent = S.pomodoro.sound ? 'Sound On' : 'Sound Off';
+    if (icon) icon.textContent = S.pomodoro.sound ? 'ON' : 'OFF';
+  }
+
   function updatePomodoroUI() {
     const el = $('pomodoroState');
     if (!el) return;
-    const phaseLabel = S.pomodoro.phase === 'focus' ? 'Focus phase' : 'Break phase';
-    el.textContent = `${phaseLabel} · ${formatMMSS(Math.max(0, S.pomodoro.remainingSec))}`;
+    const phaseLabel = S.pomodoro.phase === 'focus' ? 'Focus sprint' : 'Recovery break';
+    const statusLabel = S.pomodoro.running ? phaseLabel : 'Cycle ready';
+    el.textContent = `${statusLabel} - ${formatMMSS(Math.max(0, S.pomodoro.remainingSec))}`;
+    if ($('btnPomodoroStart')) $('btnPomodoroStart').textContent = S.pomodoro.running ? 'Restart Cycle' : 'Start Cycle';
+    if ($('btnPomodoroSkip')) $('btnPomodoroSkip').textContent = S.pomodoro.phase === 'focus' ? 'Start Break' : 'Back To Focus';
+    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').textContent = document.body.classList.contains('deep-work') ? 'Exit Deep Work' : 'Deep Work';
+    syncFocusSoundButton();
   }
 
   async function switchPomodoroPhase() {
@@ -1809,7 +1886,7 @@ const App = (() => {
       }
     }
     updatePomodoroUI();
-    showToast(S.pomodoro.phase === 'focus' ? 'Focus started' : 'Break started', 'info');
+    showToast(S.pomodoro.phase === 'focus' ? 'Focus sprint started' : 'Recovery break started', 'info');
   }
 
   function startPomodoroLoop() {
@@ -1833,21 +1910,19 @@ const App = (() => {
     }
     $('pomodoroFocusMin') && ($('pomodoroFocusMin').value = String(S.pomodoro.focusMin));
     $('pomodoroBreakMin') && ($('pomodoroBreakMin').value = String(S.pomodoro.breakMin));
-    $('pomodoroSound') && ($('pomodoroSound').checked = S.pomodoro.sound);
     S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
     updatePomodoroUI();
 
     $('btnPomodoroStart')?.addEventListener('click', async () => {
       S.pomodoro.focusMin = Math.min(90, Math.max(10, parseInt($('pomodoroFocusMin')?.value || '25', 10) || 25));
       S.pomodoro.breakMin = Math.min(30, Math.max(3, parseInt($('pomodoroBreakMin')?.value || '5', 10) || 5));
-      S.pomodoro.sound = !!$('pomodoroSound')?.checked;
       await DB.setSetting('pomodoro_settings', {
         focusMin: S.pomodoro.focusMin,
         breakMin: S.pomodoro.breakMin,
         sound: S.pomodoro.sound,
       });
       if (!S.activeTask) {
-        const name = $('taskName')?.value?.trim() || 'Pomodoro Focus Session';
+        const name = $('taskName')?.value?.trim() || 'Focus Sprint Session';
         $('taskName').value = name;
         await handleStart();
       }
@@ -1855,7 +1930,7 @@ const App = (() => {
       S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
       startPomodoroLoop();
       updatePomodoroUI();
-      showToast('Pomodoro started', 'success');
+      showToast('Focus cycle started', 'success');
     });
 
     $('btnPomodoroSkip')?.addEventListener('click', async () => {
@@ -1865,6 +1940,18 @@ const App = (() => {
       }
       await switchPomodoroPhase();
       if (!S.pomodoro.running) startPomodoroLoop();
+      updatePomodoroUI();
+    });
+
+    $('btnFocusSound')?.addEventListener('click', async () => {
+      S.pomodoro.sound = !S.pomodoro.sound;
+      await DB.setSetting('pomodoro_settings', {
+        focusMin: S.pomodoro.focusMin,
+        breakMin: S.pomodoro.breakMin,
+        sound: S.pomodoro.sound,
+      });
+      syncFocusSoundButton();
+      showToast(S.pomodoro.sound ? 'Focus cycle sound enabled' : 'Focus cycle sound muted', 'info');
     });
   }
 
@@ -1880,8 +1967,10 @@ const App = (() => {
       } else if (document.fullscreenElement && document.exitFullscreen) {
         try { await document.exitFullscreen(); } catch {}
       }
+      updatePomodoroUI();
     });
   }
+
 
   async function getSkillPointsInfo() {
     const skillState = await getSkillState();
@@ -1904,7 +1993,7 @@ const App = (() => {
         return `<button class="skill-node ${unlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}" data-skill="${n.id}">
           <div class="skill-name">${n.name}</div>
           <div class="skill-desc">${n.desc}</div>
-          <div class="skill-meta">Tier ${n.tier} · Lv ${n.levelReq}+</div>
+          <div class="skill-meta">Tier ${n.tier} Â· Lv ${n.levelReq}+</div>
         </button>`;
       }).join('');
       return `<div class="skill-branch">
@@ -1968,8 +2057,8 @@ const App = (() => {
       if (hhmm === S.alarm.time && S.alarm.triggeredForDate !== today) {
         S.alarm.triggeredForDate = today;
         ringAlarm();
-        sendAlert('⏰ FocusOS Alarm', `Alarm ${S.alarm.time}`);
-        showToast(`⏰ Alarm ${S.alarm.time}`, 'warn', 7000);
+        sendAlert('âŹ° FocusOS Alarm', `Alarm ${S.alarm.time}`);
+        showToast(`âŹ° Alarm ${S.alarm.time}`, 'warn', 7000);
       }
     }, 1000);
   }
@@ -2024,7 +2113,7 @@ const App = (() => {
     if (!('serviceWorker' in navigator)) return;
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
-      console.log('%c⚡ FocusOS SW zarejestrowany', 'color:#39ff14;font-family:monospace', reg.scope);
+      console.log('%câšˇ FocusOS SW zarejestrowany', 'color:#39ff14;font-family:monospace', reg.scope);
     } catch (err) {
       console.warn('[FocusOS] SW rejestracja nieudana:', err);
     }
@@ -2104,9 +2193,9 @@ const App = (() => {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // BACKFILL MODAL
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function initBackfillModal() {
     $('btnOpenBackfill').addEventListener('click', () => {
@@ -2124,19 +2213,19 @@ const App = (() => {
       const date      = $('backfillDate').value;
       const startTime = $('backfillStart').value;
       const durationM = parseInt($('backfillDuration').value);
-      if (!name || !date || !startTime || !durationM) { showToast('⚠️ Uzupełnij wszystkie pola', 'warn'); return; }
+      if (!name || !date || !startTime || !durationM) { showToast('âš ď¸Ź UzupeĹ‚nij wszystkie pola', 'warn'); return; }
       const [hh, mm] = startTime.split(':').map(Number);
       await DB.addBackfill({ name, category, date, startHH:hh, startMM:mm, durationMinutes:durationM });
-      showToast(`✅ Dodano retro: "${name}" (${durationM} min)`, 'success');
+      showToast(`âś… Dodano retro: "${name}" (${durationM} min)`, 'success');
       $('backfillModal').classList.remove('open');
       $('backfillForm').reset();
       await loadRecentLog(); await loadQuickStats();
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // NOTIFICATIONS & SMART ALERTS
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function initNotifications() {
     const saved = await DB.getSetting('notif_settings');
@@ -2144,7 +2233,7 @@ const App = (() => {
 
     if ('Notification' in window && Notification.permission === 'default') {
       const perm = await Notification.requestPermission();
-      if (perm === 'granted') showToast('🔔 Powiadomienia włączone!', 'success');
+      if (perm === 'granted') showToast('đź”” Powiadomienia wĹ‚Ä…czone!', 'success');
     }
 
     $('btnOpenNotif').addEventListener('click', () => {
@@ -2164,7 +2253,7 @@ const App = (() => {
       S.notif.breakEnabled     = $('notifBreak').checked;
       S.notif.breakThresholdM  = parseInt($('notifBreakM').value) || 90;
       await DB.setSetting('notif_settings', S.notif);
-      showToast('✅ Ustawienia zapisane', 'success');
+      showToast('âś… Ustawienia zapisane', 'success');
       $('notifModal').classList.remove('open');
     });
 
@@ -2174,21 +2263,21 @@ const App = (() => {
   async function checkSmartAlerts() {
     const now = Date.now();
 
-    // ── Idle Alert (Phase 4): 2h without any tracked activity ─────────────
+    // â”€â”€ Idle Alert (Phase 4): 2h without any tracked activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const idleMs = now - S.lastActivity;
     if (idleMs >= 2 * 3600 * 1000 && !S.activeTask) {
-      sendAlert('⚡ Zeus Reminder', 'No focus activity for 2h. Start your next session.');
+      sendAlert('âšˇ Zeus Reminder', 'No focus activity for 2h. Start your next session.');
       S.lastActivity = now;
     }
 
     const lastRoutinePing = Number(localStorage.getItem('focusos_routine_ping') || '0');
     const morningHour = new Date().getHours();
     if (morningHour >= 7 && morningHour <= 10 && now - lastRoutinePing > 8 * 3600000) {
-      sendAlert('⚡ Zeus Ritual', 'Complete your morning routine before distractions take over.');
+      sendAlert('âšˇ Zeus Ritual', 'Complete your morning routine before distractions take over.');
       localStorage.setItem('focusos_routine_ping', String(now));
     }
 
-    // ── Water reminder ─────────────────────────────────────────────────────
+    // â”€â”€ Water reminder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (S.notif.waterEnabled) {
       const thresholdMs = S.notif.waterIntervalH * 3600 * 1000;
       let lastWater     = S.lastWaterLog;
@@ -2200,26 +2289,26 @@ const App = (() => {
       }
       const sinceWater = now - (lastWater ? lastWater.getTime() : (now - thresholdMs - 1));
       if (sinceWater >= thresholdMs) {
-        sendAlert('💧 Czas na wodę!', `Nie piłeś wody od ${Math.round(sinceWater/3600000*10)/10}h.`);
+        sendAlert('đź’§ Czas na wodÄ™!', `Nie piĹ‚eĹ› wody od ${Math.round(sinceWater/3600000*10)/10}h.`);
         S.lastWaterLog = new Date();
       }
     }
 
-    // ── Break reminder (Fatigue Curve) ─────────────────────────────────────
+    // â”€â”€ Break reminder (Fatigue Curve) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (S.notif.breakEnabled && S.activeTask && S.sessionStart) {
       const workCats = new Set(['work','coding','learning','planning']);
       if (workCats.has(S.activeTask.category)) {
         const sessionMin = Math.floor((now - S.sessionStart.getTime()) / 60000);
         const fatigue    = MATH.fatigueCurve(sessionMin);
         if (fatigue.shouldBreak) {
-          sendAlert('🧠 Czas na przerwę!',
-            `${sessionMin} min ciągłej pracy. Wydajność: ${fatigue.currentEfficiency}%. Zrób ${fatigue.recoveryMinutes} min przerwy.`);
+          sendAlert('đź§  Czas na przerwÄ™!',
+            `${sessionMin} min ciÄ…gĹ‚ej pracy. WydajnoĹ›Ä‡: ${fatigue.currentEfficiency}%. ZrĂłb ${fatigue.recoveryMinutes} min przerwy.`);
           S.sessionStart = new Date(now + 20 * 60000);
         }
       }
     }
 
-    // ── Toxic Productivity Alert (Phase 4): 5+ h continuous deep work ─────
+    // â”€â”€ Toxic Productivity Alert (Phase 4): 5+ h continuous deep work â”€â”€â”€â”€â”€
     if (S.activeTask && S.sessionStart && now > S.toxicSnoozedUntil) {
       const deepCats = new Set(['learning','coding','work']);
       if (deepCats.has(S.activeTask.category)) {
@@ -2237,15 +2326,15 @@ const App = (() => {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body,
-        icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>',
+        icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>âšˇ</text></svg>',
       });
     }
     showToast(`${title} ${body.slice(0, 60)}...`, 'warn', 7000);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MODE SPLASH + WEB3 PLACEHOLDERS
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function selectMode(mode) {
     S.appMode = mode;
@@ -2263,8 +2352,10 @@ const App = (() => {
     refreshConnectionViews();
     document.body.classList.remove('app-locked');
     $('modeSplash')?.classList.add('hidden');
+    switchTab('tracker');
+    await loadTrackerView();
+    await maybeStartGuidedEntry();
   }
-
   function updateModeIndicator() {
     const el = $('modeIndicator');
     if (!el) return;
@@ -2365,7 +2456,7 @@ const App = (() => {
       <div class="health-log-item">
         <span style="${it.done ? 'text-decoration:line-through;opacity:.7' : ''}">${escH(it.text)}</span>
         <span class="log-time">${new Date(it.ts).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}</span>
-        <button class="log-del" data-del="${idx}">×</button>
+        <button class="log-del" data-del="${idx}">Ă—</button>
       </div>
     `).join('');
     containerIds.forEach(id => {
@@ -2379,7 +2470,7 @@ const App = (() => {
   function loadDayPlan() {
     const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
     const items = getLS(key, []);
-    renderList(['dayPlanList', 'dayPlanListProfile'], items, 'Brak punktów planu na dziś', idx => {
+    renderList(['dayPlanList', 'dayPlanListProfile'], items, 'Brak punktĂłw planu na dziĹ›', idx => {
       items.splice(idx, 1);
       setLS(key, items);
       loadDayPlan();
@@ -2403,7 +2494,7 @@ const App = (() => {
   function loadSleepNotes() {
     const key = `${LS_KEYS.sleepNotes}:${DB.toDateStr()}`;
     const items = getLS(key, []);
-    renderList(['sleepNotesList', 'sleepNotesListProfile'], items, 'Brak notatek snów', idx => {
+    renderList(['sleepNotesList', 'sleepNotesListProfile'], items, 'Brak notatek snĂłw', idx => {
       items.splice(idx, 1);
       setLS(key, items);
       loadSleepNotes();
@@ -2439,7 +2530,7 @@ const App = (() => {
         return `<label class="routine-item ${done ? 'done' : ''}">
           <input type="checkbox" data-routine="${key}" data-ridx="${idx}" ${done ? 'checked' : ''}/>
           <span>${escH(it)}</span>
-          <button class="log-del" data-rdel="${key}:${idx}">×</button>
+          <button class="log-del" data-rdel="${key}:${idx}">Ă—</button>
         </label>`;
       }).join('');
     };
@@ -2555,7 +2646,7 @@ const App = (() => {
       const pct = Math.round((m.progress / m.target) * 100);
       return `<div class="mission-row ${m.done ? 'done' : ''}">
         <div class="mission-label">${escH(m.label)}</div>
-        <div class="mission-meta">${m.progress} / ${m.target} · ${m.xp} XP</div>
+        <div class="mission-meta">${m.progress} / ${m.target} Â· ${m.xp} XP</div>
         <div class="xp-track"><div class="xp-fill" style="width:${Math.min(100, pct)}%"></div></div>
       </div>`;
     }).join('');
@@ -2606,7 +2697,7 @@ const App = (() => {
     ];
     el.innerHTML = rows.map(r => `
       <div class="achievement-row ${a[r.key] ? 'unlocked' : ''}">
-        <span>${a[r.key] ? '🏛️' : '◻'}</span>
+        <span>${a[r.key] ? 'đźŹ›ď¸Ź' : 'â—»'}</span>
         <span>${r.title}</span>
       </div>
     `).join('');
@@ -2636,7 +2727,7 @@ const App = (() => {
     });
     const topHour = byHour.indexOf(Math.max(...byHour));
     el.innerHTML = `
-      <div class="adv-row"><strong>Best day</strong><span>${bestDay.day} · ${fmtSec(bestDay.sec)}</span></div>
+      <div class="adv-row"><strong>Best day</strong><span>${bestDay.day} Â· ${fmtSec(bestDay.sec)}</span></div>
       <div class="adv-row"><strong>Longest session</strong><span>${fmtSec(longest)}</span></div>
       <div class="adv-row"><strong>Most productive hour</strong><span>${String(topHour).padStart(2, '0')}:00</span></div>
     `;
@@ -2711,13 +2802,13 @@ const App = (() => {
   const ONBOARDING_STEPS = [
     {
       title: 'Pasek boczny',
-      text: 'Tutaj szybko przełączasz sekcje dashboardu: Plan, Notes, Socials i Portfel.',
+      text: 'Tutaj szybko przeĹ‚Ä…czasz sekcje dashboardu: Plan, Notes, Socials i Portfel.',
       before: () => { switchTab('profile'); },
       target: () => document.querySelector('.profile-sidebar'),
     },
     {
       title: 'Przycisk portfela',
-      text: 'W tej sekcji możesz sprawdzić status portfela i bezpiecznie go rozłączyć.',
+      text: 'W tej sekcji moĹĽesz sprawdziÄ‡ status portfela i bezpiecznie go rozĹ‚Ä…czyÄ‡.',
       before: () => {
         switchTab('profile');
         const btn = document.querySelector('[data-dashboard-section="wallet"]');
@@ -2727,7 +2818,7 @@ const App = (() => {
     },
     {
       title: 'Sekcja planu dnia',
-      text: 'Dodawaj punkty planu dnia i śledź wykonanie z poziomu kart.',
+      text: 'Dodawaj punkty planu dnia i Ĺ›ledĹş wykonanie z poziomu kart.',
       before: () => {
         switchTab('profile');
         const btn = document.querySelector('[data-dashboard-section="dayplan"]');
@@ -2738,6 +2829,7 @@ const App = (() => {
   ];
 
   function startOnboardingIfNeeded() {
+    if (document.body.classList.contains('app-locked')) return;
     if (localStorage.getItem(ONBOARDING_KEY) === 'true') return;
     let step = 0;
     const overlay = $('onboardingOverlay');
@@ -2765,7 +2857,7 @@ const App = (() => {
       $('onboardingText').textContent = s.text;
       const target = s.target();
       if (target) placeTooltip(target);
-      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? 'Zakończ' : 'Dalej';
+      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? 'Finish' : 'Next';
     };
 
     $('btnOnboardingSkip').onclick = complete;
@@ -2779,6 +2871,32 @@ const App = (() => {
     startOnboardingIfNeeded();
   }
 
+  async function maybeStartGuidedEntry() {
+    if (S.guidedEntryStarted || document.body.classList.contains('app-locked')) return;
+    S.guidedEntryStarted = true;
+    await maybeShowWelcome();
+    setTimeout(startTutorial, 900);
+    setTimeout(startOnboardingIfNeeded, 450);
+  }
+
+  function initZeusActions() {
+    $('btnZeusFocus')?.addEventListener('click', () => {
+      switchTab('tracker');
+      if (!$('taskName')?.value.trim()) $('taskName').value = 'High-value focus sprint';
+      $('taskCategory').value = 'work';
+      $('taskName')?.focus();
+      zeusSpeak('A focused sprint begins with one clear target.', 'Approving');
+    });
+    $('btnZeusStreak')?.addEventListener('click', () => {
+      switchTab('tracker');
+      showToast('Complete one solid session today to keep the streak alive.', 'info');
+      zeusSpeak('Protect the streak with one completed session before the day ends.', 'Observing');
+    });
+    $('btnZeusRecover')?.addEventListener('click', () => {
+      switchTab('sleep');
+      zeusSpeak('Recovery is part of discipline, not a break from it.', 'Tired');
+    });
+  }
   function loadProfileView() {
     const socials = getLS(LS_KEYS.socials, { twitter: '', discord: '' });
     if ($('socialTwitter')) $('socialTwitter').value = socials.twitter || '';
@@ -2786,11 +2904,11 @@ const App = (() => {
     const preview = [];
     if (socials.twitter) preview.push(`Twitter: ${socials.twitter}`);
     if (socials.discord) preview.push(`Discord: ${socials.discord}`);
-    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : 'Brak zapisanych linków.';
+    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : 'Brak zapisanych linkĂłw.';
     if ($('walletProfileInfo')) {
       $('walletProfileInfo').textContent = S.walletAddress
-        ? `Połączony portfel: ${S.walletAddress}`
-        : 'Brak połączonego portfela';
+        ? `PoĹ‚Ä…czony portfel: ${S.walletAddress}`
+        : 'Brak poĹ‚Ä…czonego portfela';
     }
     updateDashboardCounters();
   }
@@ -2812,14 +2930,14 @@ const App = (() => {
       showToast('Brak aktywnego portfela', 'warn');
       return;
     }
-    if (!window.confirm('Krok 1/2: Czy na pewno chcesz rozpocząć rozłączanie portfela?')) return;
-    if (!window.confirm('Krok 2/2: Potwierdź ostatecznie rozłączenie portfela.')) return;
+    if (!window.confirm('Krok 1/2: Czy na pewno chcesz rozpoczÄ…Ä‡ rozĹ‚Ä…czanie portfela?')) return;
+    if (!window.confirm('Krok 2/2: PotwierdĹş ostatecznie rozĹ‚Ä…czenie portfela.')) return;
     S.walletAddress = null;
     localStorage.removeItem(LS_KEYS.wallet);
     if ($('walletAddressView')) $('walletAddressView').textContent = 'Not connected';
     updateModeIndicator();
     loadProfileView();
-    showToast('Portfel rozłączony', 'success');
+    showToast('Portfel rozĹ‚Ä…czony', 'success');
   }
 
   function openResetDataModal() {
@@ -2835,8 +2953,8 @@ const App = (() => {
 
   function updateResetModalUI() {
     const step = S.resetConfirmStep + 1;
-    if ($('resetDataStepText')) $('resetDataStepText').textContent = `To usunie notatki, plan dnia, socials i zapisany portfel. Potwierdź krok ${step}/3.`;
-    if ($('btnResetDataConfirm')) $('btnResetDataConfirm').textContent = `Potwierdź ${step}/3`;
+    if ($('resetDataStepText')) $('resetDataStepText').textContent = `To usunie notatki, plan dnia, socials i zapisany portfel. PotwierdĹş krok ${step}/3.`;
+    if ($('btnResetDataConfirm')) $('btnResetDataConfirm').textContent = `PotwierdĹş ${step}/3`;
   }
 
   function advanceResetConfirmation() {
@@ -2856,12 +2974,12 @@ const App = (() => {
     loadSleepNotes();
     loadProfileView();
     updateModeIndicator();
-    showToast('Dane użytkownika zostały zresetowane', 'success', 5000);
+    showToast('Dane uĹĽytkownika zostaĹ‚y zresetowane', 'success', 5000);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // HEALTH BUTTONS
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function initHealthButtons() {
     // Meal log with caloric input (Phase 3)
@@ -2873,7 +2991,7 @@ const App = (() => {
         const label    = $('mealType').options[$('mealType').selectedIndex].text;
         await DB.logHealth({ type:'meal', value:mealType, note:label, calories });
         $('mealCalories').value = '';
-        showToast(`🍽️ ${label} zalogowany${calories ? ` — ${calories} kcal` : ''}`, 'success');
+        showToast(`đźŤ˝ď¸Ź ${label} zalogowany${calories ? ` â€” ${calories} kcal` : ''}`, 'success');
         if (S.currentView === 'health') await loadHealthView();
       });
     }
@@ -2883,15 +3001,15 @@ const App = (() => {
       btn.addEventListener('click', async () => {
         const min = parseInt(btn.dataset.move);
         await DB.logHealth({ type:'movement', value:min, unit:'min', note:btn.textContent.trim() });
-        showToast(`🏃 ${min} min ruchu zalogowane`, 'success');
+        showToast(`đźŹ ${min} min ruchu zalogowane`, 'success');
         if (S.currentView === 'health') await loadHealthView();
       })
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // DATE NAVIGATION
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function initDateNav() {
     $('dailyPrev').addEventListener('click', () => {
@@ -2915,9 +3033,9 @@ const App = (() => {
     $('weekCurrent').addEventListener('click', () => { S.weekStart = getMonday(new Date()); loadWeeklyView(); });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // EXPORT / IMPORT (Phase 5)
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function getExtendedLocalDataSnapshot() {
     const dayPlan = {};
@@ -2954,8 +3072,8 @@ const App = (() => {
       const a    = document.createElement('a');
       a.href = url; a.download = `focusos_${DB.toDateStr()}.csv`; a.click();
       URL.revokeObjectURL(url);
-      showToast('📥 CSV wyeksportowany!', 'success');
-    } catch { showToast('❌ Błąd eksportu CSV', 'error'); }
+      showToast('đź“Ą CSV wyeksportowany!', 'success');
+    } catch { showToast('âťŚ BĹ‚Ä…d eksportu CSV', 'error'); }
   }
 
   async function handleExportJSON() {
@@ -2968,8 +3086,8 @@ const App = (() => {
       const a    = document.createElement('a');
       a.href = url; a.download = `focusos_backup_${DB.toDateStr()}.json`; a.click();
       URL.revokeObjectURL(url);
-      showToast('📦 Backup JSON (z planem, notesami i profilem) gotowy.', 'success', 5000);
-    } catch (e) { showToast('❌ Błąd eksportu JSON: ' + e.message, 'error'); }
+      showToast('đź“¦ Backup JSON (z planem, notesami i profilem) gotowy.', 'success', 5000);
+    } catch (e) { showToast('âťŚ BĹ‚Ä…d eksportu JSON: ' + e.message, 'error'); }
   }
 
   async function handleImportJSON(file) {
@@ -2983,20 +3101,20 @@ const App = (() => {
       } else {
         showToast(
           backupVersion > 0
-            ? `⚠ Backup v${backupVersion} nie zawiera sekcji extended_local — przywrócono tylko dane DB.`
-            : '⚠ Backup nie zawiera metadanych wersji/extended_local — przywrócono tylko dane DB.',
+            ? `âš  Backup v${backupVersion} nie zawiera sekcji extended_local â€” przywrĂłcono tylko dane DB.`
+            : 'âš  Backup nie zawiera metadanych wersji/extended_local â€” przywrĂłcono tylko dane DB.',
           'warn',
           7000
         );
       }
-      showToast(`✅ Zaimportowano ${count} zadań. Odświeżam...`, 'success', 5000);
+      showToast(`âś… Zaimportowano ${count} zadaĹ„. OdĹ›wieĹĽam...`, 'success', 5000);
       setTimeout(() => location.reload(), 1500);
-    } catch (e) { showToast('❌ Import nieudany: ' + e.message, 'error'); }
+    } catch (e) { showToast('âťŚ Import nieudany: ' + e.message, 'error'); }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // KEYBOARD SHORTCUTS
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function initKeyboard() {
     document.addEventListener('keydown', e => {
@@ -3017,9 +3135,9 @@ const App = (() => {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // INIT
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function init() {
     await registerServiceWorker();
@@ -3044,6 +3162,7 @@ const App = (() => {
     initSettingsView();
     initRoutines();
     initDeepWorkMode();
+    initZeusActions();
     renderMissions();
     renderAchievements();
     await renderAdvancedStats();
@@ -3067,7 +3186,7 @@ const App = (() => {
     });
     $('btnRefresh').addEventListener('click', async () => {
       await loadTrackerView();
-      showToast('↻ Odświeżono', 'info');
+      showToast('â†» OdĹ›wieĹĽono', 'info');
     });
     $('btnRefreshLog') && $('btnRefreshLog').addEventListener('click', async () => {
       await loadRecentLog(); await loadQuickStats();
@@ -3082,7 +3201,7 @@ const App = (() => {
     $('btnToxicSnooze').addEventListener('click', () => {
       S.toxicSnoozedUntil = Date.now() + 3600000;
       $('toxicModal').classList.remove('open');
-      showToast('😅 Przypomnę za 1h. Zaplanuj przerwę!', 'warn');
+      showToast('đź… PrzypomnÄ™ za 1h. Zaplanuj przerwÄ™!', 'warn');
     });
     $('btnToxicBreak').addEventListener('click', async () => {
       $('toxicModal').classList.remove('open');
@@ -3107,15 +3226,15 @@ const App = (() => {
     loadProfileView();
     refreshConnectionViews();
     updateModeIndicator();
-    await maybeShowWelcome();
-    setTimeout(startTutorial, 900);
-    setTimeout(startOnboardingIfNeeded, 450);
+    if (!document.body.classList.contains('app-locked')) {
+      await maybeStartGuidedEntry();
+    }
 
     setInterval(async () => {
       if (S.currentView === 'tracker') await loadQuickStats();
     }, 30000);
 
-    console.log('%c⚡ FocusOS 2.0 PWA — no backend required', 'color:#63ffb4;font-family:monospace;font-size:14px;');
+    console.log('%câšˇ FocusOS 2.0 PWA â€” no backend required', 'color:#63ffb4;font-family:monospace;font-size:14px;');
   }
 
   function loadProfileView() {
@@ -3225,3 +3344,4 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('[FocusOS:init] bootstrap crashed before promise creation', err);
   }
 });
+
