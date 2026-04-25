@@ -19,6 +19,7 @@
 
 <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <link rel="stylesheet" href="style.css"/>
 </head>
@@ -62,6 +63,8 @@
       <button class="tab-btn" data-tab="weekly">📊 Tygodniowy</button>
       <button class="tab-btn" data-tab="health">🩺 Zdrowie</button>
       <button class="tab-btn" data-tab="sleep">🌙 Sen</button>
+      <button class="tab-btn" data-tab="settings">⚙ Ustawienia</button>
+      <button class="tab-btn" data-tab="about">ℹ O nas</button>
       <button class="tab-btn" data-tab="profile">👤 Profil</button>
     </nav>
 
@@ -455,6 +458,22 @@
       <div id="sleepHistory"><div class="health-empty">Brak danych snu</div></div>
     </section>
 
+    <section class="panel panel--sleep-alarm" style="grid-column:1/-1">
+      <div class="panel-label">⏰ Budzik Lokalny</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+        Ustaw godzinę alarmu. FocusOS sprawdza czas lokalnie i uruchamia dzwonek bez backendu.
+      </p>
+      <div class="sleep-calc-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Godzina alarmu</label>
+          <input class="form-input" id="alarmTime" type="time" value="07:00"/>
+        </div>
+        <button class="btn-primary" id="btnSetAlarm" style="margin-top:20px;align-self:flex-end">Ustaw budzik</button>
+        <button class="btn-secondary" id="btnCancelAlarm" style="width:auto;padding:10px 14px;margin-top:20px;align-self:flex-end">Anuluj</button>
+      </div>
+      <div id="alarmStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--accent4)">Budzik nieaktywny.</div>
+    </section>
+
     <section class="panel panel--sleep-notes" style="grid-column:1/-1">
       <div class="panel-label">Notes Snów</div>
       <div class="meal-input-row">
@@ -465,6 +484,65 @@
     </section>
 
   </div><!-- /view--sleep -->
+
+  <div class="view view--settings hidden" data-view="settings">
+    <section class="panel panel--settings-language">
+      <div class="panel-label">🌐 Ustawienia języka</div>
+      <div class="form-group">
+        <label class="form-label">Wybierz język interfejsu</label>
+        <select class="form-input" id="languageSelect">
+          <option value="pl">Polski (PL)</option>
+          <option value="en">English (EN)</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel panel--settings-theme">
+      <div class="panel-label">🎨 Ustawienia motywu</div>
+      <div class="form-group">
+        <label class="form-label">Wybierz motyw</label>
+        <select class="form-input" id="themeSelect">
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="light">Light</option>
+          <option value="retro">Retro</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel panel--settings-sync">
+      <div class="panel-label">☁ Integracje i kopie zapasowe</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+        FocusOS działa local-first. Możesz ręcznie zainstalować aplikację i wysłać kopię danych na Google Drive.
+      </p>
+      <div class="form-actions" style="margin-top:0">
+        <button class="btn-primary" id="btnInstallPwa">Zainstaluj Aplikację</button>
+        <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Połącz z kontem Google / Wyślij Kopię Zapasową</button>
+      </div>
+      <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
+        Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.
+      </div>
+    </section>
+  </div><!-- /view--settings -->
+
+  <div class="view view--about hidden" data-view="about">
+    <section class="panel panel--about">
+      <div class="panel-label">FocusOS - Local Productivity Intelligence</div>
+      <h2 style="font-size:24px;margin-bottom:10px;color:var(--accent)">FocusOS - Local Productivity Intelligence</h2>
+      <p style="font-size:14px;line-height:1.8;color:var(--text);margin-bottom:14px">
+        FocusOS to narzędzie produktywności zbudowane w filozofii <strong>Local-First</strong>:
+        brak backendu, brak zewnętrznej chmury i pełna kontrola nad danymi.
+      </p>
+      <p style="font-size:13px;line-height:1.8;color:var(--text-muted);margin-bottom:18px">
+        Twoje dane pozostają na urządzeniu (IndexedDB i localStorage), a Ty decydujesz,
+        kiedy wykonać eksport lub kopię zapasową na własne konto.
+      </p>
+      <div class="about-socials">
+        <a class="about-social-link" href="https://x.com" target="_blank" rel="noreferrer noopener">X / Twitter</a>
+        <a class="about-social-link" href="https://discord.com" target="_blank" rel="noreferrer noopener">Discord</a>
+        <a class="about-social-link" href="https://github.com" target="_blank" rel="noreferrer noopener">GitHub</a>
+      </div>
+    </section>
+  </div><!-- /view--about -->
 
   <div class="view view--profile hidden" data-view="profile">
     <section class="panel profile-dashboard">

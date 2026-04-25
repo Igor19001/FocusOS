@@ -33,6 +33,16 @@ const App = (() => {
     walletAddress:     null,
     stakedFCS:         0,
     resetConfirmStep:  0,
+    alarm: {
+      time: null,
+      intervalId: null,
+      triggeredForDate: null,
+    },
+    deferredInstallPrompt: null,
+    installAvailable: false,
+    language: 'pl',
+    theme: 'cyberpunk',
+    googleTokenClient: null,
   };
   const LS_KEYS = {
     sleepNotes: 'focusos_sleep_notes',
@@ -41,6 +51,10 @@ const App = (() => {
     wallet: 'focusos_wallet_address',
   };
   const ONBOARDING_KEY = 'hasCompletedOnboarding';
+  const TUTORIAL_COMPLETED_KEY = 'tutorialCompleted';
+  const APP_SETTINGS_KEY = 'focusos_app_settings';
+  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+  const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
   // ── Utilities ─────────────────────────────────────────────────────────────
 
@@ -167,15 +181,14 @@ const App = (() => {
   // ── Tutorial (Phase 1) ────────────────────────────────────────────────────
 
   const TUTORIAL_STEPS = [
-    { target:'taskName',      arrow:'down',  text:'👆 Tutaj wpisz co robisz i kliknij <strong>START</strong>. Timer ruszy automatycznie.' },
-    { target:'fatigueBarWrap',arrow:'up',    text:'📊 Ten pasek pokazuje Twoją <strong>aktualną wydajność</strong> (Krzywa Zmęczenia). Czerwony = czas na przerwę.' },
-    { target:'btnOpenBackfill',arrow:'right',text:'⏪ Przegapiłeś śledzenie? Użyj <strong>Retro</strong> by wpisać zadanie z przeszłości.' },
-    { target:'xpBarWrap',     arrow:'down',  text:'🎮 Zdobywasz <strong>XP</strong> za produktywną pracę. Poziom 3 odblokuje zaawansowaną analitykę!' },
+    { target:'btnStart', arrow:'down', text:'👆 Kliknij START, aby rozpocząć sesję focus i śledzić czas.' },
+    { target:'tab-settings', arrow:'down', text:'⚙ W Ustawieniach zmienisz język, motyw oraz uruchomisz instalację PWA.' },
+    { target:'tab-sleep', arrow:'down', text:'🌙 W zakładce Sen znajdziesz kalkulator snu i lokalny budzik.' },
+    { target:'xpBarWrap', arrow:'down', text:'🎮 Zdobywasz XP za produktywne sesje i zdrowe nawyki.' },
   ];
 
   async function startTutorial() {
-    const seen = await DB.getSetting('tutorial_done');
-    if (seen) return;
+    if (localStorage.getItem(TUTORIAL_COMPLETED_KEY) === 'true') return;
     S.tutorialStep = 0;
     showTutorialStep();
   }
@@ -184,16 +197,28 @@ const App = (() => {
     const steps = TUTORIAL_STEPS;
     if (S.tutorialStep >= steps.length) {
       $('tutorialOverlay').style.display = 'none';
-      DB.setSetting('tutorial_done', true);
+      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+      showToast(t('tutorialDone'), 'success');
       return;
     }
     const step     = steps[S.tutorialStep];
+    if (step.target === 'tab-settings') {
+      const btn = document.querySelector('[data-tab="settings"]');
+      if (btn) btn.id = 'tab-settings';
+    }
+    if (step.target === 'tab-sleep') {
+      const btn = document.querySelector('[data-tab="sleep"]');
+      if (btn) btn.id = 'tab-sleep';
+    }
     const targetEl = document.getElementById(step.target) || document.querySelector('.' + step.target);
     $('tutorialOverlay').style.display = 'block';
 
     $('tutText').innerHTML = step.text;
     $('tutStep').textContent = `${S.tutorialStep + 1} / ${steps.length}`;
-    $('tutNext').textContent = S.tutorialStep === steps.length - 1 ? 'Rozumiem ✓' : 'Dalej →';
+    const isLast = S.tutorialStep === steps.length - 1;
+    $('tutNext').textContent = isLast
+      ? (S.language === 'en' ? 'Done ✓' : 'Rozumiem ✓')
+      : (S.language === 'en' ? 'Next →' : 'Dalej →');
 
     const arrow = $('tutArrow');
     arrow.className = `tut-arrow tut-arrow--${step.arrow}`;
@@ -320,6 +345,7 @@ const App = (() => {
     if (view === 'health')  loadHealthView();
     if (view === 'tracker') loadTrackerView();
     if (view === 'sleep')   { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
+    if (view === 'settings') loadSettingsView();
     if (view === 'profile') loadProfileView();
   }
 
@@ -330,6 +356,110 @@ const App = (() => {
   function setLS(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   }
+
+  function getAppSettings() {
+    const saved = getLS(APP_SETTINGS_KEY, {});
+    return {
+      language: saved.language || 'pl',
+      theme: saved.theme || 'cyberpunk',
+    };
+  }
+
+  function saveAppSettings(partial) {
+    const merged = { ...getAppSettings(), ...partial };
+    setLS(APP_SETTINGS_KEY, merged);
+    return merged;
+  }
+
+  function applyTheme(themeName) {
+    S.theme = themeName;
+    document.documentElement.setAttribute('data-theme', themeName);
+  }
+
+  const I18N = {
+    pl: {
+      installUnavailable: 'Instalacja nie jest teraz dostępna. Otwórz aplikację przez HTTPS lub już jest zainstalowana.',
+      installReady: 'Możesz teraz zainstalować aplikację.',
+      installDone: 'Instalacja uruchomiona.',
+      installDismissed: 'Instalacja anulowana.',
+      alarmSet: 'Budzik ustawiony na',
+      alarmCancelled: 'Budzik anulowany.',
+      alarmIdle: 'Budzik nieaktywny.',
+      backupMissingClient: 'Wklej swój Google Client ID w GOOGLE_CLIENT_ID.',
+      backupDone: 'Backup wysłany na Google Drive jako FocusOS_Backup.json',
+      backupFailed: 'Błąd backupu Google: ',
+      tutorialDone: 'Samouczek zakończony',
+      tabs: {
+        tracker: '⏱ Tracker',
+        daily: '📅 Dzienny',
+        weekly: '📊 Tygodniowy',
+        health: '🩺 Zdrowie',
+        sleep: '🌙 Sen',
+        settings: '⚙ Ustawienia',
+        about: 'ℹ O nas',
+        profile: '👤 Profil',
+      },
+    },
+    en: {
+      installUnavailable: 'Install prompt is unavailable right now. Use HTTPS or app may already be installed.',
+      installReady: 'App can now be installed.',
+      installDone: 'Install prompt opened.',
+      installDismissed: 'Install was dismissed.',
+      alarmSet: 'Alarm set to',
+      alarmCancelled: 'Alarm canceled.',
+      alarmIdle: 'Alarm is inactive.',
+      backupMissingClient: 'Paste your Google Client ID in GOOGLE_CLIENT_ID.',
+      backupDone: 'Backup uploaded to Google Drive as FocusOS_Backup.json',
+      backupFailed: 'Google backup failed: ',
+      tutorialDone: 'Tutorial completed',
+      tabs: {
+        tracker: '⏱ Tracker',
+        daily: '📅 Daily',
+        weekly: '📊 Weekly',
+        health: '🩺 Health',
+        sleep: '🌙 Sleep',
+        settings: '⚙ Settings',
+        about: 'ℹ About',
+        profile: '👤 Profile',
+      },
+    },
+  };
+
+  const t = key => {
+    const langPack = I18N[S.language] || I18N.pl;
+    return langPack[key] || I18N.pl[key] || key;
+  };
+
+  function applyLanguage(lang) {
+    S.language = lang;
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      const tabId = btn.dataset.tab;
+      if (I18N[lang]?.tabs?.[tabId]) btn.textContent = I18N[lang].tabs[tabId];
+    });
+    const nextBtn = $('tutNext');
+    if (nextBtn) {
+      nextBtn.textContent = lang === 'en' ? 'Next →' : 'Dalej →';
+    }
+    const installHint = $('installHint');
+    if (installHint && !S.installAvailable) {
+      installHint.textContent = lang === 'en'
+        ? 'PWA install appears when browser allows it.'
+        : 'Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.';
+    }
+    if ($('alarmStatus') && !S.alarm.time) {
+      updateAlarmStatus(t('alarmIdle'));
+    }
+  }
+
+  function applyPersistedSettings() {
+    const settings = getAppSettings();
+    applyTheme(settings.theme);
+    applyLanguage(settings.language);
+  }
+
+  // Apply local-first appearance settings immediately on startup.
+  applyPersistedSettings();
 
   // ─────────────────────────────────────────────────────────────────────────
   // TRACKER VIEW
@@ -947,6 +1077,188 @@ const App = (() => {
         await loadSleepHistory();
       })
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SETTINGS, ALARM, PWA INSTALL, GOOGLE BACKUP
+  // ─────────────────────────────────────────────────────────────────────────
+
+  function loadSettingsView() {
+    const languageSelect = $('languageSelect');
+    const themeSelect = $('themeSelect');
+    if (languageSelect) languageSelect.value = S.language;
+    if (themeSelect) themeSelect.value = S.theme;
+  }
+
+  function initSettingsView() {
+    $('languageSelect')?.addEventListener('change', e => {
+      const lang = e.target.value === 'en' ? 'en' : 'pl';
+      applyLanguage(lang);
+      saveAppSettings({ language: lang });
+      showToast(lang === 'en' ? 'Language switched to English.' : 'Zmieniono język na polski.', 'success');
+    });
+
+    $('themeSelect')?.addEventListener('change', e => {
+      const theme = e.target.value;
+      applyTheme(theme);
+      saveAppSettings({ theme });
+      showToast(`Motyw: ${theme}`, 'success');
+    });
+  }
+
+  function ringAlarm() {
+    // Tiny local beep sequence generated with Web Audio API.
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    [0, 0.22, 0.44].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 880;
+      gain.gain.value = 0.001;
+      gain.gain.exponentialRampToValueAtTime(0.15, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.2);
+    });
+  }
+
+  function updateAlarmStatus(msg, colorVar = '--accent4') {
+    const status = $('alarmStatus');
+    if (!status) return;
+    status.textContent = msg;
+    status.style.color = `var(${colorVar})`;
+  }
+
+  function cancelAlarm() {
+    if (S.alarm.intervalId) clearInterval(S.alarm.intervalId);
+    S.alarm.intervalId = null;
+    S.alarm.time = null;
+    localStorage.removeItem('focusos_alarm_time');
+    updateAlarmStatus(t('alarmIdle'));
+  }
+
+  function scheduleAlarm(timeStr) {
+    cancelAlarm();
+    S.alarm.time = timeStr;
+    localStorage.setItem('focusos_alarm_time', timeStr);
+    updateAlarmStatus(`${t('alarmSet')} ${timeStr}`);
+
+    S.alarm.intervalId = setInterval(() => {
+      const now = new Date();
+      const hhmm = now.toTimeString().slice(0, 5);
+      const today = DB.toDateStr(now);
+      if (hhmm === S.alarm.time && S.alarm.triggeredForDate !== today) {
+        S.alarm.triggeredForDate = today;
+        ringAlarm();
+        sendAlert('⏰ FocusOS Alarm', `Alarm ${S.alarm.time}`);
+        showToast(`⏰ Alarm ${S.alarm.time}`, 'warn', 7000);
+      }
+    }, 1000);
+  }
+
+  function initAlarmClock() {
+    const savedAlarm = localStorage.getItem('focusos_alarm_time');
+    if (savedAlarm) scheduleAlarm(savedAlarm);
+    else updateAlarmStatus(t('alarmIdle'));
+
+    $('btnSetAlarm')?.addEventListener('click', () => {
+      const timeVal = $('alarmTime')?.value;
+      if (!timeVal) return;
+      scheduleAlarm(timeVal);
+    });
+    $('btnCancelAlarm')?.addEventListener('click', () => {
+      cancelAlarm();
+      showToast(t('alarmCancelled'), 'info');
+    });
+  }
+
+  function initPwaInstall() {
+    const btnInstall = $('btnInstallPwa');
+    const installHint = $('installHint');
+    if (!btnInstall) return;
+    btnInstall.disabled = true;
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      S.deferredInstallPrompt = e;
+      S.installAvailable = true;
+      btnInstall.disabled = false;
+      if (installHint) installHint.textContent = t('installReady');
+    });
+
+    btnInstall.addEventListener('click', async () => {
+      if (!S.deferredInstallPrompt) {
+        showToast(t('installUnavailable'), 'warn');
+        return;
+      }
+      S.deferredInstallPrompt.prompt();
+      const choice = await S.deferredInstallPrompt.userChoice;
+      S.deferredInstallPrompt = null;
+      btnInstall.disabled = true;
+      if (choice.outcome === 'accepted') showToast(t('installDone'), 'success');
+      else showToast(t('installDismissed'), 'info');
+    });
+  }
+
+  function initGoogleBackup() {
+    $('btnGoogleBackup')?.addEventListener('click', async () => {
+      if (!window.google?.accounts?.oauth2) {
+        showToast('Google Identity Services not loaded.', 'error');
+        return;
+      }
+      if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE')) {
+        showToast(t('backupMissingClient'), 'warn', 7000);
+        return;
+      }
+      if (!S.googleTokenClient) {
+        S.googleTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: GOOGLE_SCOPES,
+          callback: async (resp) => {
+            if (!resp?.access_token) {
+              showToast(t('backupFailed') + 'Missing access token.', 'error');
+              return;
+            }
+            try {
+              const dbPayload = JSON.parse(await DB.exportJSON());
+              dbPayload.extended_local = getExtendedLocalDataSnapshot();
+              dbPayload.exported_at = new Date().toISOString();
+              const metadata = {
+                name: 'FocusOS_Backup.json',
+                mimeType: 'application/json',
+              };
+              const boundary = 'focusos_boundary';
+              const body =
+                `--${boundary}\r\n` +
+                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+                `${JSON.stringify(metadata)}\r\n` +
+                `--${boundary}\r\n` +
+                'Content-Type: application/json\r\n\r\n' +
+                `${JSON.stringify(dbPayload, null, 2)}\r\n` +
+                `--${boundary}--`;
+              const upload = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${resp.access_token}`,
+                  'Content-Type': `multipart/related; boundary=${boundary}`,
+                },
+                body,
+              });
+              if (!upload.ok) throw new Error(`HTTP ${upload.status}`);
+              showToast(t('backupDone'), 'success', 6000);
+            } catch (err) {
+              showToast(t('backupFailed') + err.message, 'error', 7000);
+            }
+          },
+        });
+      }
+      S.googleTokenClient.requestAccessToken();
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1585,7 +1897,9 @@ const App = (() => {
       if (e.key === '3') switchTab('weekly');
       if (e.key === '4') switchTab('health');
       if (e.key === '5') switchTab('sleep');
-      if (e.key === '6') switchTab('profile');
+      if (e.key === '6') switchTab('settings');
+      if (e.key === '7') switchTab('about');
+      if (e.key === '8') switchTab('profile');
     });
     $('taskName').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleStart();
@@ -1610,6 +1924,10 @@ const App = (() => {
     initHealthButtons();
     initExtendedSections();
     initSleepView();
+    initSettingsView();
+    initAlarmClock();
+    initPwaInstall();
+    initGoogleBackup();
 
     $('btnStart').addEventListener('click', handleStart);
     $('btnStop').addEventListener('click', handleStop);
@@ -1653,6 +1971,7 @@ const App = (() => {
     loadProfileView();
     updateModeIndicator();
     await maybeShowWelcome();
+    setTimeout(startTutorial, 900);
     setTimeout(startOnboardingIfNeeded, 450);
 
     setInterval(async () => {
