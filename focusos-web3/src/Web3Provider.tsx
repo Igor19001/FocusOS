@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { createWalletClient, custom, parseEther } from "viem";
 
-type AppMode = "local" | "monad";
+type AppMode = "local" | "gmail" | "monad";
 const ADMIN_WALLET = (import.meta.env.VITE_ADMIN_WALLET ?? "").trim();
 const TREASURY_WALLET = (import.meta.env.VITE_TREASURY_WALLET ?? ADMIN_WALLET).trim();
 const ADMIN_API_BASE_URL = (import.meta.env.VITE_ADMIN_API_BASE_URL ?? "").trim();
@@ -9,9 +9,14 @@ const ADMIN_API_BASE_URL = (import.meta.env.VITE_ADMIN_API_BASE_URL ?? "").trim(
 type Web3ContextState = {
   mode: AppMode | null;
   address: string | null;
+  gmailAddress: string | null;
   fcsBalance: number;
   adminWallet: string;
-  setMode: (mode: AppMode) => Promise<void>;
+  activateDemoMode: () => Promise<void>;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  connectGmail: (email: string) => Promise<void>;
+  disconnectGmail: () => void;
   claimTestFCS: () => Promise<void>;
   stakeTokens: (amount: number) => Promise<void>;
   burnTokens: (amount: number) => Promise<void>;
@@ -26,6 +31,7 @@ const Web3Context = createContext<Web3ContextState | null>(null);
 export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [mode, setModeState] = useState<AppMode | null>(null);
   const [address, setAddress] = useState<string | null>(null);
+  const [gmailAddress, setGmailAddress] = useState<string | null>(null);
   const [fcsBalance, setFcsBalance] = useState(0);
 
   const getWalletClient = async () => {
@@ -35,22 +41,55 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
     });
   };
 
-  const setMode = async (nextMode: AppMode) => {
-    setModeState(nextMode);
-    if (nextMode === "monad" && (window as any).ethereum) {
-      const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
-      setAddress(accounts?.[0] ?? null);
+  const activateDemoMode = async () => {
+    setModeState("local");
+  };
+
+  const connectWallet = async () => {
+    if (!(window as any).ethereum) {
+      throw new Error("No wallet detected. Install MetaMask or another EVM wallet.");
     }
-    if (nextMode === "local") setAddress(null);
+    const accounts = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
+    const nextAddress = accounts?.[0] ?? null;
+    if (!nextAddress) {
+      throw new Error("Wallet connection was cancelled.");
+    }
+    setAddress(nextAddress);
+    setModeState("monad");
+  };
+
+  const disconnectWallet = () => {
+    setAddress(null);
+    setModeState(gmailAddress ? "gmail" : "local");
+  };
+
+  const connectGmail = async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const isGmail = /^[a-z0-9._%+-]+@gmail\.com$/.test(normalizedEmail);
+    if (!isGmail) {
+      throw new Error("Enter a valid Gmail address.");
+    }
+    setGmailAddress(normalizedEmail);
+    setModeState("gmail");
+  };
+
+  const disconnectGmail = () => {
+    setGmailAddress(null);
+    setModeState(address ? "monad" : "local");
   };
 
   const value = useMemo<Web3ContextState>(
     () => ({
       mode,
       address,
+      gmailAddress,
       fcsBalance,
       adminWallet: ADMIN_WALLET,
-      setMode,
+      activateDemoMode,
+      connectWallet,
+      disconnectWallet,
+      connectGmail,
+      disconnectGmail,
       claimTestFCS: async () => setFcsBalance((v) => v + 100),
       stakeTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
       burnTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
@@ -128,7 +167,7 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
       },
     }),
-    [mode, address, fcsBalance]
+    [mode, address, gmailAddress, fcsBalance]
   );
 
   return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;

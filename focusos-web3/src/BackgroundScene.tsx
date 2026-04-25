@@ -1,11 +1,10 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-function Particles() {
+function Particles({ count }: { count: number }) {
   const pointsRef = useRef<THREE.Points>(null);
   const positions = useMemo(() => {
-    const count = 1200;
     const data = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       data[i * 3] = (Math.random() - 0.5) * 18;
@@ -32,11 +31,20 @@ function Particles() {
 }
 
 export default function BackgroundScene() {
+  const [particleCount, setParticleCount] = useState(900);
+
+  useEffect(() => {
+    const updateCount = () => setParticleCount(window.innerWidth < 640 ? 420 : 900);
+    updateCount();
+    window.addEventListener("resize", updateCount);
+    return () => window.removeEventListener("resize", updateCount);
+  }, []);
+
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 opacity-70">
+    <div className="pointer-events-none fixed inset-0 -z-10 opacity-55 sm:opacity-70">
       <Canvas camera={{ position: [0, 0, 8], fov: 55 }}>
         <ambientLight intensity={0.3} />
-        <Particles />
+        <Particles count={particleCount} />
       </Canvas>
     </div>
   );
