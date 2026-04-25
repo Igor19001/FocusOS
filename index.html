@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="description" content="FocusOS 2.0 — Local-First Personal Productivity Intelligence"/>
 <meta name="theme-color" content="#0a0a0f"/>
+<meta name="application-name" content="FocusOS"/>
+<meta name="msapplication-TileColor" content="#0a0a0f"/>
+<meta name="format-detection" content="telephone=no"/>
 <title>FocusOS 2.0 — Local Productivity Intelligence</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json"/>
@@ -518,6 +521,12 @@
         <button class="btn-primary" id="btnInstallPwa">Zainstaluj Aplikację</button>
         <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Połącz z kontem Google / Wyślij Kopię Zapasową</button>
       </div>
+      <div class="form-actions" style="margin-top:10px">
+        <button class="btn-primary hidden" id="installButton">Zainstaluj Aplikację (PWA)</button>
+        <button class="btn-secondary" id="exportJsonButton" style="width:auto;padding:10px 14px">Eksportuj JSON</button>
+        <button class="btn-secondary" id="importJsonButton" style="width:auto;padding:10px 14px">Importuj JSON</button>
+        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none"/>
+      </div>
       <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
         Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.
       </div>
@@ -813,21 +822,6 @@
 <script src="db.js"></script>
 <script src="math.js"></script>
 <script src="app.js"></script>
-<!-- PWA: Rejestracja Service Workera -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => {
-          console.log('%c⚡ FocusOS SW zarejestrowany', 'color:#39ff14;font-family:monospace', reg.scope);
-        })
-        .catch((err) => {
-          console.warn('[FocusOS] SW rejestracja nieudana:', err);
-        });
-    });
-  }
-</script>
-
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
 <script src="db.js"></script>
 </body>

@@ -190,6 +190,7 @@ body.app-locked .main {
 .main { position: relative; z-index: 2; max-width: 1500px; margin: 0 auto; padding: 20px 24px; }
 .view { display: grid; gap: 16px; }
 .view.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* ── Tracker view grid ─────────────────────────────────────────────────────── */
 .view--tracker {

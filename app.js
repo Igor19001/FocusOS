@@ -53,8 +53,9 @@ const App = (() => {
   const ONBOARDING_KEY = 'hasCompletedOnboarding';
   const TUTORIAL_COMPLETED_KEY = 'tutorialCompleted';
   const APP_SETTINGS_KEY = 'focusos_app_settings';
-  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+  const GOOGLE_CLIENT_ID = '236650961782-14eb0ahioado9bedd7mq8frs8heuao1m.apps.googleusercontent.com';
   const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+  const FALLBACK_WALLET_ADDRESS = 'YOUR_MONAD_WALLET_ADDRESS_HERE';
 
   // ── Utilities ─────────────────────────────────────────────────────────────
 
@@ -181,16 +182,151 @@ const App = (() => {
   // ── Tutorial (Phase 1) ────────────────────────────────────────────────────
 
   const TUTORIAL_STEPS = [
-    { target:'btnStart', arrow:'down', text:'👆 Kliknij START, aby rozpocząć sesję focus i śledzić czas.' },
-    { target:'tab-settings', arrow:'down', text:'⚙ W Ustawieniach zmienisz język, motyw oraz uruchomisz instalację PWA.' },
-    { target:'tab-sleep', arrow:'down', text:'🌙 W zakładce Sen znajdziesz kalkulator snu i lokalny budzik.' },
-    { target:'xpBarWrap', arrow:'down', text:'🎮 Zdobywasz XP za produktywne sesje i zdrowe nawyki.' },
+    {
+      targetSelector: '[data-tab="tracker"]',
+      arrow: 'down',
+      text: '👋 Witaj w FocusOS. To pełny przewodnik po wszystkich kluczowych opcjach aplikacji.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'taskName',
+      arrow: 'down',
+      text: '✍️ Tu wpisujesz nazwę aktualnego zadania. Im bardziej konkretna nazwa, tym lepsze analizy.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'taskCategory',
+      arrow: 'down',
+      text: '🏷️ Wybierz kategorię pracy. Kategorie wpływają na statystyki produktywności, EMA i wnioski.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'btnStart',
+      arrow: 'down',
+      text: '▶️ START rozpoczyna sesję i timer. STOP zapisuje czas i nalicza XP dla produktywnych kategorii.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'xpBarWrap',
+      arrow: 'down',
+      text: '🎮 Pasek XP pokazuje progres poziomu. Wyższe poziomy odblokowują zaawansowaną analitykę.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetSelector: '[data-tab="daily"]',
+      arrow: 'down',
+      text: '📅 Zakładka Dzienny: analiza jednego dnia, wykresy kategorii i rozkład godzinowy.',
+      before: () => switchTab('daily'),
+    },
+    {
+      targetId: 'dailyCatChart',
+      arrow: 'up',
+      text: '🧩 Ten wykres pokazuje, gdzie realnie znika Twój czas w ciągu dnia.',
+      before: () => switchTab('daily'),
+    },
+    {
+      targetSelector: '[data-tab="weekly"]',
+      arrow: 'down',
+      text: '📊 Zakładka Tygodniowy: trendy 7-dniowe, EMA i sekwencje aktywności.',
+      before: () => switchTab('weekly'),
+    },
+    {
+      targetId: 'emaChart',
+      arrow: 'up',
+      text: '📈 EMA wygładza wahania i pokazuje realny kierunek Twojej produktywności.',
+      before: () => switchTab('weekly'),
+    },
+    {
+      targetSelector: '[data-tab="health"]',
+      arrow: 'down',
+      text: '🩺 Zakładka Zdrowie: nawodnienie, ruch i posiłki, które wspierają jakość pracy.',
+      before: () => switchTab('health'),
+    },
+    {
+      targetId: 'waterGlasses',
+      arrow: 'up',
+      text: '💧 Klikaj szklanki, aby logować wodę i budować nawyk regularnego nawodnienia.',
+      before: () => switchTab('health'),
+    },
+    {
+      targetSelector: '[data-tab="sleep"]',
+      arrow: 'down',
+      text: '🌙 Zakładka Sen: kalkulator cykli, log snu, notatki oraz lokalny budzik.',
+      before: () => switchTab('sleep'),
+    },
+    {
+      targetId: 'btnCalcSleep',
+      arrow: 'up',
+      text: '🛌 Kalkulator snu wylicza najlepsze godziny zaśnięcia na bazie cykli 90 minut + 15 min zasypiania.',
+      before: () => switchTab('sleep'),
+    },
+    {
+      targetId: 'btnSetAlarm',
+      arrow: 'up',
+      text: '⏰ Budzik działa lokalnie: sprawdza czas i uruchamia sygnał + alert bez backendu.',
+      before: () => switchTab('sleep'),
+    },
+    {
+      targetSelector: '[data-tab="settings"]',
+      arrow: 'down',
+      text: '⚙️ Ustawienia: personalizacja aplikacji, instalacja PWA i kopie zapasowe.',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetId: 'languageSelect',
+      arrow: 'up',
+      text: '🌐 Tu zmienisz język interfejsu (PL/EN). Ustawienie zapisuje się lokalnie.',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetId: 'themeSelect',
+      arrow: 'up',
+      text: '🎨 Tu przełączysz motyw (Cyberpunk / Light / Retro) oparty o CSS variables.',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetId: 'installButton',
+      arrow: 'up',
+      text: '📲 Ten przycisk pokazuje instalację systemową PWA, gdy przeglądarka zgłosi beforeinstallprompt.',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetId: 'exportJsonButton',
+      arrow: 'up',
+      text: '💾 Eksport/Import JSON służy do lokalnego backupu i odtworzenia danych na innym urządzeniu.',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetId: 'btnGoogleBackup',
+      arrow: 'up',
+      text: '☁️ Backup Google wysyła plik FocusOS_Backup.json na Twój Google Drive (po OAuth).',
+      before: () => switchTab('settings'),
+    },
+    {
+      targetSelector: '[data-tab="about"]',
+      arrow: 'down',
+      text: 'ℹ️ Zakładka O nas opisuje filozofię Local-First i kanały społecznościowe FocusOS.',
+      before: () => switchTab('about'),
+    },
+    {
+      targetSelector: '[data-tab="profile"]',
+      arrow: 'down',
+      text: '👤 Profil to panel pomocniczy: plan dnia, notatki snu, socials i zarządzanie portfelem.',
+      before: () => switchTab('profile'),
+    },
   ];
 
   async function startTutorial() {
     if (localStorage.getItem(TUTORIAL_COMPLETED_KEY) === 'true') return;
     S.tutorialStep = 0;
     showTutorialStep();
+  }
+
+  function resolveTutorialTarget(step) {
+    if (step.targetId) return document.getElementById(step.targetId);
+    if (step.targetSelector) return document.querySelector(step.targetSelector);
+    if (step.target) return document.getElementById(step.target) || document.querySelector('.' + step.target);
+    return null;
   }
 
   function showTutorialStep() {
@@ -201,16 +337,9 @@ const App = (() => {
       showToast(t('tutorialDone'), 'success');
       return;
     }
-    const step     = steps[S.tutorialStep];
-    if (step.target === 'tab-settings') {
-      const btn = document.querySelector('[data-tab="settings"]');
-      if (btn) btn.id = 'tab-settings';
-    }
-    if (step.target === 'tab-sleep') {
-      const btn = document.querySelector('[data-tab="sleep"]');
-      if (btn) btn.id = 'tab-sleep';
-    }
-    const targetEl = document.getElementById(step.target) || document.querySelector('.' + step.target);
+    const step = steps[S.tutorialStep];
+    if (typeof step.before === 'function') step.before();
+    const targetEl = resolveTutorialTarget(step);
     $('tutorialOverlay').style.display = 'block';
 
     $('tutText').innerHTML = step.text;
@@ -246,6 +375,10 @@ const App = (() => {
       const bubble = $('tutBubble');
       bubble.style.top  = Math.max(8, top)  + 'px';
       bubble.style.left = Math.max(8, left) + 'px';
+    } else {
+      const bubble = $('tutBubble');
+      bubble.style.top = '18vh';
+      bubble.style.left = 'max(8px, calc(50vw - 144px))';
     }
 
     $('tutNext').onclick = () => { S.tutorialStep++; showTutorialStep(); };
@@ -1179,19 +1312,22 @@ const App = (() => {
 
   function initPwaInstall() {
     const btnInstall = $('btnInstallPwa');
+    const installButton = $('installButton');
     const installHint = $('installHint');
-    if (!btnInstall) return;
-    btnInstall.disabled = true;
+    if (!btnInstall && !installButton) return;
+    if (btnInstall) btnInstall.disabled = true;
+    if (installButton) installButton.classList.add('hidden');
 
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       S.deferredInstallPrompt = e;
       S.installAvailable = true;
-      btnInstall.disabled = false;
+      if (btnInstall) btnInstall.disabled = false;
+      if (installButton) installButton.classList.remove('hidden');
       if (installHint) installHint.textContent = t('installReady');
     });
 
-    btnInstall.addEventListener('click', async () => {
+    const installNow = async () => {
       if (!S.deferredInstallPrompt) {
         showToast(t('installUnavailable'), 'warn');
         return;
@@ -1199,10 +1335,24 @@ const App = (() => {
       S.deferredInstallPrompt.prompt();
       const choice = await S.deferredInstallPrompt.userChoice;
       S.deferredInstallPrompt = null;
-      btnInstall.disabled = true;
+      if (btnInstall) btnInstall.disabled = true;
+      if (installButton) installButton.classList.add('hidden');
       if (choice.outcome === 'accepted') showToast(t('installDone'), 'success');
       else showToast(t('installDismissed'), 'info');
-    });
+    };
+
+    btnInstall?.addEventListener('click', installNow);
+    installButton?.addEventListener('click', installNow);
+  }
+
+  async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      console.log('%c⚡ FocusOS SW zarejestrowany', 'color:#39ff14;font-family:monospace', reg.scope);
+    } catch (err) {
+      console.warn('[FocusOS] SW rejestracja nieudana:', err);
+    }
   }
 
   function initGoogleBackup() {
@@ -1439,11 +1589,15 @@ const App = (() => {
           console.warn('[FocusOS:web3] wallet request failed, falling back to demo mode', e);
         }
         if (!S.walletAddress) {
-          S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
+          S.walletAddress = FALLBACK_WALLET_ADDRESS.includes('YOUR_MONAD_WALLET_ADDRESS_HERE')
+            ? '0xDEMO00000000000000000000000000000000FCS'
+            : FALLBACK_WALLET_ADDRESS;
         }
       }
     } else if (!S.walletAddress) {
-      S.walletAddress = '0xDEMO00000000000000000000000000000000FCS';
+      S.walletAddress = FALLBACK_WALLET_ADDRESS.includes('YOUR_MONAD_WALLET_ADDRESS_HERE')
+        ? '0xDEMO00000000000000000000000000000000FCS'
+        : FALLBACK_WALLET_ADDRESS;
     }
     if (S.walletAddress) localStorage.setItem(LS_KEYS.wallet, S.walletAddress);
     if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
@@ -1847,6 +2001,45 @@ const App = (() => {
     } catch { showToast('❌ Błąd eksportu CSV', 'error'); }
   }
 
+  function exportFocusOSData() {
+    const payload = {};
+    Object.keys(localStorage).forEach(key => {
+      try {
+        payload[key] = JSON.parse(localStorage.getItem(key));
+      } catch {
+        payload[key] = localStorage.getItem(key);
+      }
+    });
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'FocusOS_Backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importFocusOSData(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        Object.keys(localStorage).forEach(key => localStorage.removeItem(key));
+        Object.entries(data).forEach(([key, value]) => {
+          if (typeof value === 'string') localStorage.setItem(key, value);
+          else localStorage.setItem(key, JSON.stringify(value));
+        });
+        showToast('✅ Import localStorage zakończony. Odświeżam...', 'success', 4500);
+        setTimeout(() => location.reload(), 1200);
+      } catch (error) {
+        showToast('❌ Nieprawidłowy plik JSON: ' + error.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   async function handleExportJSON() {
     try {
       const dbPayload = JSON.parse(await DB.exportJSON());
@@ -1911,6 +2104,7 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function init() {
+    await registerServiceWorker();
     S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
     await initModeSplash();
     initMatrixRain();
@@ -1937,6 +2131,12 @@ const App = (() => {
     $('importFileInput').addEventListener('change', e => {
       if (e.target.files[0]) handleImportJSON(e.target.files[0]);
     });
+    $('exportJsonButton')?.addEventListener('click', () => {
+      exportFocusOSData();
+      showToast('📦 FocusOS_Backup.json gotowy do pobrania', 'success');
+    });
+    $('importJsonButton')?.addEventListener('click', () => $('importJsonInput')?.click());
+    $('importJsonInput')?.addEventListener('change', importFocusOSData);
     $('btnRefresh').addEventListener('click', async () => {
       await loadTrackerView();
       showToast('↻ Odświeżono', 'info');
