@@ -43,12 +43,30 @@ const App = (() => {
     language: 'en',
     theme: 'cyberpunk',
     googleTokenClient: null,
+    listFilter: 'today',
+    pomodoro: {
+      focusMin: 25,
+      breakMin: 5,
+      remainingSec: 1500,
+      phase: 'focus',
+      interval: null,
+      running: false,
+      sound: true,
+    },
+    hardcoreMode: false,
+    zeusStyle: 'balanced',
+    missionRewarded: new Set(),
   };
   const LS_KEYS = {
     sleepNotes: 'focusos_sleep_notes',
     dayPlan: 'focusos_day_plan',
     socials: 'focusos_socials',
     wallet: 'focusos_wallet_address',
+    routines: 'focusos_routines',
+    streakMeta: 'focusos_streak_meta',
+    missions: 'focusos_daily_missions',
+    achievements: 'focusos_achievements',
+    zeusStyle: 'focusos_zeus_style',
   };
   const ONBOARDING_KEY = 'hasCompletedOnboarding';
   const TUTORIAL_COMPLETED_KEY = 'tutorialCompleted';
@@ -56,6 +74,27 @@ const App = (() => {
   const GOOGLE_CLIENT_ID = '236650961782-14eb0ahioado9bedd7mq8frs8heuao1m.apps.googleusercontent.com';
   const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
   const FALLBACK_WALLET_ADDRESS = 'YOUR_MONAD_WALLET_ADDRESS_HERE';
+  const HARDCORE_ACTIVE_KEY = 'focusos_hardcore_active_session';
+  const SKILL_TREE = {
+    discipline: [
+      { id: 'consistency_1', name: 'Consistency I', desc: '+5% streak bonus', tier: 1, levelReq: 5 },
+      { id: 'consistency_2', name: 'Consistency II', desc: '+10% streak bonus', tier: 2, levelReq: 10, requires: 'consistency_1' },
+      { id: 'unbreakable', name: 'Unbreakable', desc: 'First missed day does not reset streak', tier: 3, levelReq: 15, requires: 'consistency_2' },
+      { id: 'iron_routine', name: 'Iron Routine', desc: '+20 XP for completed routine', tier: 3, levelReq: 15, requires: 'consistency_2' },
+    ],
+    focus: [
+      { id: 'deep_focus_1', name: 'Deep Focus I', desc: '+10% XP for sessions >30 min', tier: 1, levelReq: 5 },
+      { id: 'deep_focus_2', name: 'Deep Focus II', desc: '+20% XP for sessions >45 min', tier: 2, levelReq: 10, requires: 'deep_focus_1' },
+      { id: 'flow_state', name: 'Flow State', desc: 'Removes anti-grind penalty', tier: 3, levelReq: 15, requires: 'deep_focus_2' },
+      { id: 'ultra_focus', name: 'Ultra Focus', desc: '+15% XP in Deep Work mode', tier: 3, levelReq: 15, requires: 'deep_focus_2' },
+    ],
+    power: [
+      { id: 'risk_taker', name: 'Risk Taker', desc: '+20% XP in hardcore mode', tier: 1, levelReq: 5 },
+      { id: 'no_mercy', name: 'No Mercy', desc: 'Cannot cancel sessions', tier: 2, levelReq: 10, requires: 'risk_taker' },
+      { id: 'comeback', name: 'Comeback', desc: 'Next session after fail gets +30% XP', tier: 3, levelReq: 15, requires: 'no_mercy' },
+      { id: 'wrath_of_zeus', name: 'Wrath of Zeus', desc: 'Hardcore success = 2x XP, fail = stronger penalty', tier: 3, levelReq: 15, requires: 'no_mercy' },
+    ],
+  };
 
   // ── Utilities ─────────────────────────────────────────────────────────────
 
@@ -102,42 +141,197 @@ const App = (() => {
   //    • Water: +20 XP per glass
   //    • Sleep log: +50 XP
 
-  const XP_LEVELS = [
-    { level:1, min:0,     max:999,      title:'Novice'      },
-    { level:2, min:1000,  max:4999,     title:'Apprentice'  },
-    { level:3, min:5000,  max:11999,    title:'Analyst'     },
-    { level:4, min:12000, max:24999,    title:'Architect'   },
-    { level:5, min:25000, max:Infinity, title:'Master'      },
-  ];
+  const LEVEL_REWARDS = {
+    2:  { feature: 'basic_stats', title: 'Acolyte', text: 'Basic stats unlocked.' },
+    5:  { feature: 'daily_goals', title: 'Planner', text: 'Daily goals unlocked.' },
+    6:  { feature: 'missions', title: 'Questbound', text: 'Daily missions unlocked.' },
+    10: { feature: 'hardcore_mode', title: 'Steel Mind', text: 'Hardcore mode unlocked.' },
+    12: { feature: 'zeus_style', title: 'Voice of Olympus', text: 'Zeus personality settings unlocked.' },
+    15: { feature: 'achievements', title: 'Relic Hunter', text: 'Olympus achievements unlocked.' },
+    17: { feature: 'deep_work', title: 'Storm Focus', text: 'Deep Work mode unlocked.' },
+    20: { feature: 'title_disciple', title: 'Disciple of Olympus', text: 'New title unlocked: Disciple of Olympus.' },
+    30: { feature: 'title_champion', title: 'Champion of Zeus', text: 'Champion of Zeus unlocked + special aura.' },
+  };
 
-  function getLevelInfo(totalXP) {
-    const l = XP_LEVELS.find(l => totalXP >= l.min && totalXP <= l.max) || XP_LEVELS[0];
-    const nextLevel = XP_LEVELS.find(x => x.level === l.level + 1);
-    const pct = nextLevel
-      ? Math.min(100, Math.round((totalXP - l.min) / (nextLevel.min - l.min) * 100))
-      : 100;
-    return { ...l, pct, nextMin: nextLevel ? nextLevel.min : l.max, totalXP };
+  function xpRequiredForLevel(level) {
+    return Math.round(100 * Math.pow(level, 1.5));
   }
 
-  function calcTaskXP(task) {
+  function getLevelInfo(totalXP) {
+    const xp = Math.max(0, Number(totalXP) || 0);
+    let level = 1;
+    while (xp >= xpRequiredForLevel(level + 1)) level += 1;
+    const curMin = xpRequiredForLevel(level);
+    const nextMin = xpRequiredForLevel(level + 1);
+    const pct = Math.max(0, Math.min(100, Math.round(((xp - curMin) / Math.max(1, nextMin - curMin)) * 100)));
+    let title = 'Initiate';
+    if (level >= 30) title = 'Champion of Zeus';
+    else if (level >= 20) title = 'Disciple of Olympus';
+    else if (level >= 17) title = 'Storm Focus';
+    else if (level >= 12) title = 'Voice of Olympus';
+    else if (level >= 6) title = 'Questbound';
+    else if (level >= 2) title = 'Acolyte';
+    return { level, min: curMin, nextMin, pct, title, totalXP: xp };
+  }
+
+  function computeStreakFromTasks(tasks) {
+    const days = new Set((tasks || []).map(t => (t.start_time || '').slice(0, 10)).filter(Boolean));
+    let streak = 0;
+    const d = new Date();
+    while (days.has(DB.toDateStr(d))) { streak++; d.setDate(d.getDate() - 1); }
+    let bestStreak = 0;
+    if (days.size) {
+      const sorted = [...days].sort();
+      let run = 1;
+      bestStreak = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1]);
+        const curr = new Date(sorted[i]);
+        const diffDays = Math.round((curr - prev) / 86400000);
+        run = diffDays === 1 ? run + 1 : 1;
+        if (run > bestStreak) bestStreak = run;
+      }
+    }
+    return { streak, bestStreak };
+  }
+
+  async function getSleepXPModifier() {
+    const logs = await DB.getSleepLogs(1);
+    if (!logs.length) return 1.0;
+    const h = (logs[0].durationMin || 0) / 60;
+    if (h < 6) return 0.9;
+    if (h >= 8) return 1.1;
+    return 1.0;
+  }
+
+  async function calcTaskXP(task, { interrupted = false, hardcoreFail = false } = {}) {
     if (!task || task.is_backfill === 1 || task.is_backfill === true) return 0;
     if (!task.duration || !DB.PRODUCTIVE.has(task.category)) return 0;
-    const sessionMin = task.duration / 60;
-    const fatigue = MATH.fatigueCurve(sessionMin);
-    if (fatigue.currentEfficiency <= FATIGUE_ZERO_XP_THRESHOLD) return 0;
-    // XP = productive_minutes × efficiency_factor (0.5–1.0)
-    return Math.round(sessionMin * (fatigue.currentEfficiency / 100) * 1.2);
+    const sessionMin = Math.max(0, Math.round(task.duration / 60));
+    if (!sessionMin) return 0;
+    if (hardcoreFail) return 0;
+
+    const skillState = await getSkillState();
+    const allCompleted = await DB.getAllCompletedTasks();
+    const { streak } = computeStreakFromTasks(allCompleted);
+    let streakBonus = Math.min(2.0, 1 + streak * 0.05);
+    if (hasSkill(skillState, 'consistency_1')) streakBonus *= 1.05;
+    if (hasSkill(skillState, 'consistency_2')) streakBonus *= 1.10;
+    streakBonus = Math.min(2.0, streakBonus);
+    const sleepModifier = await getSleepXPModifier();
+    const todayTasks = await DB.getTasksForDay(DB.toDateStr());
+    const todaySec = todayTasks.reduce((sum, t) => sum + (t.duration || 0), 0);
+    const antiGrind = hasSkill(skillState, 'flow_state') ? 1.0 : (todaySec > 4 * 3600 ? 0.7 : 1.0);
+
+    let multiplier = S.hardcoreMode ? 1.5 : 1.2;
+    if (interrupted) multiplier = 1.0;
+    if (S.hardcoreMode && hasSkill(skillState, 'risk_taker')) multiplier *= 1.2;
+    let xp = sessionMin * multiplier;
+
+    if (sessionMin > 30 && hasSkill(skillState, 'deep_focus_1')) xp *= 1.1;
+    if (sessionMin > 45 && hasSkill(skillState, 'deep_focus_2')) xp *= 1.2;
+    else if (sessionMin > 45) xp *= 1.2;
+    const startHour = new Date(task.start_time).getHours();
+    if (startHour >= 5 && startHour < 11) xp += 10; // morning bonus
+    if (document.body.classList.contains('deep-work') && hasSkill(skillState, 'ultra_focus')) xp *= 1.15;
+    if (S.hardcoreMode && hasSkill(skillState, 'wrath_of_zeus') && !interrupted) xp *= 2;
+    if (skillState.comebackReady && hasSkill(skillState, 'comeback')) {
+      xp *= 1.3;
+      skillState.comebackReady = false;
+      await setSkillState(skillState);
+    }
+    xp *= streakBonus;
+    xp *= sleepModifier;
+    xp *= antiGrind;
+    if (interrupted) xp *= 0.5;
+
+    return Math.max(0, Math.round(xp));
+  }
+
+  async function applyXPPenalty(amount) {
+    const total = await DB.getTotalXP();
+    const next = Math.max(0, total - Math.max(0, Math.round(amount)));
+    await DB.setSetting('total_xp', next);
+    await refreshXPBar();
+    return next;
   }
 
   async function refreshXPBar() {
-    S.totalXP  = await DB.getTotalXP();
-    S.userLevel = getLevelInfo(S.totalXP).level;
-    const info  = getLevelInfo(S.totalXP);
+    S.totalXP = await DB.getTotalXP();
+    const prevLevel = S.userLevel || 1;
+    const info = getLevelInfo(S.totalXP);
+    S.userLevel = info.level;
     if ($('xpLevel')) $('xpLevel').textContent  = `Lv.${info.level}`;
     if ($('xpTitle')) $('xpTitle').textContent  = info.title;
     if ($('xpLabel')) $('xpLabel').textContent  = `${info.totalXP.toLocaleString()} / ${info.nextMin.toLocaleString()} XP`;
     if ($('xpFill'))  $('xpFill').style.width   = info.pct + '%';
+    if ($('playerTitle')) $('playerTitle').textContent = `Title: ${info.title}`;
+    await applyLevelRewards(prevLevel, info.level);
+    applyUnlockVisibility();
+    await renderSkillTree();
     applyLevelLocks();
+  }
+
+  async function getUnlockedFeatures() {
+    return await DB.getSetting('unlocked_features', ['basic_stats']);
+  }
+
+  async function setUnlockedFeatures(features) {
+    const uniq = [...new Set(features)];
+    await DB.setSetting('unlocked_features', uniq);
+    return uniq;
+  }
+
+  async function showLevelRewardPopup(level, reward) {
+    const modal = $('levelRewardModal');
+    const text = $('levelRewardText');
+    const closeBtn = $('btnCloseLevelReward');
+    if (!modal || !text || !closeBtn) return;
+    text.textContent = `Level ${level}: ${reward.text}`;
+    modal.classList.add('open');
+    closeBtn.onclick = () => modal.classList.remove('open');
+  }
+
+  async function applyLevelRewards(prevLevel, newLevel) {
+    if (newLevel <= prevLevel) return;
+    let unlocked = await getUnlockedFeatures();
+    for (let lvl = prevLevel + 1; lvl <= newLevel; lvl++) {
+      const reward = LEVEL_REWARDS[lvl];
+      if (!reward) continue;
+      if (!unlocked.includes(reward.feature)) {
+        unlocked.push(reward.feature);
+        await showLevelRewardPopup(lvl, reward);
+      }
+      if (lvl === 30) document.body.classList.add('olympus-champion');
+    }
+    await setUnlockedFeatures(unlocked);
+  }
+
+  async function applyUnlockVisibility() {
+    const unlocked = await getUnlockedFeatures();
+    const has = key => unlocked.includes(key);
+    if ($('goalWrap')) $('goalWrap').classList.toggle('hidden', !has('daily_goals'));
+    document.querySelector('.panel--missions')?.classList.toggle('hidden', !has('missions'));
+    if ($('hardcoreModeToggle')) $('hardcoreModeToggle').disabled = !has('hardcore_mode');
+    if ($('zeusStyleSelect')) $('zeusStyleSelect').disabled = !has('zeus_style');
+    document.querySelector('.panel--achievements')?.classList.toggle('hidden', !has('achievements'));
+    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = !has('deep_work');
+  }
+
+  async function initLevelProgression() {
+    const unlocked = await DB.getSetting('unlocked_features', null);
+    if (!Array.isArray(unlocked)) {
+      await setUnlockedFeatures(['basic_stats']);
+    }
+    const current = getLevelInfo(await DB.getTotalXP());
+    const rewardsToApply = Object.entries(LEVEL_REWARDS)
+      .filter(([lvl]) => current.level >= Number(lvl))
+      .map(([, reward]) => reward.feature);
+    await setUnlockedFeatures([...(await getUnlockedFeatures()), ...rewardsToApply]);
+    if (current.level >= 30) document.body.classList.add('olympus-champion');
+    if ($('playerTitle')) $('playerTitle').textContent = `Title: ${current.title}`;
+    await applyUnlockVisibility();
+    await renderSkillTree();
   }
 
   function applyLevelLocks() {
@@ -354,7 +548,9 @@ const App = (() => {
 
     if (targetEl) {
       const rect = targetEl.getBoundingClientRect();
-      const bw = 288;
+      const bubble = $('tutBubble');
+      const bw = bubble?.offsetWidth || 288;
+      const bh = bubble?.offsetHeight || 180;
       let top, left;
       if (step.arrow === 'down') {
         top  = rect.top - 130;
@@ -372,9 +568,10 @@ const App = (() => {
         arrow.style.top  = '14px';
         arrow.style.left = '';
       }
-      const bubble = $('tutBubble');
-      bubble.style.top  = Math.max(8, top)  + 'px';
-      bubble.style.left = Math.max(8, left) + 'px';
+      const clampedTop = Math.min(Math.max(8, top), window.innerHeight - bh - 8);
+      const clampedLeft = Math.min(Math.max(8, left), window.innerWidth - bw - 8);
+      bubble.style.top  = clampedTop + 'px';
+      bubble.style.left = clampedLeft + 'px';
     } else {
       const bubble = $('tutBubble');
       bubble.style.top = '18vh';
@@ -382,6 +579,10 @@ const App = (() => {
     }
 
     $('tutNext').onclick = () => { S.tutorialStep++; showTutorialStep(); };
+    $('tutSkip').onclick = () => {
+      $('tutorialOverlay').style.display = 'none';
+      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+    };
   }
 
   // ── Clock ─────────────────────────────────────────────────────────────────
@@ -488,6 +689,65 @@ const App = (() => {
   }
   function setLS(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function zeusSpeak(message, mood = 'Observing', intensity = 'normal') {
+    const negativeMoods = new Set(['Warning', 'Judging', 'Disappointed']);
+    const context = negativeMoods.has(mood) ? 'negative' : 'positive';
+    message = adaptZeusMessage(message, context);
+    const msgEl = $('zeusMessage');
+    const moodEl = $('zeusMood');
+    const card = $('zeusCard');
+    if (!msgEl || !moodEl || !card) return;
+    msgEl.textContent = message;
+    moodEl.textContent = mood;
+    card.classList.remove('zeus-anim');
+    void card.offsetWidth;
+    card.classList.add('zeus-anim');
+    if (intensity === 'high') {
+      const flash = $('zeusLightning');
+      flash?.classList.remove('active');
+      void flash?.offsetWidth;
+      flash?.classList.add('active');
+    }
+  }
+
+  function adaptZeusMessage(base, context = 'neutral') {
+    const style = S.zeusStyle || 'balanced';
+    if (style === 'supportive') {
+      if (context === 'negative') return `Stay steady: ${base}`;
+      return `Good momentum: ${base}`;
+    }
+    if (style === 'strict') {
+      if (context === 'negative') return `Weak discipline. ${base}`;
+      return `Olympus demands more. ${base}`;
+    }
+    return base;
+  }
+
+  function calculateSleepDurationHours(bedtime, wakeTime) {
+    const [bh, bm] = bedtime.split(':').map(Number);
+    const [wh, wm] = wakeTime.split(':').map(Number);
+    let bedMin = bh * 60 + bm;
+    let wakeMin = wh * 60 + wm;
+    if (wakeMin <= bedMin) wakeMin += 1440;
+    return (wakeMin - bedMin) / 60;
+  }
+
+  async function getSkillState() {
+    return await DB.getSetting('skill_state', { unlocked: [], spentPoints: 0, unbreakableUsed: false, comebackReady: false });
+  }
+
+  async function setSkillState(state) {
+    await DB.setSetting('skill_state', state);
+  }
+
+  function hasSkill(state, skillId) {
+    return (state?.unlocked || []).includes(skillId);
+  }
+
+  function allSkillsFlat() {
+    return Object.values(SKILL_TREE).flat();
   }
 
   function getAppSettings() {
@@ -628,6 +888,7 @@ const App = (() => {
     $('btnStop').disabled  = false;
     $('taskName').value    = '';
     $('quickStartChecklist')?.classList.add('hidden');
+    updateHardcoreStopState();
   }
 
   function clearActiveUI() {
@@ -645,6 +906,43 @@ const App = (() => {
     $('fatigueLabel').textContent = '';
     $('btnStart').disabled = false;
     $('btnStop').disabled  = true;
+  }
+
+  function updateHardcoreStopState() {
+    if (!$('btnStop')) return;
+    if (!S.activeTask) return;
+    getSkillState().then(skillState => {
+      const forceNoCancel = hasSkill(skillState, 'no_mercy');
+      $('btnStop').disabled = !!S.hardcoreMode || forceNoCancel;
+    });
+  }
+
+  async function initHardcoreMode() {
+    S.hardcoreMode = !!(await DB.getSetting('hardcore_mode', false));
+    window.addEventListener('beforeunload', () => {
+      if (S.hardcoreMode && S.activeTask) {
+        localStorage.setItem(HARDCORE_ACTIVE_KEY, '1');
+      }
+    });
+  }
+
+  async function recoverHardcoreFailureIfNeeded() {
+    if (localStorage.getItem(HARDCORE_ACTIVE_KEY) !== '1') return;
+    localStorage.removeItem(HARDCORE_ACTIVE_KEY);
+    const active = await DB.getActiveTask();
+    if (active) await DB.stopActiveTask();
+    const failed = (await DB.getSetting('hardcore_failed_sessions', 0)) + 1;
+    await DB.setSetting('hardcore_failed_sessions', failed);
+    const skillState = await getSkillState();
+    const failPenalty = hasSkill(skillState, 'wrath_of_zeus') ? 40 : 20;
+    await applyXPPenalty(failPenalty);
+    if (hasSkill(skillState, 'comeback')) {
+      skillState.comebackReady = true;
+      await setSkillState(skillState);
+    }
+    markMissionFailure();
+    showToast(`Hardcore session failed after refresh. XP -${failPenalty}`, 'warn', 6000);
+    zeusSpeak('You fled the trial. Olympus marks this as failure.', 'Judging', 'high');
   }
 
   function startLocalTimer(startISO) {
@@ -671,31 +969,63 @@ const App = (() => {
       const task = await DB.startTask(name, category);
       S.sessionStart = new Date(task.start_time);
       S.lastActivity = Date.now();
+      if (S.hardcoreMode) localStorage.setItem(HARDCORE_ACTIVE_KEY, '1');
+      markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
       showToast(`▶ Start: "${name}"`, 'success');
+      zeusSpeak('Discipline initiated. Olympus expects consistency.', 'Demanding', 'high');
       await loadRecentLog(); await loadQuickStats();
     } catch (e) { showToast('❌ Błąd: ' + e.message, 'error'); }
   }
 
   async function handleStop() {
+    if (S.hardcoreMode) {
+      showToast('Hardcore mode: wait for phase completion.', 'warn');
+      return;
+    }
     try {
       const stopped = await DB.stopActiveTask();
+      localStorage.removeItem(HARDCORE_ACTIVE_KEY);
       clearActiveUI();
       if (stopped) {
-        const xp = calcTaskXP(stopped);
+        const stoppedMin = Math.round((stopped.duration || 0) / 60);
+        const interrupted = stoppedMin < 15;
+        const xp = await calcTaskXP(stopped, { interrupted, hardcoreFail: false });
         if (xp > 0) {
           const prevLevel  = getLevelInfo(S.totalXP).level;
-          const newTotal   = await DB.addXP(xp);
+          let bonusXP = 0;
+          const todayTasks = await DB.getTasksForDay(DB.toDateStr());
+          const goalMin = await DB.getSetting('daily_goal_min', 0);
+          if (goalMin > 0) {
+            const totalMin = Math.round(todayTasks.reduce((s, t) => s + (t.duration || 0), 0) / 60);
+            const perfectAwardedDate = await DB.getSetting('perfect_day_bonus_date', null);
+            if (totalMin >= goalMin && perfectAwardedDate !== DB.toDateStr()) {
+              bonusXP += 100;
+              await DB.setSetting('perfect_day_bonus_date', DB.toDateStr());
+            }
+          }
+          const newTotal   = await DB.addXP(xp + bonusXP);
           const nextLevel  = getLevelInfo(newTotal).level;
           await refreshXPBar();
           if (nextLevel > prevLevel) {
             showToast(`🎉 LEVEL UP! Osiągnąłeś Poziom ${nextLevel} — ${getLevelInfo(newTotal).title}!`, 'success', 6000);
+            zeusSpeak(`You ascended to level ${nextLevel}. Olympus acknowledges your rise.`, 'Triumphant', 'high');
           } else {
-            showToast(`⏹ Zatrzymano: "${stopped.name}" (+${xp} XP)`, 'info');
+            showToast(`⏹ Zatrzymano: "${stopped.name}" (+${xp + bonusXP} XP)`, 'info');
+            zeusSpeak('Another session completed. Olympus is watching.', 'Approving', 'high');
           }
         } else {
           showToast(`⏹ Zatrzymano: "${stopped.name}"`, 'info');
+          if (interrupted) {
+            const penalty = S.hardcoreMode ? 20 : 35;
+            await applyXPPenalty(penalty);
+            markMissionFailure();
+            zeusSpeak('You stopped early? Even mortals show more discipline.', 'Disappointed', 'high');
+            showToast(`XP penalty: -${penalty}`, 'warn');
+          } else {
+            zeusSpeak('Session closed. Return stronger.', 'Neutral');
+          }
         }
       }
       S.lastActivity = Date.now();
@@ -712,10 +1042,38 @@ const App = (() => {
 
     // Streak
     const all  = await DB.getAllCompletedTasks();
-    const days = new Set(all.map(t => t.start_time.slice(0,10)));
-    let streak = 0, d = new Date();
-    while (days.has(DB.toDateStr(d))) { streak++; d.setDate(d.getDate()-1); }
-    $('qsStreak').textContent = streak;
+    const { streak, bestStreak } = computeStreakFromTasks(all);
+    $('qsStreak').textContent = `${streak} / ${bestStreak}`;
+    if ($('streakText')) $('streakText').textContent = `Streak: ${streak} days`;
+    if ($('bestStreakText')) $('bestStreakText').textContent = `Best: ${bestStreak} days`;
+    const streakMeta = getLS(LS_KEYS.streakMeta, { lastSeenStreak: 0, lastActiveDate: null });
+    const days = new Set(all.map(t => (t.start_time || '').slice(0, 10)).filter(Boolean));
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = DB.toDateStr(yesterday);
+    if (streakMeta.lastActiveDate && streakMeta.lastActiveDate !== DB.toDateStr() && !days.has(yesterdayKey)) {
+      const skillState = await getSkillState();
+      const canProtect = hasSkill(skillState, 'unbreakable') && !skillState.unbreakableUsed;
+      if (canProtect) {
+        skillState.unbreakableUsed = true;
+        await setSkillState(skillState);
+        zeusSpeak('Unbreakable absorbed your first missed day. Do not waste this mercy.', 'Warning', 'high');
+      } else {
+        const alreadyPenalizedFor = streakMeta.lastPenaltyDate;
+        if (alreadyPenalizedFor !== DB.toDateStr()) {
+          await applyXPPenalty(50);
+          streakMeta.lastPenaltyDate = DB.toDateStr();
+        }
+        zeusSpeak('A day was skipped. Olympus does not reward broken oaths.', 'Judging', 'high');
+      }
+    }
+    if (streak > streakMeta.lastSeenStreak && streak >= 2) {
+      zeusSpeak(`Streak ${streak} days. Keep climbing toward Olympus.`, 'Fired Up', 'high');
+    }
+    setLS(LS_KEYS.streakMeta, {
+      lastSeenStreak: streak,
+      lastActiveDate: days.size ? [...days].sort().slice(-1)[0] : null,
+    });
 
     // EMA badge
     const ema = MATH.emaProductivityTrend(all);
@@ -728,6 +1086,10 @@ const App = (() => {
 
     // Leaderboard
     renderLeaderboard(all);
+    await refreshDailyGoal(analysis.totalSec);
+    await updateMissionsFromTasks(todayTasks);
+    await evaluateAchievements(all, streak);
+    await renderAdvancedStats();
   }
 
   // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
@@ -765,7 +1127,12 @@ const App = (() => {
   }
 
   async function loadRecentLog() {
-    const tasks     = await DB.getTasks({ limit: 40 });
+    let tasks = await DB.getTasks({ limit: 120 });
+    if (S.listFilter === 'today') {
+      const today = DB.toDateStr();
+      tasks = tasks.filter(t => (t.start_time || '').slice(0, 10) === today);
+    }
+    tasks = tasks.slice(0, 40);
     const container = $('recentLog');
     if (!tasks.length) {
       container.innerHTML = '<div class="log-empty">No sessions yet. Start your first focus session.</div>';
@@ -794,6 +1161,24 @@ const App = (() => {
         await loadRecentLog(); await loadQuickStats();
       })
     );
+  }
+
+  function initHistoryFilters() {
+    const applyFilterVisual = () => {
+      $('btnFilterToday')?.classList.toggle('active', S.listFilter === 'today');
+      $('btnFilterAll')?.classList.toggle('active', S.listFilter === 'all');
+    };
+    $('btnFilterToday')?.addEventListener('click', async () => {
+      S.listFilter = 'today';
+      applyFilterVisual();
+      await loadRecentLog();
+    });
+    $('btnFilterAll')?.addEventListener('click', async () => {
+      S.listFilter = 'all';
+      applyFilterVisual();
+      await loadRecentLog();
+    });
+    applyFilterVisual();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1188,6 +1573,12 @@ const App = (() => {
         await DB.addXP(50);
         await refreshXPBar();
         showToast(`🌙 Sen zapisany (${Math.round(durationMin/60*10)/10}h) — +50 XP`, 'success');
+        const sleepHours = calculateSleepDurationHours(bedtime, wakeTime);
+        if (sleepHours < 6) {
+          zeusSpeak(`You slept ${sleepHours.toFixed(1)} hours. Even gods require more.`, 'Warning', 'high');
+        } else {
+          zeusSpeak(`Recovery logged: ${sleepHours.toFixed(1)}h. A sharper mind returns.`, 'Approving');
+        }
         await loadSleepHistory();
         $('sleepDate').value = $('sleepBedtime').value = $('sleepWakeLog').value = $('sleepQuality').value = '';
       });
@@ -1243,6 +1634,69 @@ const App = (() => {
       saveAppSettings({ theme });
       showToast(`Motyw: ${theme}`, 'success');
     });
+
+    const hardcoreToggle = document.getElementById('hardcoreModeToggle');
+    if (hardcoreToggle) {
+      hardcoreToggle.checked = S.hardcoreMode;
+      hardcoreToggle.addEventListener('change', async () => {
+        if (hardcoreToggle.checked) {
+          const ok = window.confirm('Hardcore Mode V2: no pause, no cancel. Session must complete or fail. Continue?');
+          if (!ok) {
+            hardcoreToggle.checked = false;
+            return;
+          }
+        }
+        S.hardcoreMode = hardcoreToggle.checked;
+        await DB.setSetting('hardcore_mode', S.hardcoreMode);
+        showToast(S.hardcoreMode ? 'Hardcore mode enabled' : 'Hardcore mode disabled', 'info');
+        updateHardcoreStopState();
+      });
+    }
+
+    const zeusSelect = $('zeusStyleSelect');
+    if (zeusSelect) {
+      zeusSelect.value = S.zeusStyle;
+      zeusSelect.addEventListener('change', () => {
+        S.zeusStyle = zeusSelect.value;
+        setLS(LS_KEYS.zeusStyle, S.zeusStyle);
+        zeusSpeak('Zeus voice adjusted to your preference.', 'Observing');
+      });
+    }
+  }
+
+  async function initDailyGoal() {
+    const goalMin = await DB.getSetting('daily_goal_min', 0);
+    const input = $('dailyGoalMin');
+    if (input && goalMin > 0) input.value = goalMin;
+    $('btnSaveGoal')?.addEventListener('click', async () => {
+      const value = Math.max(0, parseInt($('dailyGoalMin')?.value || '0', 10) || 0);
+      await DB.setSetting('daily_goal_min', value);
+      await refreshDailyGoal();
+      showToast(value > 0 ? `Daily goal set: ${value} min` : 'Daily goal cleared', 'success');
+    });
+  }
+
+  async function refreshDailyGoal(todaySec = null) {
+    const goalMin = await DB.getSetting('daily_goal_min', 0);
+    const fill = $('goalFill');
+    const label = $('goalLabel');
+    if (!fill || !label) return;
+    if (!goalMin) {
+      fill.style.width = '0%';
+      label.textContent = 'No goal set.';
+      return;
+    }
+    let totalSec = todaySec;
+    if (totalSec == null) {
+      const tasks = await DB.getTasksForDay(DB.toDateStr());
+      totalSec = tasks.reduce((sum, t) => sum + (t.duration || 0), 0);
+    }
+    const goalSec = goalMin * 60;
+    const pct = Math.min(100, Math.round((totalSec / goalSec) * 100));
+    fill.style.width = `${pct}%`;
+    label.textContent = pct >= 100
+      ? `Goal completed (${Math.round(totalSec / 60)} / ${goalMin} min)`
+      : `Progress: ${Math.round(totalSec / 60)} / ${goalMin} min`;
   }
 
   function ringAlarm() {
@@ -1264,6 +1718,171 @@ const App = (() => {
       osc.start(now + offset);
       osc.stop(now + offset + 0.2);
     });
+  }
+
+  function ringSoftBell() {
+    if (!S.pomodoro.sound) return;
+    ringAlarm();
+  }
+
+  function formatMMSS(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function updatePomodoroUI() {
+    const el = $('pomodoroState');
+    if (!el) return;
+    const phaseLabel = S.pomodoro.phase === 'focus' ? 'Focus phase' : 'Break phase';
+    el.textContent = `${phaseLabel} · ${formatMMSS(Math.max(0, S.pomodoro.remainingSec))}`;
+  }
+
+  async function switchPomodoroPhase() {
+    S.pomodoro.phase = S.pomodoro.phase === 'focus' ? 'break' : 'focus';
+    S.pomodoro.remainingSec = (S.pomodoro.phase === 'focus' ? S.pomodoro.focusMin : S.pomodoro.breakMin) * 60;
+    ringSoftBell();
+    if (S.pomodoro.phase === 'break' && S.activeTask) {
+      try {
+        localStorage.removeItem(HARDCORE_ACTIVE_KEY);
+        await DB.stopActiveTask();
+        clearActiveUI();
+        await loadRecentLog();
+        await loadQuickStats();
+      } catch (e) {
+        console.warn('[pomodoro] stop failed', e);
+      }
+    }
+    updatePomodoroUI();
+    showToast(S.pomodoro.phase === 'focus' ? 'Focus started' : 'Break started', 'info');
+  }
+
+  function startPomodoroLoop() {
+    if (S.pomodoro.interval) clearInterval(S.pomodoro.interval);
+    S.pomodoro.running = true;
+    S.pomodoro.interval = setInterval(async () => {
+      S.pomodoro.remainingSec -= 1;
+      updatePomodoroUI();
+      if (S.pomodoro.remainingSec <= 0) {
+        await switchPomodoroPhase();
+      }
+    }, 1000);
+  }
+
+  async function initPomodoro() {
+    const saved = await DB.getSetting('pomodoro_settings', null);
+    if (saved && typeof saved === 'object') {
+      S.pomodoro.focusMin = Math.min(90, Math.max(10, Number(saved.focusMin) || 25));
+      S.pomodoro.breakMin = Math.min(30, Math.max(3, Number(saved.breakMin) || 5));
+      S.pomodoro.sound = saved.sound !== false;
+    }
+    $('pomodoroFocusMin') && ($('pomodoroFocusMin').value = String(S.pomodoro.focusMin));
+    $('pomodoroBreakMin') && ($('pomodoroBreakMin').value = String(S.pomodoro.breakMin));
+    $('pomodoroSound') && ($('pomodoroSound').checked = S.pomodoro.sound);
+    S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
+    updatePomodoroUI();
+
+    $('btnPomodoroStart')?.addEventListener('click', async () => {
+      S.pomodoro.focusMin = Math.min(90, Math.max(10, parseInt($('pomodoroFocusMin')?.value || '25', 10) || 25));
+      S.pomodoro.breakMin = Math.min(30, Math.max(3, parseInt($('pomodoroBreakMin')?.value || '5', 10) || 5));
+      S.pomodoro.sound = !!$('pomodoroSound')?.checked;
+      await DB.setSetting('pomodoro_settings', {
+        focusMin: S.pomodoro.focusMin,
+        breakMin: S.pomodoro.breakMin,
+        sound: S.pomodoro.sound,
+      });
+      if (!S.activeTask) {
+        const name = $('taskName')?.value?.trim() || 'Pomodoro Focus Session';
+        $('taskName').value = name;
+        await handleStart();
+      }
+      S.pomodoro.phase = 'focus';
+      S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
+      startPomodoroLoop();
+      updatePomodoroUI();
+      showToast('Pomodoro started', 'success');
+    });
+
+    $('btnPomodoroSkip')?.addEventListener('click', async () => {
+      if (S.hardcoreMode) {
+        zeusSpeak('Hardcore law: no skipping phases.', 'Judging', 'high');
+        return;
+      }
+      await switchPomodoroPhase();
+      if (!S.pomodoro.running) startPomodoroLoop();
+    });
+  }
+
+  function initDeepWorkMode() {
+    $('btnDeepWorkMode')?.addEventListener('click', async () => {
+      document.body.classList.toggle('deep-work');
+      const enabled = document.body.classList.contains('deep-work');
+      if (enabled) {
+        zeusSpeak('Now you work. No excuses.', 'Demanding', 'high');
+        if (document.documentElement.requestFullscreen) {
+          try { await document.documentElement.requestFullscreen(); } catch {}
+        }
+      } else if (document.fullscreenElement && document.exitFullscreen) {
+        try { await document.exitFullscreen(); } catch {}
+      }
+    });
+  }
+
+  async function getSkillPointsInfo() {
+    const skillState = await getSkillState();
+    const earned = Math.floor(Math.max(0, S.userLevel - 1) / 2);
+    const spent = Number(skillState.spentPoints || 0);
+    return { earned, spent, available: Math.max(0, earned - spent), state: skillState };
+  }
+
+  async function renderSkillTree() {
+    const grid = $('skillTreeGrid');
+    if (!grid) return;
+    const { available, state } = await getSkillPointsInfo();
+    if ($('skillPointsLabel')) $('skillPointsLabel').textContent = `Skill points: ${available}`;
+    const mkBranch = (branchName, nodes) => {
+      const items = nodes.map(n => {
+        const unlocked = hasSkill(state, n.id);
+        const reqMet = !n.requires || hasSkill(state, n.requires);
+        const levelMet = S.userLevel >= n.levelReq;
+        const canUnlock = !unlocked && reqMet && levelMet && available > 0;
+        return `<button class="skill-node ${unlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}" data-skill="${n.id}">
+          <div class="skill-name">${n.name}</div>
+          <div class="skill-desc">${n.desc}</div>
+          <div class="skill-meta">Tier ${n.tier} · Lv ${n.levelReq}+</div>
+        </button>`;
+      }).join('');
+      return `<div class="skill-branch">
+        <div class="skill-branch-title">${branchName}</div>
+        ${items}
+      </div>`;
+    };
+    grid.innerHTML = [
+      mkBranch('Discipline', SKILL_TREE.discipline),
+      mkBranch('Focus', SKILL_TREE.focus),
+      mkBranch('Power', SKILL_TREE.power),
+    ].join('');
+    grid.querySelectorAll('[data-skill]').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        const skillId = e.currentTarget.dataset.skill;
+        await tryUnlockSkill(skillId);
+      });
+    });
+  }
+
+  async function tryUnlockSkill(skillId) {
+    const { available, state } = await getSkillPointsInfo();
+    const skill = allSkillsFlat().find(s => s.id === skillId);
+    if (!skill) return;
+    if (available <= 0) return showToast('No skill points available', 'warn');
+    if (hasSkill(state, skillId)) return;
+    if (S.userLevel < skill.levelReq) return showToast(`Requires level ${skill.levelReq}`, 'warn');
+    if (skill.requires && !hasSkill(state, skill.requires)) return showToast('Unlock previous skill first', 'warn');
+    state.unlocked.push(skillId);
+    state.spentPoints = Number(state.spentPoints || 0) + 1;
+    await setSkillState(state);
+    await renderSkillTree();
+    zeusSpeak(`Path chosen: ${skill.name}. Your style is being forged.`, 'Fired Up', 'high');
   }
 
   function updateAlarmStatus(msg, colorVar = '--accent4') {
@@ -1485,8 +2104,15 @@ const App = (() => {
     // ── Idle Alert (Phase 4): 2h without any tracked activity ─────────────
     const idleMs = now - S.lastActivity;
     if (idleMs >= 2 * 3600 * 1000 && !S.activeTask) {
-      sendAlert('👋 Żyjesz?', 'Brak aktywności od 2h. Pamiętaj o uruchomieniu trackera!');
+      sendAlert('⚡ Zeus Reminder', 'No focus activity for 2h. Start your next session.');
       S.lastActivity = now;
+    }
+
+    const lastRoutinePing = Number(localStorage.getItem('focusos_routine_ping') || '0');
+    const morningHour = new Date().getHours();
+    if (morningHour >= 7 && morningHour <= 10 && now - lastRoutinePing > 8 * 3600000) {
+      sendAlert('⚡ Zeus Ritual', 'Complete your morning routine before distractions take over.');
+      localStorage.setItem('focusos_routine_ping', String(now));
     }
 
     // ── Water reminder ─────────────────────────────────────────────────────
@@ -1649,7 +2275,7 @@ const App = (() => {
       ? `<div class="health-empty">${emptyText}</div>`
       : items.map((it, idx) => `
       <div class="health-log-item">
-        <span>${escH(it.text)}</span>
+        <span style="${it.done ? 'text-decoration:line-through;opacity:.7' : ''}">${escH(it.text)}</span>
         <span class="log-time">${new Date(it.ts).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}</span>
         <button class="log-del" data-del="${idx}">×</button>
       </div>
@@ -1673,6 +2299,19 @@ const App = (() => {
     updateDashboardCounters();
   }
 
+  function markDayPlanProgress(taskName) {
+    const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
+    const items = getLS(key, []);
+    const name = String(taskName || '').toLowerCase();
+    const idx = items.findIndex(it => !it.done && (name.includes(String(it.text).toLowerCase()) || String(it.text).toLowerCase().includes(name)));
+    if (idx >= 0) {
+      items[idx].done = true;
+      setLS(key, items);
+      loadDayPlan();
+      zeusSpeak('Daily plan task aligned with your focus session.', 'Approving');
+    }
+  }
+
   function loadSleepNotes() {
     const key = `${LS_KEYS.sleepNotes}:${DB.toDateStr()}`;
     const items = getLS(key, []);
@@ -1684,6 +2323,237 @@ const App = (() => {
     updateDashboardCounters();
   }
 
+  function getRoutinesState() {
+    return getLS(LS_KEYS.routines, {
+      morning: [],
+      evening: [],
+      completions: {},
+    });
+  }
+
+  function saveRoutinesState(state) {
+    setLS(LS_KEYS.routines, state);
+  }
+
+  async function renderRoutines() {
+    const state = getRoutinesState();
+    const today = DB.toDateStr();
+    const renderGroup = (key, containerId) => {
+      const container = $(containerId);
+      if (!container) return;
+      const items = state[key] || [];
+      if (!items.length) {
+        container.innerHTML = `<div class="health-empty">No ${key} routine yet.</div>`;
+        return;
+      }
+      container.innerHTML = items.map((it, idx) => {
+        const done = !!state.completions?.[`${today}:${key}:${idx}`];
+        return `<label class="routine-item ${done ? 'done' : ''}">
+          <input type="checkbox" data-routine="${key}" data-ridx="${idx}" ${done ? 'checked' : ''}/>
+          <span>${escH(it)}</span>
+          <button class="log-del" data-rdel="${key}:${idx}">×</button>
+        </label>`;
+      }).join('');
+    };
+    renderGroup('morning', 'routineMorningList');
+    renderGroup('evening', 'routineEveningList');
+
+    const all = [...(state.morning || []), ...(state.evening || [])].length;
+    const doneCount = Object.keys(state.completions || {}).filter(k => k.startsWith(`${today}:`) && state.completions[k]).length;
+    if ($('routineProgress')) $('routineProgress').textContent = `${doneCount} / ${all} completed today`;
+
+    document.querySelectorAll('[data-routine][data-ridx]').forEach(cb => {
+      cb.addEventListener('change', async e => {
+        const key = e.currentTarget.dataset.routine;
+        const idx = e.currentTarget.dataset.ridx;
+        const cKey = `${today}:${key}:${idx}`;
+        const wasDone = !!state.completions[cKey];
+        state.completions[cKey] = e.currentTarget.checked;
+        saveRoutinesState(state);
+        if (!wasDone && e.currentTarget.checked) {
+          const skillState = await getSkillState();
+          const routineXP = hasSkill(skillState, 'iron_routine') ? 20 : 15;
+          await DB.addXP(routineXP);
+          await refreshXPBar();
+          zeusSpeak('Ritual completed. Discipline is forged in repetition.', 'Approving');
+        }
+        renderRoutines();
+      });
+    });
+    document.querySelectorAll('[data-rdel]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const [key, idxStr] = e.currentTarget.dataset.rdel.split(':');
+        const idx = Number(idxStr);
+        state[key].splice(idx, 1);
+        Object.keys(state.completions).forEach(cKey => {
+          if (cKey.includes(`:${key}:${idx}`)) delete state.completions[cKey];
+        });
+        saveRoutinesState(state);
+        renderRoutines();
+      });
+    });
+  }
+
+  function initRoutines() {
+    $('btnAddRoutine')?.addEventListener('click', () => {
+      const type = $('routineType')?.value || 'morning';
+      const text = $('routineInput')?.value.trim();
+      if (!text) return;
+      const state = getRoutinesState();
+      state[type] = state[type] || [];
+      state[type].push(text);
+      saveRoutinesState(state);
+      $('routineInput').value = '';
+      renderRoutines();
+    });
+    renderRoutines();
+  }
+
+  function getTodayMissionState() {
+    const today = DB.toDateStr();
+    const state = getLS(LS_KEYS.missions, {});
+    if (!state[today]) {
+      state[today] = {
+        sessions3: { progress: 0, target: 3, done: false, xp: 50, label: 'Complete 3 sessions' },
+        focus2h: { progress: 0, target: 120, done: false, xp: 100, label: 'Reach 2 hours focus' },
+        noFail: { progress: 1, target: 1, done: false, xp: 150, label: 'Do not fail any session' },
+      };
+      setLS(LS_KEYS.missions, state);
+    }
+    return { today, state, missions: state[today] };
+  }
+
+  async function updateMissionsFromTasks(tasksToday) {
+    const { today, state, missions } = getTodayMissionState();
+    const sessions = tasksToday.filter(t => (t.duration || 0) > 0);
+    const totalMin = Math.round(sessions.reduce((s, t) => s + (t.duration || 0), 0) / 60);
+    missions.sessions3.progress = Math.min(missions.sessions3.target, sessions.length);
+    missions.focus2h.progress = Math.min(missions.focus2h.target, totalMin);
+    if (!missions.noFail.done && missions.noFail.progress <= 0) {
+      missions.noFail.progress = 0;
+    }
+    const entries = Object.entries(missions);
+    for (const [key, m] of entries) {
+      const nowDone = m.progress >= m.target;
+      if (nowDone && !m.done) {
+        m.done = true;
+        if (!S.missionRewarded.has(`${today}:${key}`)) {
+          S.missionRewarded.add(`${today}:${key}`);
+          await DB.addXP(m.xp);
+          await refreshXPBar();
+          zeusSpeak(`Mission completed: ${m.label}. Olympus grants ${m.xp} XP.`, 'Triumphant', 'high');
+        }
+      }
+    }
+    state[today] = missions;
+    setLS(LS_KEYS.missions, state);
+    renderMissions();
+  }
+
+  function markMissionFailure() {
+    const { today, state, missions } = getTodayMissionState();
+    missions.noFail.progress = 0;
+    missions.noFail.done = false;
+    state[today] = missions;
+    setLS(LS_KEYS.missions, state);
+    renderMissions();
+  }
+
+  function renderMissions() {
+    const { missions } = getTodayMissionState();
+    const el = $('missionList');
+    if (!el) return;
+    el.innerHTML = Object.values(missions).map(m => {
+      const pct = Math.round((m.progress / m.target) * 100);
+      return `<div class="mission-row ${m.done ? 'done' : ''}">
+        <div class="mission-label">${escH(m.label)}</div>
+        <div class="mission-meta">${m.progress} / ${m.target} · ${m.xp} XP</div>
+        <div class="xp-track"><div class="xp-fill" style="width:${Math.min(100, pct)}%"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  function getAchievements() {
+    return getLS(LS_KEYS.achievements, {
+      first_session: false,
+      streak_7: false,
+      focused_1000m: false,
+    });
+  }
+
+  function saveAchievements(a) {
+    setLS(LS_KEYS.achievements, a);
+  }
+
+  async function evaluateAchievements(allTasks, streakNow) {
+    const a = getAchievements();
+    const totalMin = Math.round(allTasks.reduce((s, t) => s + (t.duration || 0), 0) / 60);
+    const completedSessions = allTasks.filter(t => (t.duration || 0) > 0).length;
+    let unlocked = null;
+    if (!a.first_session && completedSessions >= 1) {
+      a.first_session = true;
+      unlocked = 'First Session Completed';
+    }
+    if (!a.streak_7 && streakNow >= 7) {
+      a.streak_7 = true;
+      unlocked = '7 Day Streak';
+    }
+    if (!a.focused_1000m && totalMin >= 1000) {
+      a.focused_1000m = true;
+      unlocked = '1000 Focus Minutes';
+    }
+    saveAchievements(a);
+    renderAchievements();
+    if (unlocked) zeusSpeak(`Achievement unlocked: ${unlocked}.`, 'Triumphant', 'high');
+  }
+
+  function renderAchievements() {
+    const a = getAchievements();
+    const el = $('achievementsList');
+    if (!el) return;
+    const rows = [
+      { key: 'first_session', title: 'First Session Completed' },
+      { key: 'streak_7', title: '7 Day Streak' },
+      { key: 'focused_1000m', title: '1000 Focus Minutes' },
+    ];
+    el.innerHTML = rows.map(r => `
+      <div class="achievement-row ${a[r.key] ? 'unlocked' : ''}">
+        <span>${a[r.key] ? '🏛️' : '◻'}</span>
+        <span>${r.title}</span>
+      </div>
+    `).join('');
+  }
+
+  async function renderAdvancedStats() {
+    const all = await DB.getAllCompletedTasks();
+    const el = $('advancedStatsList');
+    if (!el || !all.length) {
+      if (el) el.innerHTML = '<div class="health-empty">No data yet.</div>';
+      return;
+    }
+    const byDay = {};
+    const byHour = Array.from({ length: 24 }, () => 0);
+    let longest = 0;
+    let bestDay = { day: '-', sec: 0 };
+    all.forEach(t => {
+      const sec = t.duration || 0;
+      longest = Math.max(longest, sec);
+      const day = (t.start_time || '').slice(0, 10);
+      byDay[day] = (byDay[day] || 0) + sec;
+      const hour = new Date(t.start_time).getHours();
+      byHour[hour] += sec;
+    });
+    Object.entries(byDay).forEach(([d, sec]) => {
+      if (sec > bestDay.sec) bestDay = { day: d, sec };
+    });
+    const topHour = byHour.indexOf(Math.max(...byHour));
+    el.innerHTML = `
+      <div class="adv-row"><strong>Best day</strong><span>${bestDay.day} · ${fmtSec(bestDay.sec)}</span></div>
+      <div class="adv-row"><strong>Longest session</strong><span>${fmtSec(longest)}</span></div>
+      <div class="adv-row"><strong>Most productive hour</strong><span>${String(topHour).padStart(2, '0')}:00</span></div>
+    `;
+  }
+
   function initExtendedSections() {
     const bindAddDayPlan = (btnId, inputId) => $(btnId)?.addEventListener('click', () => {
       const input = $(inputId);
@@ -1691,7 +2561,7 @@ const App = (() => {
       if (!text) return;
       const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
       const items = getLS(key, []);
-      items.unshift({ text, ts: Date.now() });
+      items.unshift({ text, ts: Date.now(), done: false });
       setLS(key, items);
       input.value = '';
       loadDayPlan();
@@ -2056,6 +2926,10 @@ const App = (() => {
 
   async function init() {
     await registerServiceWorker();
+    await recoverHardcoreFailureIfNeeded();
+    await initHardcoreMode();
+    await initLevelProgression();
+    S.zeusStyle = getLS(LS_KEYS.zeusStyle, 'balanced');
     S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
     await initModeSplash();
     initMatrixRain();
@@ -2070,9 +2944,20 @@ const App = (() => {
     initExtendedSections();
     initSleepView();
     initSettingsView();
+    initRoutines();
+    initDeepWorkMode();
+    renderMissions();
+    renderAchievements();
+    await renderAdvancedStats();
+    await initPomodoro();
+    await initDailyGoal();
+    initHistoryFilters();
     initAlarmClock();
     initPwaInstall();
     initGoogleBackup();
+    $('levelRewardModal')?.addEventListener('click', e => {
+      if (e.target === $('levelRewardModal')) $('levelRewardModal').classList.remove('open');
+    });
 
     $('btnStart').addEventListener('click', handleStart);
     $('btnStop').addEventListener('click', handleStop);
@@ -2113,6 +2998,14 @@ const App = (() => {
     await loadTrackerView();
     loadDayPlan();
     loadSleepNotes();
+    const latestSleep = await DB.getSleepLogs(1);
+    if (latestSleep?.length) {
+      const s = latestSleep[0];
+      const hours = (s.durationMin || 0) / 60;
+      if (hours > 0 && hours < 6) {
+        zeusSpeak(`Last sleep: ${hours.toFixed(1)}h. Low recovery weakens focus.`, 'Warning');
+      }
+    }
     loadProfileView();
     updateModeIndicator();
     await maybeShowWelcome();

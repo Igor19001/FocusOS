@@ -1473,11 +1473,328 @@ body {
   gap: 8px;
 }
 
+.btn-secondary.active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+#pomodoroState {
+  font-family: var(--font-mono);
+}
+
 @media (max-width: 1080px) {
   .panel {
     padding: 16px;
   }
   .main {
     max-width: 100%;
+  }
+}
+
+/* Digital Olympus skin */
+:root,
+:root[data-theme="cyberpunk"] {
+  --bg: #090d18;
+  --bg2: #0f1524;
+  --bg3: #141b2e;
+  --bg4: #1b2338;
+  --border: rgba(255, 215, 138, 0.16);
+  --border-hi: rgba(255, 215, 138, 0.35);
+  --accent: #f4c46a;
+  --accent2: #7ab3ff;
+  --accent3: #ff7a7a;
+  --accent4: #f4c46a;
+  --accent5: #7ab3ff;
+  --text: #eef2ff;
+  --text-muted: #a3aecb;
+  --text-dim: #6f7a98;
+}
+
+body {
+  background: radial-gradient(circle at 20% 0%, rgba(122, 179, 255, 0.08), transparent 35%), var(--bg);
+}
+
+.panel {
+  background: rgba(15, 21, 36, 0.92);
+  border: 1px solid var(--border);
+}
+
+.btn-start,
+.btn-primary {
+  background: linear-gradient(135deg, #f4c46a, #d9a43e);
+  color: #1a1307;
+}
+
+.btn-secondary,
+.btn-icon,
+.btn-stop {
+  background: rgba(20, 27, 46, 0.9);
+  border-color: rgba(122, 179, 255, 0.26);
+  color: #d5e4ff;
+}
+
+.btn-secondary:hover,
+.btn-icon:hover,
+.btn-stop:hover:not(:disabled) {
+  background: rgba(31, 41, 66, 0.96);
+  border-color: rgba(122, 179, 255, 0.45);
+  color: #eef6ff;
+}
+
+.tab-btn.active {
+  background: rgba(122, 179, 255, 0.18);
+  color: #d8e8ff;
+}
+
+.view--tracker {
+  grid-template-columns: 1.2fr 1fr;
+}
+
+.panel--zeus {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.panel--routines {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.zeus-card {
+  border: 1px solid rgba(244, 196, 106, 0.35);
+  background: linear-gradient(160deg, rgba(244, 196, 106, 0.08), rgba(122, 179, 255, 0.08));
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 120px;
+}
+
+.zeus-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.zeus-badge {
+  color: #f4c46a;
+  font-weight: 700;
+}
+
+.zeus-mood {
+  color: #7ab3ff;
+  font-size: 12px;
+}
+
+.zeus-message {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.zeus-anim {
+  animation: zeusFade 280ms ease;
+}
+
+@keyframes zeusFade {
+  from { opacity: 0.35; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.zeus-lightning {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  opacity: 0;
+}
+
+.zeus-lightning.active {
+  animation: zeusFlash 260ms ease;
+}
+
+@keyframes zeusFlash {
+  0% { opacity: 0; }
+  30% { opacity: 0.55; background: radial-gradient(circle at 10% 10%, rgba(122,179,255,0.45), transparent 40%); }
+  100% { opacity: 0; }
+}
+
+.routine-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.routine-title {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.routine-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid rgba(122, 179, 255, 0.2);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.routine-item.done span {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.routine-progress {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.mission-row {
+  border: 1px solid rgba(122, 179, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.mission-row.done {
+  border-color: rgba(244, 196, 106, 0.45);
+}
+
+.mission-label {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.mission-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.achievement-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  color: var(--text-muted);
+}
+
+.achievement-row.unlocked {
+  color: var(--text);
+}
+
+.adv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(122, 179, 255, 0.15);
+}
+
+.adv-row:last-child {
+  border-bottom: none;
+}
+
+.streak-banner {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(244, 196, 106, 0.35);
+  background: rgba(244, 196, 106, 0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.streak-flame {
+  font-size: 18px;
+  filter: drop-shadow(0 0 6px rgba(244, 196, 106, 0.5));
+}
+
+#playerTitle {
+  border-color: rgba(244, 196, 106, 0.35);
+  color: #f4c46a;
+}
+
+body.deep-work .header,
+body.deep-work .panel--qs,
+body.deep-work .panel--log,
+body.deep-work .panel--zeus,
+body.deep-work .panel--routines,
+body.deep-work .panel--missions,
+body.deep-work .panel--advstats,
+body.deep-work .panel--achievements {
+  display: none !important;
+}
+
+body.deep-work .main {
+  margin: 0 auto;
+  max-width: 720px;
+  padding-top: 60px;
+}
+
+body.deep-work .panel--tracker-main {
+  min-height: 68vh;
+}
+
+body.olympus-champion .zeus-card {
+  box-shadow: 0 0 0 1px rgba(244, 196, 106, 0.45), 0 0 18px rgba(122, 179, 255, 0.3);
+  animation: championAura 1.8s ease-in-out infinite;
+}
+
+@keyframes championAura {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.skill-tree-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.skill-branch-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.skill-node {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(122, 179, 255, 0.22);
+  background: rgba(20, 27, 46, 0.75);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.skill-node.unlocked {
+  border-color: rgba(244, 196, 106, 0.55);
+  background: rgba(244, 196, 106, 0.12);
+}
+
+.skill-node.can-unlock {
+  box-shadow: 0 0 0 1px rgba(122, 179, 255, 0.35);
+}
+
+.skill-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.skill-desc,
+.skill-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+@media (max-width: 1080px) {
+  .skill-tree-grid {
+    grid-template-columns: 1fr;
   }
 }

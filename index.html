@@ -73,6 +73,7 @@
 
     <div class="header-controls">
       <div id="modeIndicator" class="mode-indicator">Mode: Offline</div>
+      <div id="playerTitle" class="mode-indicator">Title: Initiate</div>
       <div class="live-clock" id="clock">00:00:00</div>
     </div>
   </div>
@@ -119,6 +120,30 @@
         <div class="status-dot idle" id="statusDot"></div>
         <span id="statusLabel">Idle</span>
       </div>
+      <div class="streak-banner" id="streakBanner">
+        <span class="streak-flame">🔥</span>
+        <span id="streakText">Streak: 0 days</span>
+        <span id="bestStreakText">Best: 0 days</span>
+      </div>
+
+      <section class="panel panel--tracker-sub" style="margin-bottom:12px">
+        <div class="panel-label">Pomodoro</div>
+        <div class="meal-input-row">
+          <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Focus min" style="width:120px"/>
+          <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Break min" style="width:120px"/>
+          <button class="btn-secondary" id="btnPomodoroStart" style="width:auto;padding:10px 14px">Start Cycle</button>
+          <button class="btn-secondary" id="btnPomodoroSkip" style="width:auto;padding:10px 14px">Skip Phase</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <div id="pomodoroState" style="font-size:12px;color:var(--text-muted)">Focus phase · 25:00</div>
+          <button class="btn-secondary" id="btnDeepWorkMode" style="width:auto;padding:8px 12px">Deep Work</button>
+          <label class="toggle" style="display:flex;align-items:center;gap:8px;width:auto;height:auto">
+            <input type="checkbox" id="pomodoroSound" checked/>
+            <span class="toggle-slider"></span>
+            <span style="font-size:12px;color:var(--text-muted)">Sound</span>
+          </label>
+        </div>
+      </section>
 
       <div class="active-task-card" id="activeCard" style="display:none">
         <div class="atc-name" id="activeName">—</div>
@@ -160,6 +185,56 @@
       <button class="btn-secondary" id="btnRefresh">Refresh data</button>
     </section>
 
+    <section class="panel panel--zeus">
+      <div class="panel-label">Zeus Protocol</div>
+      <div id="zeusCard" class="zeus-card">
+        <div class="zeus-head">
+          <span class="zeus-badge">⚡ Zeus</span>
+          <span class="zeus-mood" id="zeusMood">Observing</span>
+        </div>
+        <p class="zeus-message" id="zeusMessage">Olympus is watching. Begin your discipline.</p>
+      </div>
+      <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
+    </section>
+
+    <section class="panel panel--routines">
+      <div class="panel-label">Daily Routines</div>
+      <div class="meal-input-row">
+        <select class="form-input" id="routineType" style="width:140px">
+          <option value="morning">Morning</option>
+          <option value="evening">Evening</option>
+        </select>
+        <input class="form-input" id="routineInput" type="text" placeholder="Add routine step..." />
+        <button class="btn-primary" id="btnAddRoutine" style="width:auto;padding:9px 14px">Add</button>
+      </div>
+      <div class="routine-cols">
+        <div>
+          <div class="routine-title">Morning</div>
+          <div id="routineMorningList"><div class="health-empty">No morning routine yet.</div></div>
+        </div>
+        <div>
+          <div class="routine-title">Evening</div>
+          <div id="routineEveningList"><div class="health-empty">No evening routine yet.</div></div>
+        </div>
+      </div>
+      <div id="routineProgress" class="routine-progress">0 / 0 completed today</div>
+    </section>
+
+    <section class="panel panel--missions">
+      <div class="panel-label">Daily Missions</div>
+      <div id="missionList"><div class="health-empty">Loading missions...</div></div>
+    </section>
+
+    <section class="panel panel--advstats">
+      <div class="panel-label">Advanced Stats</div>
+      <div id="advancedStatsList"><div class="health-empty">No data yet.</div></div>
+    </section>
+
+    <section class="panel panel--achievements">
+      <div class="panel-label">Olympus Achievements</div>
+      <div id="achievementsList"><div class="health-empty">No achievements yet.</div></div>
+    </section>
+
     <!-- Quick stats + XP bar + Leaderboard -->
     <section class="panel panel--qs">
       <div class="xp-bar-wrap" id="xpBarWrap">
@@ -193,6 +268,14 @@
           <span class="qs-key">Trend</span>
         </div>
       </div>
+      <div class="goal-wrap" id="goalWrap" style="margin-top:12px">
+        <div class="meal-input-row" style="margin-bottom:8px">
+          <input class="form-input" id="dailyGoalMin" type="number" min="30" max="960" step="15" placeholder="Daily goal (min)" style="width:170px"/>
+          <button class="btn-secondary" id="btnSaveGoal" style="width:auto;padding:10px 14px">Save Goal</button>
+        </div>
+        <div class="xp-track"><div class="xp-fill" id="goalFill" style="width:0%"></div></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="goalLabel">No goal set.</div>
+      </div>
       <div class="leaderboard-strip">
         <div class="lb-title">You vs world average</div>
         <div id="lbRows"></div>
@@ -202,7 +285,11 @@
     <section class="panel panel--log">
       <div class="panel-header">
         <div class="panel-label">Recent sessions</div>
-        <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Today</button>
+          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">All time</button>
+          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
+        </div>
       </div>
       <div class="log-list" id="recentLog">
         <div class="log-empty">No sessions yet. Start your first focus session.</div>
@@ -499,6 +586,33 @@
           <option value="retro">Retro</option>
         </select>
       </div>
+      <div class="notif-row" style="margin-top:10px">
+        <div class="notif-label">
+          Hardcore Mode
+          <small>Stop button disabled during active session</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="hardcoreModeToggle"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="notif-row" style="margin-top:10px">
+        <div class="notif-label">
+          Zeus Personality
+          <small>Choose how Zeus speaks to you</small>
+        </div>
+        <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
+          <option value="strict">Strict</option>
+          <option value="balanced">Balanced</option>
+          <option value="supportive">Supportive</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel panel--skilltree">
+      <div class="panel-label">Skill Tree</div>
+      <div id="skillPointsLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Skill points: 0</div>
+      <div id="skillTreeGrid" class="skill-tree-grid"></div>
     </section>
 
     <section class="panel panel--settings-sync">
@@ -777,7 +891,10 @@
     <div class="tut-text" id="tutText"></div>
     <div class="tut-footer">
       <span class="tut-step" id="tutStep">1 / 4</span>
-      <button class="tut-next" id="tutNext">Dalej →</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-secondary" id="tutSkip" style="width:auto;padding:6px 10px">Skip</button>
+        <button class="tut-next" id="tutNext">Dalej →</button>
+      </div>
     </div>
     <div class="tut-arrow" id="tutArrow"></div>
   </div>
@@ -786,6 +903,16 @@
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
+
+<div class="modal" id="levelRewardModal">
+  <div class="modal-card">
+    <div class="modal-title"><span>🏛️</span> Level Reward Unlocked</div>
+    <p id="levelRewardText" style="font-size:14px;line-height:1.7;margin-bottom:16px">New reward unlocked.</p>
+    <div class="form-actions" style="margin-top:0">
+      <button class="btn-primary" id="btnCloseLevelReward">Continue</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="resetDataModal">
   <div class="modal-card">
@@ -815,7 +942,5 @@
 <script src="db.js"></script>
 <script src="math.js"></script>
 <script src="app.js"></script>
-<!-- SCRIPTS: order matters — DB → MATH → APP -->
-<script src="db.js"></script>
 </body>
 </html>
