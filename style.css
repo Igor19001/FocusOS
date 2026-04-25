@@ -1798,3 +1798,113 @@ body.olympus-champion .zeus-card {
     grid-template-columns: 1fr;
   }
 }
+
+/* Root app polish pass */
+.splash-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.splash-btn--google {
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--accent);
+  border: 1px solid var(--border-hi);
+}
+
+.splash-status {
+  margin-top: 14px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.connection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.connection-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg3);
+}
+
+.connection-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.connection-status {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1080px) {
+  .view--tracker {
+    grid-template-columns: 1fr;
+  }
+
+  .panel--tracker-main,
+  .panel--qs,
+  .panel--log,
+  .panel--zeus,
+  .panel--routines,
+  .panel--missions,
+  .panel--advstats,
+  .panel--achievements,
+  .panel--web3 {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 780px) {
+  .header-inner {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .main {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .splash-card {
+    padding: 22px;
+  }
+
+  .splash-title {
+    font-size: 28px;
+  }
+
+  .splash-actions,
+  .connection-grid,
+  .routine-cols,
+  .web3-actions,
+  .view--daily,
+  .view--weekly,
+  .view--health {
+    grid-template-columns: 1fr;
+  }
+
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .sleep-hist-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

@@ -31,6 +31,9 @@ const App = (() => {
     tutorialStep:      0,
     appMode:           null,
     walletAddress:     null,
+    googleConnected:   false,
+    googleAccessToken: null,
+    googleRequestMode: 'connect',
     stakedFCS:         0,
     resetConfirmStep:  0,
     alarm: {
@@ -62,6 +65,7 @@ const App = (() => {
     dayPlan: 'focusos_day_plan',
     socials: 'focusos_socials',
     wallet: 'focusos_wallet_address',
+    google: 'focusos_google_connected',
     routines: 'focusos_routines',
     streakMeta: 'focusos_streak_meta',
     missions: 'focusos_daily_missions',
@@ -762,6 +766,40 @@ const App = (() => {
     const merged = { ...getAppSettings(), ...partial };
     setLS(APP_SETTINGS_KEY, merged);
     return merged;
+  }
+
+  function setGoogleConnectionState(connected, accessToken = null) {
+    S.googleConnected = !!connected;
+    S.googleAccessToken = accessToken || null;
+    if (S.googleConnected) localStorage.setItem(LS_KEYS.google, '1');
+    else localStorage.removeItem(LS_KEYS.google);
+    updateModeIndicator();
+    refreshConnectionViews();
+  }
+
+  function refreshConnectionViews() {
+    const walletText = S.walletAddress
+      ? `Connected wallet: ${S.walletAddress}`
+      : 'No wallet connected.';
+    const googleText = S.googleConnected
+      ? 'Google Drive backup connected.'
+      : 'Google Drive backup not connected.';
+
+    if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
+    if ($('settingsWalletStatus')) $('settingsWalletStatus').textContent = walletText;
+    if ($('walletProfileInfo')) $('walletProfileInfo').textContent = walletText;
+    if ($('settingsGoogleStatus')) $('settingsGoogleStatus').textContent = googleText;
+    if ($('modeSplashStatus')) {
+      $('modeSplashStatus').textContent = S.appMode === 'monad'
+        ? walletText
+        : S.appMode === 'google'
+          ? googleText
+          : 'Local mode keeps everything on this device.';
+    }
+    if ($('btnDisconnectWallet')) $('btnDisconnectWallet').disabled = !S.walletAddress;
+    if ($('btnDisconnectWalletSettings')) $('btnDisconnectWalletSettings').disabled = !S.walletAddress;
+    if ($('btnGoogleDisconnect')) $('btnGoogleDisconnect').disabled = !S.googleConnected;
+    updateDashboardCounters();
   }
 
   function applyTheme(themeName) {
@@ -1618,6 +1656,7 @@ const App = (() => {
     const themeSelect = $('themeSelect');
     if (languageSelect) languageSelect.value = S.language;
     if (themeSelect) themeSelect.value = S.theme;
+    refreshConnectionViews();
   }
 
   function initSettingsView() {
@@ -1662,6 +1701,22 @@ const App = (() => {
         zeusSpeak('Zeus voice adjusted to your preference.', 'Observing');
       });
     }
+
+    $('btnConnectWalletSettings')?.addEventListener('click', async () => {
+      await connectMonadWallet(true);
+      S.appMode = 'monad';
+      await DB.setSetting('app_mode', 'monad');
+      $('web3Panel')?.classList.remove('hidden');
+      updateModeIndicator();
+      refreshConnectionViews();
+      showToast('Wallet connected.', 'success');
+    });
+
+    $('btnDisconnectWalletSettings')?.addEventListener('click', () => disconnectWalletFlow());
+    $('btnGoogleConnect')?.addEventListener('click', async () => {
+      await requestGoogleAccess({ uploadBackup: false });
+    });
+    $('btnGoogleDisconnect')?.addEventListener('click', () => disconnectGoogleFlow());
   }
 
   async function initDailyGoal() {
@@ -1975,59 +2030,77 @@ const App = (() => {
     }
   }
 
+  async function uploadBackupToGoogleDrive(accessToken) {
+    const dbPayload = JSON.parse(await DB.exportJSON());
+    dbPayload.extended_local = getExtendedLocalDataSnapshot();
+    dbPayload.exported_at = new Date().toISOString();
+    const metadata = {
+      name: 'FocusOS_Backup.json',
+      mimeType: 'application/json',
+    };
+    const boundary = 'focusos_boundary';
+    const body =
+      `--${boundary}\r\n` +
+      'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+      `${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\n` +
+      'Content-Type: application/json\r\n\r\n' +
+      `${JSON.stringify(dbPayload, null, 2)}\r\n` +
+      `--${boundary}--`;
+    const upload = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    });
+    if (!upload.ok) throw new Error(`HTTP ${upload.status}`);
+  }
+
+  async function requestGoogleAccess({ uploadBackup = false } = {}) {
+    if (!window.google?.accounts?.oauth2) {
+      showToast('Google Identity Services not loaded.', 'error');
+      return;
+    }
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE')) {
+      showToast(t('backupMissingClient'), 'warn', 7000);
+      return;
+    }
+    S.googleRequestMode = uploadBackup ? 'backup' : 'connect';
+    if (!S.googleTokenClient) {
+      S.googleTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (resp) => {
+          if (!resp?.access_token) {
+            showToast(t('backupFailed') + 'Missing access token.', 'error');
+            return;
+          }
+          setGoogleConnectionState(true, resp.access_token);
+          try {
+            if (S.googleRequestMode === 'backup') {
+              await uploadBackupToGoogleDrive(resp.access_token);
+              showToast(t('backupDone'), 'success', 6000);
+            } else {
+              if (!S.appMode) {
+                S.appMode = 'google';
+                await DB.setSetting('app_mode', 'google');
+              }
+              showToast('Google connected.', 'success');
+            }
+          } catch (err) {
+            showToast(t('backupFailed') + err.message, 'error', 7000);
+          }
+        },
+      });
+    }
+    S.googleTokenClient.requestAccessToken();
+  }
+
   function initGoogleBackup() {
     $('btnGoogleBackup')?.addEventListener('click', async () => {
-      if (!window.google?.accounts?.oauth2) {
-        showToast('Google Identity Services not loaded.', 'error');
-        return;
-      }
-      if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE')) {
-        showToast(t('backupMissingClient'), 'warn', 7000);
-        return;
-      }
-      if (!S.googleTokenClient) {
-        S.googleTokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: GOOGLE_SCOPES,
-          callback: async (resp) => {
-            if (!resp?.access_token) {
-              showToast(t('backupFailed') + 'Missing access token.', 'error');
-              return;
-            }
-            try {
-              const dbPayload = JSON.parse(await DB.exportJSON());
-              dbPayload.extended_local = getExtendedLocalDataSnapshot();
-              dbPayload.exported_at = new Date().toISOString();
-              const metadata = {
-                name: 'FocusOS_Backup.json',
-                mimeType: 'application/json',
-              };
-              const boundary = 'focusos_boundary';
-              const body =
-                `--${boundary}\r\n` +
-                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-                `${JSON.stringify(metadata)}\r\n` +
-                `--${boundary}\r\n` +
-                'Content-Type: application/json\r\n\r\n' +
-                `${JSON.stringify(dbPayload, null, 2)}\r\n` +
-                `--${boundary}--`;
-              const upload = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${resp.access_token}`,
-                  'Content-Type': `multipart/related; boundary=${boundary}`,
-                },
-                body,
-              });
-              if (!upload.ok) throw new Error(`HTTP ${upload.status}`);
-              showToast(t('backupDone'), 'success', 6000);
-            } catch (err) {
-              showToast(t('backupFailed') + err.message, 'error', 7000);
-            }
-          },
-        });
-      }
-      S.googleTokenClient.requestAccessToken();
+      await requestGoogleAccess({ uploadBackup: true });
     });
   }
 
@@ -2180,11 +2253,14 @@ const App = (() => {
     if (mode === 'monad') {
       await connectMonadWallet();
       $('web3Panel')?.classList.remove('hidden');
+    } else if (mode === 'google') {
+      $('web3Panel')?.classList.add('hidden');
+      await requestGoogleAccess({ uploadBackup: false });
     } else {
-      S.walletAddress = null;
       $('web3Panel')?.classList.add('hidden');
     }
     updateModeIndicator();
+    refreshConnectionViews();
     document.body.classList.remove('app-locked');
     $('modeSplash')?.classList.add('hidden');
   }
@@ -2194,7 +2270,11 @@ const App = (() => {
     if (!el) return;
     if (S.appMode === 'monad') {
       const short = S.walletAddress ? `${S.walletAddress.slice(0, 6)}...${S.walletAddress.slice(-4)}` : 'Not connected';
-      el.textContent = `Mode: Monad Network connected to ${short}`;
+      el.textContent = `Mode: Wallet ${short}`;
+      return;
+    }
+    if (S.appMode === 'google' || S.googleConnected) {
+      el.textContent = 'Mode: Local + Google';
       return;
     }
     el.textContent = 'Mode: Local Offline';
@@ -2227,7 +2307,7 @@ const App = (() => {
         : FALLBACK_WALLET_ADDRESS;
     }
     if (S.walletAddress) localStorage.setItem(LS_KEYS.wallet, S.walletAddress);
-    if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
+    refreshConnectionViews();
   }
 
   async function stakeTokens() {
@@ -2265,8 +2345,16 @@ const App = (() => {
     $('btnStakeTokens')?.addEventListener('click', stakeTokens);
     $('btnBurnTokens')?.addEventListener('click', burnTokens);
     $('btnSaveToChain')?.addEventListener('click', saveProgressToChain);
-    // Calm default experience: boot directly in Local mode.
-    await selectMode('local');
+    $('btnModeLocal')?.addEventListener('click', async () => {
+      await selectMode('local');
+    });
+    $('btnModeMonad')?.addEventListener('click', async () => {
+      await selectMode('monad');
+    });
+    $('btnModeGoogle')?.addEventListener('click', async () => {
+      await selectMode('google');
+    });
+    refreshConnectionViews();
   }
 
   function renderList(containerId, items, emptyText, onDelete) {
@@ -2591,6 +2679,15 @@ const App = (() => {
       loadProfileView();
     });
     $('btnDisconnectWallet')?.addEventListener('click', () => disconnectWalletFlow());
+    $('btnConnectWalletProfile')?.addEventListener('click', async () => {
+      await connectMonadWallet(true);
+      S.appMode = 'monad';
+      await DB.setSetting('app_mode', 'monad');
+      $('web3Panel')?.classList.remove('hidden');
+      updateModeIndicator();
+      refreshConnectionViews();
+      showToast('Wallet connected.', 'success');
+    });
     $('btnRestartOnboarding')?.addEventListener('click', () => restartOnboarding());
     $('btnResetData')?.addEventListener('click', () => openResetDataModal());
     $('btnResetDataCancel')?.addEventListener('click', () => closeResetDataModal());
@@ -2931,6 +3028,7 @@ const App = (() => {
     await initLevelProgression();
     S.zeusStyle = getLS(LS_KEYS.zeusStyle, 'balanced');
     S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
+    S.googleConnected = localStorage.getItem(LS_KEYS.google) === '1';
     await initModeSplash();
     initMatrixRain();
     startClock();
@@ -3007,6 +3105,7 @@ const App = (() => {
       }
     }
     loadProfileView();
+    refreshConnectionViews();
     updateModeIndicator();
     await maybeShowWelcome();
     setTimeout(startTutorial, 900);
@@ -3017,6 +3116,50 @@ const App = (() => {
     }, 30000);
 
     console.log('%c⚡ FocusOS 2.0 PWA — no backend required', 'color:#63ffb4;font-family:monospace;font-size:14px;');
+  }
+
+  function loadProfileView() {
+    const socials = getLS(LS_KEYS.socials, { twitter: '', discord: '' });
+    if ($('socialTwitter')) $('socialTwitter').value = socials.twitter || '';
+    if ($('socialDiscord')) $('socialDiscord').value = socials.discord || '';
+    const preview = [];
+    if (socials.twitter) preview.push(`Twitter: ${socials.twitter}`);
+    if (socials.discord) preview.push(`Discord: ${socials.discord}`);
+    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : 'No saved links.';
+    refreshConnectionViews();
+    updateDashboardCounters();
+  }
+
+  function disconnectWalletFlow() {
+    if (!S.walletAddress) {
+      showToast('No active wallet.', 'warn');
+      return;
+    }
+    if (!window.confirm('Step 1/2: Start wallet disconnect?')) return;
+    if (!window.confirm('Step 2/2: Confirm wallet disconnect.')) return;
+    S.walletAddress = null;
+    localStorage.removeItem(LS_KEYS.wallet);
+    if (S.appMode === 'monad') {
+      S.appMode = S.googleConnected ? 'google' : 'local';
+      DB.setSetting('app_mode', S.appMode);
+      $('web3Panel')?.classList.add('hidden');
+    }
+    updateModeIndicator();
+    refreshConnectionViews();
+    showToast('Wallet disconnected.', 'success');
+  }
+
+  function disconnectGoogleFlow() {
+    if (!S.googleConnected) {
+      showToast('Google is not connected.', 'warn');
+      return;
+    }
+    setGoogleConnectionState(false, null);
+    if (S.appMode === 'google') {
+      S.appMode = S.walletAddress ? 'monad' : 'local';
+      DB.setSetting('app_mode', S.appMode);
+    }
+    showToast('Google disconnected.', 'success');
   }
 
   return { init, _loadSleepHistory: loadSleepHistory };

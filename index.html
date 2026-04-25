@@ -26,7 +26,7 @@
 
 <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body class="app-locked">
 
 <div class="noise"></div>
 <div class="scanline"></div>
@@ -34,13 +34,15 @@
 <section id="modeSplash" class="mode-splash">
   <div class="splash-grid"></div>
   <div class="splash-card">
-    <h1 class="splash-title glitch-text">FocusOS // Dual-Mode Boot</h1>
-    <p class="splash-sub">Select execution layer before loading the dashboard.</p>
+    <h1 class="splash-title glitch-text">FocusOS Boot</h1>
+    <p class="splash-sub">Choose how you want to enter the app.</p>
     <div class="splash-actions">
       <button class="btn-primary splash-btn" id="btnModeLocal">Local Demo</button>
-      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad">Connect Monad Wallet</button>
+      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad">Connect Wallet</button>
+      <button class="btn-primary splash-btn splash-btn--google" id="btnModeGoogle">Connect Google</button>
     </div>
-    <p class="splash-footnote">Local stores data in IndexedDB. Monad mode enables staking, burning and chain save placeholders.</p>
+    <p class="splash-footnote">Local mode keeps everything on-device. Wallet mode enables web3 actions. Google mode connects Drive backup.</p>
+    <p class="splash-status" id="modeSplashStatus">No connection selected yet.</p>
   </div>
 </section>
 
@@ -56,19 +58,19 @@
         <span class="logo-sub">Local-First · No Backend · No Cloud</span>
       </div>
     </div>
-    <button class="btn-hamburger" id="btnNavToggle" aria-label="Przełącz menu" aria-expanded="false" aria-controls="headerTabNav">
+    <button class="btn-hamburger" id="btnNavToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerTabNav">
       <span></span><span></span><span></span>
     </button>
 
     <nav class="tab-nav" id="headerTabNav">
-      <button class="tab-btn active" data-tab="tracker">⏱ Tracker</button>
-      <button class="tab-btn" data-tab="daily">📅 Dzienny</button>
-      <button class="tab-btn" data-tab="weekly">📊 Tygodniowy</button>
-      <button class="tab-btn" data-tab="health">🩺 Zdrowie</button>
-      <button class="tab-btn" data-tab="sleep">🌙 Sen</button>
-      <button class="tab-btn" data-tab="settings">⚙ Ustawienia</button>
-      <button class="tab-btn" data-tab="about">ℹ O nas</button>
-      <button class="tab-btn" data-tab="profile">👤 Profil</button>
+      <button class="tab-btn active" data-tab="tracker">Tracker</button>
+      <button class="tab-btn" data-tab="daily">Daily</button>
+      <button class="tab-btn" data-tab="weekly">Weekly</button>
+      <button class="tab-btn" data-tab="health">Health</button>
+      <button class="tab-btn" data-tab="sleep">Sleep</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+      <button class="tab-btn" data-tab="about">About</button>
+      <button class="tab-btn" data-tab="profile">Profile</button>
     </nav>
 
     <div class="header-controls">
@@ -566,9 +568,9 @@
 
   <div class="view view--settings hidden" data-view="settings">
     <section class="panel panel--settings-language">
-      <div class="panel-label">🌐 Ustawienia języka</div>
+      <div class="panel-label">Language</div>
       <div class="form-group">
-        <label class="form-label">Wybierz język interfejsu</label>
+        <label class="form-label">Interface language</label>
         <select class="form-input" id="languageSelect">
           <option value="pl">Polski (PL)</option>
           <option value="en">English (EN)</option>
@@ -577,9 +579,9 @@
     </section>
 
     <section class="panel panel--settings-theme">
-      <div class="panel-label">🎨 Ustawienia motywu</div>
+      <div class="panel-label">Theme</div>
       <div class="form-group">
-        <label class="form-label">Wybierz motyw</label>
+        <label class="form-label">Select theme</label>
         <select class="form-input" id="themeSelect">
           <option value="cyberpunk">Cyberpunk</option>
           <option value="light">Light</option>
@@ -616,13 +618,31 @@
     </section>
 
     <section class="panel panel--settings-sync">
-      <div class="panel-label">☁ Integracje i kopie zapasowe</div>
+      <div class="panel-label">Connections and backups</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-        FocusOS działa local-first. Tu zarządzasz instalacją PWA, eksportem i importem danych.
+        Manage app install, Google Drive backup, and wallet access from one place.
       </p>
+      <div class="connection-grid">
+        <div class="connection-card">
+          <div class="connection-title">Wallet</div>
+          <div class="connection-status" id="settingsWalletStatus">No wallet connected.</div>
+          <div class="form-actions" style="margin-top:10px">
+            <button class="btn-secondary" id="btnConnectWalletSettings" style="width:auto;padding:10px 14px">Connect Wallet</button>
+            <button class="btn-secondary" id="btnDisconnectWalletSettings" style="width:auto;padding:10px 14px">Disconnect Wallet</button>
+          </div>
+        </div>
+        <div class="connection-card">
+          <div class="connection-title">Google</div>
+          <div class="connection-status" id="settingsGoogleStatus">Google Drive backup not connected.</div>
+          <div class="form-actions" style="margin-top:10px">
+            <button class="btn-secondary" id="btnGoogleConnect" style="width:auto;padding:10px 14px">Connect Google</button>
+            <button class="btn-secondary" id="btnGoogleDisconnect" style="width:auto;padding:10px 14px">Disconnect Google</button>
+          </div>
+        </div>
+      </div>
       <div class="form-actions" style="margin-top:0">
-        <button class="btn-primary hidden" id="installButton">Zainstaluj FocusOS na urządzeniu</button>
-        <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Połącz z kontem Google / Wyślij Kopię Zapasową</button>
+        <button class="btn-primary hidden" id="installButton">Install FocusOS</button>
+        <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup to Google Drive</button>
       </div>
       <div class="form-actions" style="margin-top:10px">
         <button class="btn-secondary" id="btnOpenBackfill" style="width:auto;padding:10px 14px">Retro</button>
@@ -635,7 +655,7 @@
         <input type="file" id="importFileInput" accept=".json,application/json" style="display:none"/>
       </div>
       <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-        Przycisk instalacji pojawi się automatycznie, gdy przeglądarka zgłosi możliwość instalacji PWA.
+        The install button appears automatically when your browser reports PWA install support.
       </div>
     </section>
   </div><!-- /view--settings -->
@@ -724,13 +744,16 @@
         </section>
 
         <section class="dash-section" data-dashboard-panel="wallet">
-          <div class="panel-label">Portfel</div>
-          <div id="walletProfileInfo" style="font-family:var(--font-mono);font-size:12px;margin-bottom:10px;color:var(--accent5)">Brak połączonego portfela</div>
+          <div class="panel-label">Wallet</div>
+          <div id="walletProfileInfo" style="font-family:var(--font-mono);font-size:12px;margin-bottom:10px;color:var(--accent5)">No wallet connected.</div>
+          <div class="form-actions">
+            <button class="btn-primary" id="btnConnectWalletProfile" style="width:auto;padding:8px 14px">Connect Wallet</button>
+          </div>
           <div class="danger-zone">
-            <button class="btn-secondary" id="btnDisconnectWallet" style="width:auto;padding:8px 14px">Rozłącz Portfel</button>
+            <button class="btn-secondary" id="btnDisconnectWallet" style="width:auto;padding:8px 14px">Disconnect Wallet</button>
           </div>
           <div class="danger-zone danger-zone--critical">
-            <button class="btn-stop" id="btnResetData" style="width:auto;padding:8px 14px">Resetuj Dane</button>
+            <button class="btn-stop" id="btnResetData" style="width:auto;padding:8px 14px">Reset Data</button>
           </div>
         </section>
       </div>
