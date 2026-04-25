@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="description" content="FocusOS 2.0 â€” Local-First Personal Productivity Intelligence"/>
+<meta name="description" content="FocusOS 2.0 — Local-First Personal Productivity Intelligence"/>
 <meta name="theme-color" content="#0a0a0f"/>
 <meta name="application-name" content="FocusOS"/>
 <meta name="msapplication-TileColor" content="#0a0a0f"/>
 <meta name="format-detection" content="telephone=no"/>
-<title>FocusOS 2.0 â€” Local Productivity Intelligence</title>
+<title>FocusOS 2.0 — Local Productivity Intelligence</title>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -37,25 +37,25 @@
     <h1 class="splash-title glitch-text">FocusOS Boot</h1>
     <p class="splash-sub">Choose how you want to enter the app.</p>
     <div class="splash-actions">
-      <button class="btn-primary splash-btn" id="btnModeLocal">Local Demo</button>
-      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad">Connect Wallet</button>
-      <button class="btn-primary splash-btn splash-btn--google" id="btnModeGoogle">Connect Google</button>
+      <button class="btn-primary splash-btn" id="btnModeLocal" type="button">Local Demo</button>
+      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad" type="button">Connect Wallet</button>
+      <button class="btn-primary splash-btn splash-btn--google" id="btnModeGoogle" type="button">Connect Google</button>
     </div>
     <p class="splash-footnote">Local mode keeps everything on-device. Wallet mode enables web3 actions. Google mode connects Drive backup.</p>
     <p class="splash-status" id="modeSplashStatus">No connection selected yet.</p>
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      HEADER
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <header class="header">
   <div class="header-inner">
     <div class="logo">
-      <span class="logo-icon">âšˇ</span>
+      <span class="logo-icon">⚡</span>
       <div>
         <span class="logo-title">FocusOS</span>
-        <span class="logo-sub">Local-First Â· No Backend Â· No Cloud</span>
+        <span class="logo-sub">Local-First · No Backend · No Cloud</span>
       </div>
     </div>
     <button class="btn-hamburger" id="btnNavToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerTabNav">
@@ -81,14 +81,14 @@
   </div>
 </header>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      MAIN
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <main class="main">
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  <!-- ─────────────────────────────────────────────────────────────────────
        VIEW: TRACKER
-       â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+       ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--tracker" data-view="tracker">
 
     <section class="panel panel--web3 hidden" id="web3Panel">
@@ -154,16 +154,16 @@
         </div>
       </section>
       <div class="active-task-card" id="activeCard" style="display:none">
-        <div class="atc-name" id="activeName">â€”</div>
+        <div class="atc-name" id="activeName">—</div>
         <div class="atc-meta">
-          <span class="atc-cat" id="activeCat">â€”</span>
+          <span class="atc-cat" id="activeCat">—</span>
           <span class="atc-timer" id="activeTimer">00:00:00</span>
         </div>
         <div class="fatigue-wrap" id="fatigueBarWrap">
           <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
           <div class="fatigue-meta">
             <span id="fatigueLabel"></span>
-            <span id="fatigueHint">â†‘ zmÄ™czenie roĹ›nie</span>
+            <span id="fatigueHint">↑ zmęczenie rośnie</span>
           </div>
         </div>
       </div>
@@ -338,15 +338,15 @@
       <div class="panel-label" style="margin-top:14px">Today at a glance</div>
       <div class="qs-grid">
         <div class="qs-card">
-          <span class="qs-value" id="qsTodayTime">â€”</span>
+          <span class="qs-value" id="qsTodayTime">—</span>
           <span class="qs-key">Focus time</span>
         </div>
         <div class="qs-card">
-          <span class="qs-value" id="qsEfficiency">â€”</span>
+          <span class="qs-value" id="qsEfficiency">—</span>
           <span class="qs-key">Efficiency</span>
         </div>
         <div class="qs-card">
-          <span class="qs-value" id="qsTaskCount">â€”</span>
+          <span class="qs-value" id="qsTaskCount">—</span>
           <span class="qs-key">Sessions</span>
         </div>
         <div class="qs-card">
@@ -354,7 +354,7 @@
           <span class="qs-key">Streak</span>
         </div>
         <div class="qs-card">
-          <span id="qsEMA" class="qs-ema">â€”</span>
+          <span id="qsEMA" class="qs-ema">—</span>
           <span class="qs-key">Trend</span>
         </div>
       </div>
@@ -378,7 +378,7 @@
         <div style="display:flex;gap:6px;align-items:center">
           <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Today</button>
           <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">All time</button>
-          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">â†»</button>
+          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
         </div>
       </div>
       <div class="log-list" id="recentLog">
@@ -389,22 +389,22 @@
   </div><!-- /view--tracker -->
 
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  <!-- ─────────────────────────────────────────────────────────────────────
        VIEW: DAILY
-       â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+       ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--daily hidden" data-view="daily">
 
     <section class="panel panel--daily-meta">
       <div class="date-nav">
-        <button class="btn-nav" id="dailyPrev">â€ą Poprzedni</button>
-        <span class="date-nav-label" id="dailyDateLabel">â€”</span>
-        <button class="btn-nav" id="dailyNext">NastÄ™pny â€ş</button>
-        <button class="btn-nav btn-nav--today" id="dailyToday">DziĹ›</button>
+        <button class="btn-nav" id="dailyPrev">‹ Poprzedni</button>
+        <span class="date-nav-label" id="dailyDateLabel">—</span>
+        <button class="btn-nav" id="dailyNext">Następny ›</button>
+        <button class="btn-nav btn-nav--today" id="dailyToday">Dziś</button>
       </div>
       <div class="daily-stats" style="margin-top:14px">
-        <div class="ds-card"><div class="ds-value" id="dTotalTime">â€”</div><div class="ds-key">ĹÄ…czny czas</div></div>
-        <div class="ds-card"><div class="ds-value" id="dEfficiency">â€”</div><div class="ds-key">ProduktywnoĹ›Ä‡</div></div>
-        <div class="ds-card"><div class="ds-value" id="dTaskCount">â€”</div><div class="ds-key">Sesji</div></div>
+        <div class="ds-card"><div class="ds-value" id="dTotalTime">—</div><div class="ds-key">Łączny czas</div></div>
+        <div class="ds-card"><div class="ds-value" id="dEfficiency">—</div><div class="ds-key">Produktywność</div></div>
+        <div class="ds-card"><div class="ds-value" id="dTaskCount">—</div><div class="ds-key">Sesji</div></div>
       </div>
     </section>
 
@@ -414,24 +414,24 @@
     </section>
 
     <section class="panel panel--daily-hours">
-      <div class="panel-label">RozkĹ‚ad godzinowy</div>
+      <div class="panel-label">Rozkład godzinowy</div>
       <div class="chart-wrap"><canvas id="dailyHourChart"></canvas></div>
     </section>
 
     <section class="panel panel--golden">
-      <div class="panel-label">âś¨ ZĹ‚ote Godziny â€” K-Means (k=2)</div>
+      <div class="panel-label">✨ Złote Godziny — K-Means (k=2)</div>
       <div class="golden-hours-wrap" id="goldenHoursDisplay">
-        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Ĺadowanie analizy klastrĂłw...</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Ładowanie analizy klastrów...</span>
       </div>
       <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-        đźźˇ ZĹ‚ote godziny = najwiÄ™ksza produktywnoĹ›Ä‡ &nbsp;|&nbsp; đź”´ Godziny strat = dominuje rozproszenie
+        🟡 Złote godziny = największa produktywność &nbsp;|&nbsp; 🔴 Godziny strat = dominuje rozproszenie
       </p>
     </section>
 
     <section class="panel panel--daily-insights">
       <div class="panel-label">Wnioski dnia</div>
       <ul class="insights-list" id="dailyInsights">
-        <li><span class="insight-icon">đź“Š</span>Ĺadowanie...</li>
+        <li><span class="insight-icon">📊</span>Ładowanie...</li>
       </ul>
     </section>
 
@@ -441,24 +441,24 @@
         <input class="form-input" id="dayPlanInput" type="text" placeholder="Dodaj punkt planu dnia..." />
         <button class="btn-primary" id="btnAddDayPlan" style="width:auto;white-space:nowrap">+ Dodaj</button>
       </div>
-      <div id="dayPlanList"><div class="health-empty">Brak punktĂłw planu na dziĹ›</div></div>
+      <div id="dayPlanList"><div class="health-empty">Brak punktów planu na dziś</div></div>
     </section>
 
   </div><!-- /view--daily -->
 
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  <!-- ─────────────────────────────────────────────────────────────────────
        VIEW: WEEKLY
-       â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+       ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--weekly hidden" data-view="weekly">
 
     <section class="panel panel--week-meta">
       <div class="week-nav">
-        <button class="btn-nav" id="weekPrev">â€ą Poprzedni tydzieĹ„</button>
-        <span class="week-nav-label" id="weekLabel">â€”</span>
-        <button class="btn-nav" id="weekNext">NastÄ™pny tydzieĹ„ â€ş</button>
-        <button class="btn-nav btn-nav--today" id="weekCurrent">BieĹĽÄ…cy</button>
-        <span class="trend-badge" id="weekTrendBadge">â€”</span>
+        <button class="btn-nav" id="weekPrev">‹ Poprzedni tydzień</button>
+        <span class="week-nav-label" id="weekLabel">—</span>
+        <button class="btn-nav" id="weekNext">Następny tydzień ›</button>
+        <button class="btn-nav btn-nav--today" id="weekCurrent">Bieżący</button>
+        <span class="trend-badge" id="weekTrendBadge">—</span>
       </div>
     </section>
 
@@ -468,32 +468,32 @@
     </section>
 
     <section class="panel panel--ema">
-      <div class="panel-label">Trend produktywnoĹ›ci â€” EMA (Î±=0.3) / 14 dni</div>
+      <div class="panel-label">Trend produktywności — EMA (α=0.3) / 14 dni</div>
       <div class="chart-wrap chart-wrap--lg"><canvas id="emaChart"></canvas></div>
       <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:8px">
-        Linia ciÄ…gĹ‚a = EMA wygĹ‚adzone. Linia przerywana = surowe dane.
+        Linia ciągła = EMA wygładzone. Linia przerywana = surowe dane.
       </p>
     </section>
 
-    <!-- Markov â€” locked until Level 3 -->
+    <!-- Markov — locked until Level 3 -->
     <section class="panel panel--markov">
-      <div class="panel-label">Sekwencje aktywnoĹ›ci â€” Markov Chain</div>
+      <div class="panel-label">Sekwencje aktywności — Markov Chain</div>
       <table class="markov-table">
         <tbody id="markovTable">
-          <tr><td colspan="4" class="empty-row">Ĺadowanie...</td></tr>
+          <tr><td colspan="4" class="empty-row">Ładowanie...</td></tr>
         </tbody>
       </table>
     </section>
 
-    <!-- Bayesian â€” locked until Level 3 -->
+    <!-- Bayesian — locked until Level 3 -->
     <section class="panel panel--bayes">
-      <div class="panel-label">Bayesian â€” estymacje czasu per kategoria</div>
+      <div class="panel-label">Bayesian — estymacje czasu per kategoria</div>
       <table class="stats-table">
         <thead>
-          <tr><th>Kategoria</th><th>Ĺšr. Bayes</th><th>Odch. std</th><th>PrĂłbki</th></tr>
+          <tr><th>Kategoria</th><th>Śr. Bayes</th><th>Odch. std</th><th>Próbki</th></tr>
         </thead>
         <tbody id="bayesTable">
-          <tr><td colspan="4" class="empty-row">Ĺadowanie...</td></tr>
+          <tr><td colspan="4" class="empty-row">Ładowanie...</td></tr>
         </tbody>
       </table>
     </section>
@@ -501,21 +501,21 @@
     <section class="panel panel--week-insights">
       <div class="panel-label">Wnioski tygodniowe</div>
       <ul class="insights-list" id="weeklyInsights">
-        <li><span class="insight-icon">đź“Š</span>Ĺadowanie...</li>
+        <li><span class="insight-icon">📊</span>Ładowanie...</li>
       </ul>
     </section>
 
   </div><!-- /view--weekly -->
 
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  <!-- ─────────────────────────────────────────────────────────────────────
        VIEW: HEALTH
-       â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+       ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--health hidden" data-view="health">
 
     <!-- Water tracker with cap + undo -->
     <section class="panel panel--water">
-      <div class="panel-label">đź’§ Nawodnienie</div>
+      <div class="panel-label">💧 Nawodnienie</div>
       <div class="water-progress-wrap">
         <div class="water-progress-track">
           <div class="water-progress-fill" id="waterProgress" style="width:0%"></div>
@@ -525,66 +525,66 @@
           <span id="waterProgressPct">0%</span>
         </div>
       </div>
-      <p class="water-info">Kliknij szklankÄ™ aby zalogowaÄ‡ 250ml:</p>
+      <p class="water-info">Kliknij szklankę aby zalogować 250ml:</p>
       <div class="water-glasses" id="waterGlasses"></div>
       <div class="water-actions">
-        <button class="btn-secondary" id="btnWaterUndo" style="width:auto;padding:6px 14px">â†© Cofnij ostatniÄ…</button>
-        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">Maks: 12 szklanek/dzieĹ„</span>
+        <button class="btn-secondary" id="btnWaterUndo" style="width:auto;padding:6px 14px">↩ Cofnij ostatnią</button>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">Maks: 12 szklanek/dzień</span>
       </div>
     </section>
 
     <!-- Meals with caloric tracking -->
     <section class="panel panel--meals">
-      <div class="panel-label">đźŤ˝ď¸Ź PosiĹ‚ki</div>
+      <div class="panel-label">🍽️ Posiłki</div>
       <div class="meal-input-row">
         <select class="form-input" id="mealType" style="flex:1">
-          <option value="breakfast">đźŚ… Ĺšniadanie</option>
-          <option value="lunch">â€ď¸Ź Obiad</option>
-          <option value="dinner">đźŚ™ Kolacja</option>
-          <option value="snack">đźŤŽ PrzekÄ…ska</option>
+          <option value="breakfast">🌅 Śniadanie</option>
+          <option value="lunch">☀️ Obiad</option>
+          <option value="dinner">🌙 Kolacja</option>
+          <option value="snack">🍎 Przekąska</option>
         </select>
         <input class="form-input" id="mealCalories" type="number" min="0" max="5000" placeholder="kcal" style="width:90px"/>
         <button class="btn-primary" id="btnLogMeal" style="white-space:nowrap;padding:9px 14px">+ Dodaj</button>
       </div>
-      <div id="mealLog"><div class="health-empty">Brak posiĹ‚kĂłw dziĹ›</div></div>
+      <div id="mealLog"><div class="health-empty">Brak posiłków dziś</div></div>
       <div class="meal-calorie-total" id="mealCalTotal" style="display:none">
-        ĹÄ…cznie dziĹ›: <strong id="mealCalSum">0</strong> kcal
+        Łącznie dziś: <strong id="mealCalSum">0</strong> kcal
       </div>
     </section>
 
     <!-- Movement -->
     <section class="panel panel--movement">
-      <div class="panel-label">đźŹ Ruch fizyczny</div>
-      <div id="movementTotal">0 min ruchu dziĹ›</div>
+      <div class="panel-label">🏃 Ruch fizyczny</div>
+      <div id="movementTotal">0 min ruchu dziś</div>
       <div class="move-btns">
         <button class="btn-move" data-move="5">+5 min</button>
         <button class="btn-move" data-move="10">+10 min</button>
-        <button class="btn-move" data-move="15">+15 min đźš¶</button>
-        <button class="btn-move" data-move="30">+30 min đźŹ</button>
-        <button class="btn-move" data-move="60">+60 min đźŹ‹ď¸Ź</button>
+        <button class="btn-move" data-move="15">+15 min 🚶</button>
+        <button class="btn-move" data-move="30">+30 min 🏃</button>
+        <button class="btn-move" data-move="60">+60 min 🏋️</button>
       </div>
       <div id="movementLog">
-        <div class="health-empty">Brak aktywnoĹ›ci fizycznej dziĹ›</div>
+        <div class="health-empty">Brak aktywności fizycznej dziś</div>
       </div>
     </section>
 
   </div><!-- /view--health -->
 
 
-  <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  <!-- ─────────────────────────────────────────────────────────────────────
        VIEW: SLEEP
-       â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+       ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--sleep hidden" data-view="sleep">
 
     <section class="panel panel--sleep-calc">
-      <div class="panel-label">đźŚ™ Kalkulator Cykli Snu (90 min/cykl)</div>
+      <div class="panel-label">🌙 Kalkulator Cykli Snu (90 min/cykl)</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">
-        Podaj godzinÄ™ wstania â†’ kalkulator wyznacza idealny moment zaĹ›niÄ™cia
-        (5 cykli = 7.5h + 15 min na zaĹ›niÄ™cie).
+        Podaj godzinę wstania → kalkulator wyznacza idealny moment zaśnięcia
+        (5 cykli = 7.5h + 15 min na zaśnięcie).
       </p>
       <div class="sleep-calc-row">
         <div class="form-group" style="flex:1">
-          <label class="form-label">ChcÄ™ wstaÄ‡ o:</label>
+          <label class="form-label">Chcę wstać o:</label>
           <input class="form-input" id="sleepWakeTime" type="time" value="07:00"/>
         </div>
         <button class="btn-primary" id="btnCalcSleep" style="margin-top:20px;align-self:flex-end">Oblicz</button>
@@ -592,20 +592,20 @@
       <div id="sleepResults" style="display:none">
         <div class="sleep-result-grid" id="sleepResultGrid"></div>
         <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-          âšˇ BudĹş siÄ™ miÄ™dzy cyklami â€” unikaj przerywania fazy REM.
+          ⚡ Budź się między cyklami — unikaj przerywania fazy REM.
         </p>
       </div>
     </section>
 
     <section class="panel panel--sleep-log">
-      <div class="panel-label">đź“‹ Loguj ostatni sen</div>
+      <div class="panel-label">📋 Loguj ostatni sen</div>
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">Data pĂłjĹ›cia spaÄ‡</label>
+          <label class="form-label">Data pójścia spać</label>
           <input class="form-input" id="sleepDate" type="date"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Pora zaĹ›niÄ™cia</label>
+          <label class="form-label">Pora zaśnięcia</label>
           <input class="form-input" id="sleepBedtime" type="time"/>
         </div>
         <div class="form-group">
@@ -613,12 +613,12 @@
           <input class="form-input" id="sleepWakeLog" type="time"/>
         </div>
         <div class="form-group">
-          <label class="form-label">JakoĹ›Ä‡ (1-5)</label>
+          <label class="form-label">Jakość (1-5)</label>
           <input class="form-input" id="sleepQuality" type="number" min="1" max="5" placeholder="3"/>
         </div>
       </div>
       <div class="form-actions" style="margin-top:12px">
-        <button class="btn-primary" id="btnLogSleep">đź’ľ Zapisz sen</button>
+        <button class="btn-primary" id="btnLogSleep">💾 Zapisz sen</button>
       </div>
     </section>
 
@@ -628,9 +628,9 @@
     </section>
 
     <section class="panel panel--sleep-alarm" style="grid-column:1/-1">
-      <div class="panel-label">âŹ° Budzik Lokalny</div>
+      <div class="panel-label">⏰ Budzik Lokalny</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-        Ustaw godzinÄ™ alarmu. FocusOS sprawdza czas lokalnie i uruchamia dzwonek bez backendu.
+        Ustaw godzinę alarmu. FocusOS sprawdza czas lokalnie i uruchamia dzwonek bez backendu.
       </p>
       <div class="sleep-calc-row">
         <div class="form-group" style="flex:1">
@@ -644,12 +644,12 @@
     </section>
 
     <section class="panel panel--sleep-notes" style="grid-column:1/-1">
-      <div class="panel-label">Notes SnĂłw</div>
+      <div class="panel-label">Notes Snów</div>
       <div class="meal-input-row">
-        <input class="form-input" id="sleepNoteInput" type="text" placeholder="Dodaj notatkÄ™ snu..." />
+        <input class="form-input" id="sleepNoteInput" type="text" placeholder="Dodaj notatkę snu..." />
         <button class="btn-primary" id="btnAddSleepNote" style="width:auto;white-space:nowrap">+ Dodaj</button>
       </div>
-      <div id="sleepNotesList"><div class="health-empty">Brak notatek snĂłw</div></div>
+      <div id="sleepNotesList"><div class="health-empty">Brak notatek snów</div></div>
     </section>
 
   </div><!-- /view--sleep -->
@@ -731,6 +731,7 @@
       <div class="form-actions" style="margin-top:0">
         <button class="btn-primary hidden" id="installButton">Install FocusOS</button>
         <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup to Google Drive</button>
+        <button class="btn-secondary" id="btnShowAccessScreen" style="width:auto;padding:10px 14px">Access screen</button>
       </div>
       <div class="form-actions" style="margin-top:10px">
         <button class="btn-secondary" id="btnOpenBackfill" style="width:auto;padding:10px 14px">Retro</button>
@@ -753,12 +754,12 @@
       <div class="panel-label">FocusOS - Local Productivity Intelligence</div>
       <h2 style="font-size:24px;margin-bottom:10px;color:var(--accent)">FocusOS - Local Productivity Intelligence</h2>
       <p style="font-size:14px;line-height:1.8;color:var(--text);margin-bottom:14px">
-        FocusOS to narzÄ™dzie produktywnoĹ›ci zbudowane w filozofii <strong>Local-First</strong>:
-        brak backendu, brak zewnÄ™trznej chmury i peĹ‚na kontrola nad danymi.
+        FocusOS to narzędzie produktywności zbudowane w filozofii <strong>Local-First</strong>:
+        brak backendu, brak zewnętrznej chmury i pełna kontrola nad danymi.
       </p>
       <p style="font-size:13px;line-height:1.8;color:var(--text-muted);margin-bottom:18px">
-        Twoje dane pozostajÄ… na urzÄ…dzeniu (IndexedDB i localStorage), a Ty decydujesz,
-        kiedy wykonaÄ‡ eksport lub kopiÄ™ zapasowÄ… na wĹ‚asne konto.
+        Twoje dane pozostają na urządzeniu (IndexedDB i localStorage), a Ty decydujesz,
+        kiedy wykonać eksport lub kopię zapasową na własne konto.
       </p>
       <div class="about-socials">
         <a class="about-social-link" href="https://x.com" target="_blank" rel="noreferrer noopener">X / Twitter</a>
@@ -778,7 +779,7 @@
         </button>
         <button class="profile-nav-btn" data-dashboard-section="notes">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-          Notes SnĂłw
+          Notes Snów
           <span class="profile-nav-count" id="cntSleepNotes">0</span>
         </button>
         <button class="profile-nav-btn" data-dashboard-section="socials">
@@ -800,16 +801,16 @@
             <input class="form-input" id="dayPlanInputProfile" type="text" placeholder="Dodaj punkt planu dnia..." />
             <button class="btn-primary" id="btnAddDayPlanProfile" style="width:auto;white-space:nowrap">+ Dodaj</button>
           </div>
-          <div id="dayPlanListProfile"><div class="health-empty">Brak punktĂłw planu na dziĹ›</div></div>
+          <div id="dayPlanListProfile"><div class="health-empty">Brak punktów planu na dziś</div></div>
         </section>
 
         <section class="dash-section" data-dashboard-panel="notes">
-          <div class="panel-label">Notes SnĂłw</div>
+          <div class="panel-label">Notes Snów</div>
           <div class="meal-input-row">
-            <input class="form-input" id="sleepNoteInputProfile" type="text" placeholder="Dodaj notatkÄ™ snu..." />
+            <input class="form-input" id="sleepNoteInputProfile" type="text" placeholder="Dodaj notatkę snu..." />
             <button class="btn-primary" id="btnAddSleepNoteProfile" style="width:auto;white-space:nowrap">+ Dodaj</button>
           </div>
-          <div id="sleepNotesListProfile"><div class="health-empty">Brak notatek snĂłw</div></div>
+          <div id="sleepNotesListProfile"><div class="health-empty">Brak notatek snów</div></div>
         </section>
 
         <section class="dash-section" data-dashboard-panel="socials">
@@ -828,7 +829,7 @@
             <button class="btn-primary" id="btnSaveSocials">Zapisz Socials</button>
             <button class="btn-secondary" id="btnRestartOnboarding" style="width:auto;padding:8px 12px">Uruchom samouczek ponownie</button>
           </div>
-          <div id="socialsPreview" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Brak zapisanych linkĂłw.</div>
+          <div id="socialsPreview" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Brak zapisanych linków.</div>
         </section>
 
         <section class="dash-section" data-dashboard-panel="wallet">
@@ -851,66 +852,66 @@
 </main>
 
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      MODAL: Welcome / Onboarding (Phase 1)
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <div class="modal modal--welcome" id="welcomeModal">
   <div class="modal-card modal-card--welcome">
-    <div class="welcome-glyph">âšˇ</div>
+    <div class="welcome-glyph">⚡</div>
     <h1 class="welcome-title">FocusOS</h1>
     <p class="welcome-sub">Local-First Productivity Intelligence</p>
     <ul class="welcome-features">
-      <li><span class="wf-icon">đź§ </span><div><strong>100% Offline</strong> â€” dane nigdy nie opuszczajÄ… Twojej przeglÄ…darki.</div></li>
-      <li><span class="wf-icon">đź“</span><div><strong>Zaawansowana matematyka</strong> â€” Bayesian, Markov, EMA, K-Means.</div></li>
-      <li><span class="wf-icon">đźŽ®</span><div><strong>System XP</strong> â€” odblokowuj analitykÄ™ uczÄ…c siÄ™ produktywnoĹ›ci.</div></li>
-      <li><span class="wf-icon">đź©ş</span><div><strong>Bio-Tracking</strong> â€” woda, sen, kalorie, ruch.</div></li>
+      <li><span class="wf-icon">🧠</span><div><strong>100% Offline</strong> — dane nigdy nie opuszczają Twojej przeglądarki.</div></li>
+      <li><span class="wf-icon">📐</span><div><strong>Zaawansowana matematyka</strong> — Bayesian, Markov, EMA, K-Means.</div></li>
+      <li><span class="wf-icon">🎮</span><div><strong>System XP</strong> — odblokowuj analitykę ucząc się produktywności.</div></li>
+      <li><span class="wf-icon">🩺</span><div><strong>Bio-Tracking</strong> — woda, sen, kalorie, ruch.</div></li>
     </ul>
-    <button class="btn-primary btn-welcome-enter" id="btnWelcomeEnter">âšˇ WejdĹş do aplikacji</button>
-    <p class="welcome-footer">Twoje dane: IndexedDB Â· Brak chmury Â· Brak trackingu</p>
+    <button class="btn-primary btn-welcome-enter" id="btnWelcomeEnter" type="button">⚡ Wejdź do aplikacji</button>
+    <p class="welcome-footer">Twoje dane: IndexedDB · Brak chmury · Brak trackingu</p>
   </div>
 </div>
 
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      MODAL: Toxic Productivity Warning (Phase 4)
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="toxicModal">
   <div class="modal-card">
     <div class="modal-title" style="color:var(--accent3)">
-      <span>đźš¨</span> Toksyczna ProduktywnoĹ›Ä‡
+      <span>🚨</span> Toksyczna Produktywność
     </div>
     <p style="font-size:14px;line-height:1.7;margin-bottom:16px">
-      Wykryto <strong id="toxicSessionHours">5+</strong> godzin ciÄ…gĹ‚ej pracy kategorii
-      <strong id="toxicCatName">â€”</strong> bez przerwy.<br><br>
-      TwĂłj mĂłzg potrzebuje odpoczynku. CiÄ…gĹ‚a praca powyĹĽej 90 minut zmniejsza wydajnoĹ›Ä‡
-      poznawczÄ… o ponad 25% (Ericsson Research). ZrĂłb teraz <strong>minimum 30 minut przerwy</strong>.
+      Wykryto <strong id="toxicSessionHours">5+</strong> godzin ciągłej pracy kategorii
+      <strong id="toxicCatName">—</strong> bez przerwy.<br><br>
+      Twój mózg potrzebuje odpoczynku. Ciągła praca powyżej 90 minut zmniejsza wydajność
+      poznawczą o ponad 25% (Ericsson Research). Zrób teraz <strong>minimum 30 minut przerwy</strong>.
     </p>
     <div style="background:var(--bg3);border:1px solid var(--border-err);border-radius:var(--radius);padding:12px;font-family:var(--font-mono);font-size:11px;color:var(--accent4);margin-bottom:18px">
-      đź’ˇ Sugestia: wyjdĹş na spacer, zjedz coĹ›, oderwij wzrok od ekranu.
+      💡 Sugestia: wyjdź na spacer, zjedz coś, oderwij wzrok od ekranu.
     </div>
     <div class="form-actions">
       <button class="btn-primary" id="btnToxicSnooze" style="background:var(--bg3);border:1px solid var(--border);color:var(--text-muted)">Rozumiem, przypomnij za 1h</button>
-      <button class="btn-primary" id="btnToxicBreak" style="background:var(--accent3);color:#fff">đź›‘ Zacznij przerwÄ™ teraz</button>
+      <button class="btn-primary" id="btnToxicBreak" style="background:var(--accent3);color:#fff">🛑 Zacznij przerwę teraz</button>
     </div>
   </div>
 </div>
 
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      MODAL: Backfill (Retroactive time entry)
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="backfillModal">
   <div class="modal-card">
-    <button class="modal-close" id="backfillClose">Ă—</button>
-    <div class="modal-title"><span>âŹŞ</span> Dodaj retro-wpis</div>
+    <button class="modal-close" id="backfillClose">×</button>
+    <div class="modal-title"><span>⏪</span> Dodaj retro-wpis</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">
-      Zaloguj aktywnoĹ›Ä‡, ktĂłra juĹĽ siÄ™ odbyĹ‚a â€” np. "czytaĹ‚em 2h wczoraj o 14:00".
+      Zaloguj aktywność, która już się odbyła — np. "czytałem 2h wczoraj o 14:00".
     </p>
     <form id="backfillForm" novalidate>
       <div class="form-grid">
         <div class="form-group span-2">
           <label class="form-label">Nazwa zadania *</label>
-          <input class="form-input" id="backfillName" type="text" placeholder="np. Czytanie â€” Atomic Habits" required maxlength="80"/>
+          <input class="form-input" id="backfillName" type="text" placeholder="np. Czytanie — Atomic Habits" required maxlength="80"/>
         </div>
         <div class="form-group">
           <label class="form-label">Kategoria</label>
@@ -942,27 +943,27 @@
         </div>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn-primary">âś… Dodaj wpis</button>
+        <button type="submit" class="btn-primary">✅ Dodaj wpis</button>
       </div>
     </form>
   </div>
 </div>
 
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      MODAL: Notification settings
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <div class="modal" id="notifModal">
   <div class="modal-card">
-    <button class="modal-close" id="notifClose">Ă—</button>
-    <div class="modal-title"><span>đź””</span> Smart Alerts</div>
+    <button class="modal-close" id="notifClose">×</button>
+    <div class="modal-title"><span>🔔</span> Smart Alerts</div>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">
-      Powiadomienia przeglÄ…darkowe i alerty in-app dziaĹ‚ajÄ… bez serwera.
+      Powiadomienia przeglądarkowe i alerty in-app działają bez serwera.
     </p>
     <div class="notif-row">
       <div class="notif-label">
-        đź’§ Przypomnienie o wodzie
-        <small>Alert gdy za dĹ‚ugo nie piĹ‚eĹ› wody</small>
+        💧 Przypomnienie o wodzie
+        <small>Alert gdy za długo nie piłeś wody</small>
       </div>
       <div class="notif-ctrl">
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">co</span>
@@ -973,8 +974,8 @@
     </div>
     <div class="notif-row">
       <div class="notif-label">
-        đź§  Przypomnienie o przerwie
-        <small>Alert po ciÄ…gĹ‚ej pracy (Krzywa ZmÄ™czenia)</small>
+        🧠 Przypomnienie o przerwie
+        <small>Alert po ciągłej pracy (Krzywa Zmęczenia)</small>
       </div>
       <div class="notif-ctrl">
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">po</span>
@@ -984,18 +985,18 @@
       </div>
     </div>
     <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:14px;line-height:1.7">
-      âšˇ Alerty dziaĹ‚ajÄ… tylko gdy karta przeglÄ…darki jest otwarta.
+      ⚡ Alerty działają tylko gdy karta przeglądarki jest otwarta.
     </p>
     <div class="form-actions">
-      <button class="btn-primary" id="notifSave">đź’ľ Zapisz ustawienia</button>
+      <button class="btn-primary" id="notifSave">💾 Zapisz ustawienia</button>
     </div>
   </div>
 </div>
 
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+<!-- ═══════════════════════════════════════════════════════════════════════
      TUTORIAL TOOLTIPS (Phase 1)
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+     ═══════════════════════════════════════════════════════════════════════ -->
 <div id="tutorialOverlay" style="display:none">
   <div class="tut-backdrop"></div>
   <div class="tut-bubble" id="tutBubble">
@@ -1004,7 +1005,7 @@
       <span class="tut-step" id="tutStep">1 / 4</span>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn-secondary" id="tutSkip" style="width:auto;padding:6px 10px">Skip</button>
-        <button class="tut-next" id="tutNext">Dalej â†’</button>
+        <button class="tut-next" id="tutNext">Dalej →</button>
       </div>
     </div>
     <div class="tut-arrow" id="tutArrow"></div>
@@ -1017,7 +1018,7 @@
 
 <div class="modal" id="levelRewardModal">
   <div class="modal-card">
-    <div class="modal-title"><span>đźŹ›ď¸Ź</span> Level Reward Unlocked</div>
+    <div class="modal-title"><span>🏛️</span> Level Reward Unlocked</div>
     <p id="levelRewardText" style="font-size:14px;line-height:1.7;margin-bottom:16px">New reward unlocked.</p>
     <div class="form-actions" style="margin-top:0">
       <button class="btn-primary" id="btnCloseLevelReward">Continue</button>
@@ -1027,10 +1028,10 @@
 
 <div class="modal" id="resetDataModal">
   <div class="modal-card">
-    <div class="modal-title"><span>âš </span> PotwierdĹş reset danych</div>
-    <p id="resetDataStepText" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">To usunie dane uĹĽytkownika. PotwierdĹş krok 1/3.</p>
+    <div class="modal-title"><span>⚠</span> Potwierdź reset danych</div>
+    <p id="resetDataStepText" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">To usunie dane użytkownika. Potwierdź krok 1/3.</p>
     <div class="form-actions">
-      <button class="btn-primary" id="btnResetDataConfirm">PotwierdĹş 1/3</button>
+      <button class="btn-primary" id="btnResetDataConfirm">Potwierdź 1/3</button>
       <button class="btn-primary" id="btnResetDataCancel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text-muted)">Anuluj</button>
     </div>
   </div>
@@ -1040,20 +1041,18 @@
   <div class="onboarding-backdrop"></div>
   <div class="onboarding-tooltip" id="onboardingTooltip">
     <div class="onboarding-title" id="onboardingTitle">Witamy w FocusOS</div>
-    <div class="onboarding-text" id="onboardingText">KrĂłtki samouczek interfejsu.</div>
+    <div class="onboarding-text" id="onboardingText">Krótki samouczek interfejsu.</div>
     <div class="onboarding-footer">
-      <button class="btn-secondary" id="btnOnboardingSkip" style="width:auto;padding:7px 12px">PomiĹ„</button>
+      <button class="btn-secondary" id="btnOnboardingSkip" style="width:auto;padding:7px 12px">Pomiń</button>
       <button class="btn-primary" id="btnOnboardingNext" style="width:auto;padding:7px 12px">Dalej</button>
     </div>
   </div>
 </div>
 
 
-<!-- SCRIPTS: order matters â€” DB â†’ MATH â†’ APP -->
+<!-- SCRIPTS: order matters — DB → MATH → APP -->
 <script src="db.js"></script>
 <script src="math.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
-
-
