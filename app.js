@@ -291,7 +291,7 @@ const App = (() => {
       before: () => switchTab('settings'),
     },
     {
-      targetId: 'exportJsonButton',
+      targetId: 'btnExportJSON',
       arrow: 'up',
       text: '💾 Eksport/Import JSON służy do lokalnego backupu i odtworzenia danych na innym urządzeniu.',
       before: () => switchTab('settings'),
@@ -1311,18 +1311,15 @@ const App = (() => {
   }
 
   function initPwaInstall() {
-    const btnInstall = $('btnInstallPwa');
     const installButton = $('installButton');
     const installHint = $('installHint');
-    if (!btnInstall && !installButton) return;
-    if (btnInstall) btnInstall.disabled = true;
+    if (!installButton) return;
     if (installButton) installButton.classList.add('hidden');
 
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       S.deferredInstallPrompt = e;
       S.installAvailable = true;
-      if (btnInstall) btnInstall.disabled = false;
       if (installButton) installButton.classList.remove('hidden');
       if (installHint) installHint.textContent = t('installReady');
     });
@@ -1335,13 +1332,11 @@ const App = (() => {
       S.deferredInstallPrompt.prompt();
       const choice = await S.deferredInstallPrompt.userChoice;
       S.deferredInstallPrompt = null;
-      if (btnInstall) btnInstall.disabled = true;
       if (installButton) installButton.classList.add('hidden');
       if (choice.outcome === 'accepted') showToast(t('installDone'), 'success');
       else showToast(t('installDismissed'), 'info');
     };
 
-    btnInstall?.addEventListener('click', installNow);
     installButton?.addEventListener('click', installNow);
   }
 
@@ -2001,45 +1996,6 @@ const App = (() => {
     } catch { showToast('❌ Błąd eksportu CSV', 'error'); }
   }
 
-  function exportFocusOSData() {
-    const payload = {};
-    Object.keys(localStorage).forEach(key => {
-      try {
-        payload[key] = JSON.parse(localStorage.getItem(key));
-      } catch {
-        payload[key] = localStorage.getItem(key);
-      }
-    });
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = 'FocusOS_Backup.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function importFocusOSData(event) {
-    const file = event?.target?.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        Object.keys(localStorage).forEach(key => localStorage.removeItem(key));
-        Object.entries(data).forEach(([key, value]) => {
-          if (typeof value === 'string') localStorage.setItem(key, value);
-          else localStorage.setItem(key, JSON.stringify(value));
-        });
-        showToast('✅ Import localStorage zakończony. Odświeżam...', 'success', 4500);
-        setTimeout(() => location.reload(), 1200);
-      } catch (error) {
-        showToast('❌ Nieprawidłowy plik JSON: ' + error.message, 'error');
-      }
-    };
-    reader.readAsText(file);
-  }
-
   async function handleExportJSON() {
     try {
       const dbPayload = JSON.parse(await DB.exportJSON());
@@ -2131,12 +2087,6 @@ const App = (() => {
     $('importFileInput').addEventListener('change', e => {
       if (e.target.files[0]) handleImportJSON(e.target.files[0]);
     });
-    $('exportJsonButton')?.addEventListener('click', () => {
-      exportFocusOSData();
-      showToast('📦 FocusOS_Backup.json gotowy do pobrania', 'success');
-    });
-    $('importJsonButton')?.addEventListener('click', () => $('importJsonInput')?.click());
-    $('importJsonInput')?.addEventListener('change', importFocusOSData);
     $('btnRefresh').addEventListener('click', async () => {
       await loadTrackerView();
       showToast('↻ Odświeżono', 'info');

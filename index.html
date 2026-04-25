@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="FocusOS"/>
-<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+<link rel="apple-touch-icon" href="/FocusOS/icons/icon-192.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
@@ -74,27 +74,6 @@
     <div class="header-controls">
       <div id="modeIndicator" class="mode-indicator">Mode: Offline</div>
       <div class="live-clock" id="clock">00:00:00</div>
-      <button class="btn-icon" id="btnOpenBackfill" title="Dodaj retro-wpis">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Retro
-      </button>
-      <button class="btn-icon" id="btnOpenNotif" title="Ustawienia powiadomień">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        Alerty
-      </button>
-      <button class="btn-icon" id="btnExportJSON" title="Eksportuj JSON (pełna kopia)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        JSON
-      </button>
-      <button class="btn-icon" id="btnImportJSON" title="Importuj JSON">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Import
-      </button>
-      <input type="file" id="importFileInput" accept=".json" style="display:none"/>
-      <button class="btn-icon" id="btnExport" title="Eksportuj CSV">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        CSV
-      </button>
     </div>
   </div>
 </header>
@@ -515,20 +494,24 @@
     <section class="panel panel--settings-sync">
       <div class="panel-label">☁ Integracje i kopie zapasowe</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-        FocusOS działa local-first. Możesz ręcznie zainstalować aplikację i wysłać kopię danych na Google Drive.
+        FocusOS działa local-first. Tu zarządzasz instalacją PWA, eksportem i importem danych.
       </p>
       <div class="form-actions" style="margin-top:0">
-        <button class="btn-primary" id="btnInstallPwa">Zainstaluj Aplikację</button>
+        <button class="btn-primary hidden" id="installButton">Zainstaluj FocusOS na urządzeniu</button>
         <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Połącz z kontem Google / Wyślij Kopię Zapasową</button>
       </div>
       <div class="form-actions" style="margin-top:10px">
-        <button class="btn-primary hidden" id="installButton">Zainstaluj Aplikację (PWA)</button>
-        <button class="btn-secondary" id="exportJsonButton" style="width:auto;padding:10px 14px">Eksportuj JSON</button>
-        <button class="btn-secondary" id="importJsonButton" style="width:auto;padding:10px 14px">Importuj JSON</button>
-        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none"/>
+        <button class="btn-secondary" id="btnOpenBackfill" style="width:auto;padding:10px 14px">Retro</button>
+        <button class="btn-secondary" id="btnOpenNotif" style="width:auto;padding:10px 14px">Alerty</button>
+        <button class="btn-secondary" id="btnExport" style="width:auto;padding:10px 14px">Eksportuj CSV</button>
+      </div>
+      <div class="form-actions" style="margin-top:10px">
+        <button class="btn-secondary" id="btnExportJSON" style="width:auto;padding:10px 14px">Eksportuj JSON</button>
+        <button class="btn-secondary" id="btnImportJSON" style="width:auto;padding:10px 14px">Importuj JSON</button>
+        <input type="file" id="importFileInput" accept=".json,application/json" style="display:none"/>
       </div>
       <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-        Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.
+        Przycisk instalacji pojawi się automatycznie, gdy przeglądarka zgłosi możliwość instalacji PWA.
       </div>
     </section>
   </div><!-- /view--settings -->

@@ -17,9 +17,9 @@ const STATIC_ASSETS = [
   '/db.js',
   '/math.js',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon.svg',
+  '/FocusOS/icons/icon-192.png',
+  '/FocusOS/icons/icon-512.png',
+  '/FocusOS/icons/icon.svg',
 ];
 
 self.addEventListener('install', (event) => {
