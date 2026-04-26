@@ -4550,3 +4550,224 @@ button:disabled {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Desktop layout polish */
+@media (min-width: 981px) {
+  .header-drawer {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-content: start;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 18px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .header-drawer .tab-nav,
+  .header-drawer .header-controls {
+    width: 100%;
+  }
+
+  .header-drawer .header-controls {
+    margin-top: 0;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+  }
+
+  .mode-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mode-indicator,
+  .live-clock {
+    width: 100%;
+    padding-inline: 0;
+  }
+
+  .live-clock {
+    text-align: left;
+  }
+
+  .main {
+    width: min(1720px, calc(100vw - 260px));
+    max-width: none;
+    padding: 32px 36px 44px;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1500px) {
+  .view--tracker,
+  body[data-ux-mode="zen"] .view--tracker {
+    grid-template-columns: 1fr;
+  }
+
+  .panel--tracker-main,
+  .panel--zeus,
+  .panel--quick-actions,
+  .panel--backup,
+  .panel--qs,
+  .panel--log,
+  body[data-ux-mode="zen"] .panel--tracker-main,
+  body[data-ux-mode="zen"] .panel--zeus,
+  body[data-ux-mode="zen"] .panel--log {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .panel--zeus,
+  body[data-ux-mode="zen"] .panel--zeus {
+    position: relative;
+    top: 0;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .focus-hero,
+  .focus-hero-copy,
+  .focus-hero-status,
+  .quick-start,
+  .quick-start-head > div,
+  .focus-stage-card,
+  .focus-stage-top > div,
+  .focus-cycle-card,
+  .focus-cycle-card__head > div,
+  .active-task-card,
+  .zeus-stage,
+  .zeus-copy {
+    min-width: 0;
+  }
+
+  .focus-flow-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .focus-stage-card--complete {
+    grid-column: 1 / -1;
+  }
+
+  .quick-start-head,
+  .focus-cycle-card__head,
+  .atc-meta,
+  .zeus-head {
+    flex-wrap: wrap;
+  }
+
+  .focus-cycle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-cycle-grid > .sound-toggle {
+    grid-column: 1 / -1;
+  }
+
+  .focus-completion-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-completion-actions > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .zeus-shell {
+    grid-template-columns: minmax(144px, 156px) minmax(0, 1fr);
+  }
+
+  .zeus-message {
+    font-size: clamp(24px, 2vw, 30px);
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .zeus-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zeus-actions > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1501px) {
+  .view--tracker,
+  body[data-ux-mode="zen"] .view--tracker {
+    gap: 28px;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+  }
+
+  .panel--zeus,
+  body[data-ux-mode="zen"] .panel--zeus {
+    min-width: 360px;
+    max-width: 400px;
+  }
+
+  .focus-hero,
+  .focus-hero-copy,
+  .focus-hero-status,
+  .quick-start,
+  .quick-start-head > div,
+  .focus-stage-card,
+  .focus-stage-top > div,
+  .focus-cycle-card,
+  .focus-cycle-card__head > div,
+  .active-task-card,
+  .zeus-stage,
+  .zeus-copy {
+    min-width: 0;
+  }
+
+  .focus-flow-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .focus-stage-card--complete {
+    grid-column: 1 / -1;
+  }
+
+  .quick-start-head,
+  .focus-cycle-card__head,
+  .atc-meta,
+  .zeus-head {
+    flex-wrap: wrap;
+  }
+
+  .focus-cycle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-cycle-grid > .sound-toggle {
+    grid-column: 1 / -1;
+  }
+
+  .focus-completion-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-completion-actions > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .zeus-shell {
+    grid-template-columns: minmax(144px, 156px) minmax(0, 1fr);
+  }
+
+  .zeus-message {
+    font-size: clamp(24px, 2vw, 30px);
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .zeus-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .zeus-actions > :last-child {
+    grid-column: 1 / -1;
+  }
+}
