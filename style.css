@@ -4476,3 +4476,77 @@ button:disabled {
     text-align: left;
   }
 }
+
+/* Desktop tracker grid stabilization */
+@media (min-width: 1081px) {
+  .main {
+    margin-left: 260px;
+    width: min(1600px, calc(100vw - 260px));
+    max-width: none;
+    padding: 32px;
+  }
+
+  .view--tracker,
+  body[data-ux-mode="zen"] .view--tracker {
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 440px);
+    grid-template-rows: auto auto auto auto auto;
+    align-items: start;
+  }
+
+  .panel--tracker-main,
+  body[data-ux-mode="zen"] .panel--tracker-main {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .panel--zeus,
+  body[data-ux-mode="zen"] .panel--zeus {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 32px;
+    width: 100%;
+    min-width: 400px;
+    max-width: 440px;
+    justify-self: stretch;
+    align-self: start;
+    z-index: 24;
+  }
+
+  .panel--quick-actions {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .panel--backup {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .panel--qs {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    position: relative;
+    top: auto;
+  }
+
+  .panel--log,
+  body[data-ux-mode="zen"] .panel--log {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  .zeus-shell {
+    grid-template-columns: minmax(148px, 164px) minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .zeus-message {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .zeus-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
