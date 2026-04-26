@@ -1,0 +1,438 @@
+/* ============================================================================
+   ZEUS HOLOGRAM - Hologram Assistant Styles
+   Animacje CSS-only, glow effects, responsywne
+   ============================================================================ */
+
+/* ============================================================================
+   KONTENER GŁÓWNY
+   ============================================================================ */
+
+.zeusContainer {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.zeusContainer.mobile {
+  right: 16px;
+  bottom: 24px;
+  top: auto;
+  transform: none;
+}
+
+/* ============================================================================
+   WIDGET GŁÓWNY
+   ============================================================================ */
+
+.zeusWidget {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* ============================================================================
+   STAN ZWINIĘTY - Glowing Orb
+   ============================================================================ */
+
+.zeusOrbCollapsed {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 229, 255, 0.4), rgba(124, 58, 237, 0.1));
+  border: 1px solid rgba(0, 229, 255, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 0 10px rgba(0, 229, 255, 0.2),
+    0 0 30px rgba(0, 229, 255, 0.1),
+    inset 0 0 10px rgba(0, 229, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.zeusOrbCollapsed:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 0 15px rgba(0, 229, 255, 0.4),
+    0 0 40px rgba(0, 229, 255, 0.2),
+    inset 0 0 15px rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.7);
+}
+
+.zeusOrbCollapsed:active {
+  transform: scale(0.95);
+}
+
+/* Pulujące światło wokół orba */
+.zeusOrbPulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 229, 255, 0.3);
+  animation: orbPulse 2s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.1;
+  }
+}
+
+/* Avatar wewnątrz orba */
+.zeusAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00E5FF 0%, #7C3AED 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  position: relative;
+  z-index: 2;
+  animation: avatarBreathe 3s ease-in-out infinite;
+}
+
+@keyframes avatarBreathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Scanlines efekt na avatarze */
+.zeusAvatar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   STAN ROZWINIĘTY - Full Panel
+   ============================================================================ */
+
+.zeusPanel {
+  background: rgba(15, 20, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 20px;
+  padding: 16px;
+  min-width: 280px;
+  max-width: 320px;
+  box-shadow: 
+    0 0 20px rgba(0, 229, 255, 0.2),
+    0 0 60px rgba(0, 229, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: panelSlideIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.zeusPanel.mobile {
+  min-width: 240px;
+  max-width: 280px;
+  padding: 12px;
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Zamknięcie panelu */
+.zeusPanel.closing {
+  animation: panelSlideOut 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes panelSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+}
+
+/* ============================================================================
+   ZAWARTOŚĆ PANELU
+   ============================================================================ */
+
+.zeusPanelContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Nagłówek panelu */
+.zeusPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.zeusPanelTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #00E5FF;
+  letter-spacing: 0.5px;
+}
+
+.zeusCloseButton {
+  background: none;
+  border: none;
+  color: rgba(0, 229, 255, 0.6);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+}
+
+.zeusCloseButton:hover {
+  color: rgba(0, 229, 255, 1);
+  transform: rotate(90deg);
+}
+
+/* ============================================================================
+   BUBBLE WIADOMOŚCI
+   ============================================================================ */
+
+.messageBubble {
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #E0F7FF;
+  position: relative;
+  animation: messageAppear 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade out animation */
+.messageBubble.fading {
+  animation: messageFade 300ms ease-out;
+}
+
+@keyframes messageFade {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Bounce reaction */
+.messageBubble.reaction-bounce {
+  animation: messageBounce 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55) 1;
+}
+
+@keyframes messageBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-15px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Glow reaction */
+.messageBubble.reaction-glow {
+  animation: messageGlow 600ms ease-out;
+}
+
+@keyframes messageGlow {
+  0% {
+    box-shadow: 0 0 0px rgba(0, 229, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(0, 229, 255, 0);
+  }
+}
+
+/* Shake reaction */
+.messageBubble.reaction-shake {
+  animation: messageShake 400ms ease-out;
+}
+
+@keyframes messageShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Mouthpiece pulsing when speaking */
+.messageBubble.speaking {
+  animation: messageSpeaking 400ms ease-in-out;
+}
+
+@keyframes messageSpeaking {
+  0%, 100% {
+    border-color: rgba(0, 229, 255, 0.4);
+    background: rgba(0, 229, 255, 0.1);
+  }
+  50% {
+    border-color: rgba(0, 229, 255, 0.7);
+    background: rgba(0, 229, 255, 0.15);
+  }
+}
+
+/* Strzałka bubble'a */
+.messageBubble::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid rgba(0, 229, 255, 0.1);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+/* ============================================================================
+   TOOLBAR - Info i interakcja
+   ============================================================================ */
+
+.zeusToolbar {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 229, 255, 0.2);
+  font-size: 12px;
+  color: rgba(0, 229, 255, 0.6);
+}
+
+.zeusTooltip {
+  opacity: 0.8;
+  transition: opacity 200ms ease;
+}
+
+.zeusTooltip:hover {
+  opacity: 1;
+  color: rgba(0, 229, 255, 0.9);
+}
+
+/* ============================================================================
+   RESPONSYWNE - Mobile
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .zeusContainer {
+    right: 12px;
+    top: auto;
+    bottom: 20px;
+    transform: none;
+  }
+
+  .zeusContainer.mobile {
+    right: 12px;
+    bottom: 20px;
+  }
+
+  .zeusOrbCollapsed {
+    width: 52px;
+    height: 52px;
+  }
+
+  .zeusPanel {
+    min-width: 240px;
+    max-width: 280px;
+    padding: 12px;
+  }
+
+  .messageBubble {
+    font-size: 13px;
+    padding: 10px;
+  }
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT (jeśli będzie przełącznik)
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .zeusPanel {
+    background: rgba(10, 15, 25, 0.97);
+  }
+}
+
+/* ============================================================================
+   PREFERS REDUCED MOTION - accessibility
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .zeusOrbPulse,
+  .zeusAvatar,
+  .zeusOrbCollapsed,
+  .zeusPanel,
+  .messageBubble {
+    animation: none !important;
+    transition: none !important;
+  }
+}
