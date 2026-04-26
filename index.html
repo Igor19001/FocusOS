@@ -58,30 +58,32 @@
         <span class="logo-sub">Lokalnie · Bez backendu · Bez chmury</span>
       </div>
     </div>
-    <button class="btn-hamburger" id="btnNavToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerTabNav">
+    <button class="btn-hamburger" id="btnNavToggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerDrawer">
       <span></span><span></span><span></span>
     </button>
 
-    <nav class="tab-nav" id="headerTabNav">
-      <button class="tab-btn active" data-tab="tracker">Skupienie</button>
-      <button class="tab-btn" data-tab="daily">Statystyki</button>
-      <button class="tab-btn" data-tab="weekly">Raport</button>
-      <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
-      <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
-      <button class="tab-btn" data-tab="settings">Ustawienia</button>
-      <button class="tab-btn" data-tab="about">O aplikacji</button>
-      <button class="tab-btn" data-tab="profile">Profil</button>
-    </nav>
+    <div class="header-drawer" id="headerDrawer">
+      <nav class="tab-nav" id="headerTabNav">
+        <button class="tab-btn active" data-tab="tracker">Skupienie</button>
+        <button class="tab-btn" data-tab="daily">Statystyki</button>
+        <button class="tab-btn" data-tab="weekly">Raport</button>
+        <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
+        <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
+        <button class="tab-btn" data-tab="settings">Ustawienia</button>
+        <button class="tab-btn" data-tab="about">O aplikacji</button>
+        <button class="tab-btn" data-tab="profile">Profil</button>
+      </nav>
 
-    <div class="header-controls">
-      <div class="mode-toggle" id="uxModeToggle" aria-label="Tryb interfejsu">
-        <button class="mode-toggle__btn active" id="btnZenMode" type="button" data-ux-mode-btn="zen">Zen</button>
-        <button class="mode-toggle__btn" id="btnProMode" type="button" data-ux-mode-btn="pro">Pro</button>
+      <div class="header-controls">
+        <div class="mode-toggle" id="uxModeToggle" aria-label="Tryb interfejsu">
+          <button class="mode-toggle__btn active" id="btnZenMode" type="button" data-ux-mode-btn="zen">Zen</button>
+          <button class="mode-toggle__btn" id="btnProMode" type="button" data-ux-mode-btn="pro">Pro</button>
+        </div>
+        <div id="saveStatus" class="mode-indicator mode-indicator--save">Dane zapisane lokalnie</div>
+        <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
+        <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
+        <div class="live-clock" id="clock">00:00:00</div>
       </div>
-      <div id="saveStatus" class="mode-indicator mode-indicator--save">Dane zapisane lokalnie</div>
-      <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
-      <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
-      <div class="live-clock" id="clock">00:00:00</div>
     </div>
   </div>
 </header>

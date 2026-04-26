@@ -677,15 +677,28 @@ const App = (() => {
 
   // ── Tab navigation ────────────────────────────────────────────────────────
 
+  function isCompactHeaderViewport() {
+    return window.innerWidth <= 980;
+  }
+
+  function setResponsiveHeaderOpen(isOpen) {
+    const headerInner = document.querySelector('.header-inner');
+    const toggleBtn = $('btnNavToggle');
+    if (!headerInner || !toggleBtn) return;
+    const nextState = Boolean(isOpen) && isCompactHeaderViewport();
+    headerInner.classList.toggle('nav-open', nextState);
+    toggleBtn.setAttribute('aria-expanded', String(nextState));
+  }
+
+  function closeResponsiveHeader() {
+    setResponsiveHeaderOpen(false);
+  }
+
   function initTabs() {
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         switchTab(btn.dataset.tab);
-        const headerInner = document.querySelector('.header-inner');
-        if (window.innerWidth <= 980 && headerInner) {
-          headerInner.classList.remove('nav-open');
-          $('btnNavToggle')?.setAttribute('aria-expanded', 'false');
-        }
+        closeResponsiveHeader();
       });
     });
   }
@@ -694,15 +707,20 @@ const App = (() => {
     const toggleBtn = $('btnNavToggle');
     const headerInner = document.querySelector('.header-inner');
     if (!toggleBtn || !headerInner) return;
-    toggleBtn.addEventListener('click', () => {
-      const isOpen = headerInner.classList.toggle('nav-open');
-      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+    toggleBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      setResponsiveHeaderOpen(!headerInner.classList.contains('nav-open'));
+    });
+    document.addEventListener('click', event => {
+      if (!isCompactHeaderViewport() || !headerInner.classList.contains('nav-open')) return;
+      if (headerInner.contains(event.target)) return;
+      closeResponsiveHeader();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeResponsiveHeader();
     });
     window.addEventListener('resize', () => {
-      if (window.innerWidth > 980) {
-        headerInner.classList.remove('nav-open');
-        toggleBtn.setAttribute('aria-expanded', 'false');
-      }
+      if (!isCompactHeaderViewport()) closeResponsiveHeader();
     });
   }
 
@@ -1432,8 +1450,7 @@ const App = (() => {
     if ($('tutorialOverlay')) $('tutorialOverlay').style.display = 'none';
     if ($('onboardingOverlay')) $('onboardingOverlay').style.display = 'none';
     $('welcomeModal')?.classList.remove('open');
-    $('headerTabNav')?.classList.remove('open');
-    $('btnNavToggle')?.setAttribute('aria-expanded', 'false');
+    closeResponsiveHeader();
   }
 
   function applyTheme(themeName) {
