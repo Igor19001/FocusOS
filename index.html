@@ -63,17 +63,22 @@
     </button>
 
     <nav class="tab-nav" id="headerTabNav">
-      <button class="tab-btn active" data-tab="tracker">Tracker</button>
-      <button class="tab-btn" data-tab="daily">Daily</button>
-      <button class="tab-btn" data-tab="weekly">Weekly</button>
-      <button class="tab-btn" data-tab="health">Health</button>
-      <button class="tab-btn" data-tab="sleep">Sleep</button>
-      <button class="tab-btn" data-tab="settings">Settings</button>
-      <button class="tab-btn" data-tab="about">About</button>
-      <button class="tab-btn" data-tab="profile">Profile</button>
+      <button class="tab-btn active" data-tab="tracker">Skupienie</button>
+      <button class="tab-btn" data-tab="daily">Statystyki</button>
+      <button class="tab-btn" data-tab="weekly">Raport</button>
+      <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
+      <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
+      <button class="tab-btn" data-tab="settings">Ustawienia</button>
+      <button class="tab-btn" data-tab="about">O aplikacji</button>
+      <button class="tab-btn" data-tab="profile">Profil</button>
     </nav>
 
     <div class="header-controls">
+      <div class="mode-toggle" id="uxModeToggle" aria-label="Tryb interfejsu">
+        <button class="mode-toggle__btn active" id="btnZenMode" type="button" data-ux-mode-btn="zen">Zen</button>
+        <button class="mode-toggle__btn" id="btnProMode" type="button" data-ux-mode-btn="pro">Pro</button>
+      </div>
+      <div id="saveStatus" class="mode-indicator mode-indicator--save">Dane zapisane lokalnie</div>
       <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
       <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
       <div class="live-clock" id="clock">00:00:00</div>
@@ -190,7 +195,10 @@
         <button class="btn-stop" id="btnStop" disabled>Stop</button>
       </div>
 
-      <button class="btn-secondary" id="btnRefresh">Refresh data</button>
+      <div class="tracker-inline-actions">
+        <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
+        <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
+      </div>
     </section>
 
     <section class="panel panel--zeus">
@@ -205,34 +213,38 @@
           <div class="zeus-scanlines" aria-hidden="true"></div>
           <div class="zeus-portrait-shell" aria-hidden="true">
             <div class="zeus-portrait-glow"></div>
-            <svg class="zeus-portrait" viewBox="0 0 420 520">
+            <svg class="zeus-portrait zeus-portrait--funko" viewBox="0 0 360 440">
             <defs>
-              <radialGradient id="zeusBg" cx="50%" cy="36%" r="72%">
-                <stop offset="0%" stop-color="#1d3f6f"></stop>
-                <stop offset="50%" stop-color="#091121"></stop>
+              <radialGradient id="zeusBg" cx="50%" cy="38%" r="72%">
+                <stop offset="0%" stop-color="#1b2f56"></stop>
+                <stop offset="52%" stop-color="#0b1224"></stop>
                 <stop offset="100%" stop-color="#050913"></stop>
               </radialGradient>
-              <radialGradient id="zeusAura" cx="50%" cy="28%" r="46%">
-                <stop offset="0%" stop-color="rgba(83,241,255,0.9)"></stop>
+              <radialGradient id="zeusAura" cx="50%" cy="28%" r="54%">
+                <stop offset="0%" stop-color="rgba(117,240,255,0.92)"></stop>
                 <stop offset="100%" stop-color="rgba(74,222,255,0)"></stop>
               </radialGradient>
-              <radialGradient id="zeusGold" cx="50%" cy="16%" r="46%">
-                <stop offset="0%" stop-color="rgba(250,204,21,0.62)"></stop>
+              <radialGradient id="zeusGold" cx="50%" cy="18%" r="42%">
+                <stop offset="0%" stop-color="rgba(255,214,94,0.62)"></stop>
                 <stop offset="100%" stop-color="rgba(250,204,21,0)"></stop>
               </radialGradient>
-              <linearGradient id="zeusSkin" x1="30%" y1="8%" x2="70%" y2="100%">
-                <stop offset="0%" stop-color="#f3dbbf"></stop>
-                <stop offset="45%" stop-color="#e0b88c"></stop>
-                <stop offset="100%" stop-color="#9a6848"></stop>
+              <linearGradient id="zeusSkin" x1="28%" y1="4%" x2="70%" y2="100%">
+                <stop offset="0%" stop-color="#ffd8be"></stop>
+                <stop offset="45%" stop-color="#efb08e"></stop>
+                <stop offset="100%" stop-color="#af6b53"></stop>
               </linearGradient>
               <linearGradient id="zeusHair" x1="30%" y1="0%" x2="72%" y2="100%">
-                <stop offset="0%" stop-color="#f7fbff"></stop>
-                <stop offset="55%" stop-color="#d7e2f0"></stop>
-                <stop offset="100%" stop-color="#92a6bc"></stop>
+                <stop offset="0%" stop-color="#ffffff"></stop>
+                <stop offset="52%" stop-color="#e2ebf8"></stop>
+                <stop offset="100%" stop-color="#9aafc8"></stop>
               </linearGradient>
               <linearGradient id="zeusRobe" x1="18%" y1="0%" x2="82%" y2="100%">
-                <stop offset="0%" stop-color="#0d2241"></stop>
-                <stop offset="100%" stop-color="#09132b"></stop>
+                <stop offset="0%" stop-color="#fbfbff"></stop>
+                <stop offset="100%" stop-color="#dce7fb"></stop>
+              </linearGradient>
+              <linearGradient id="zeusTrim" x1="18%" y1="0%" x2="82%" y2="100%">
+                <stop offset="0%" stop-color="#f5cf6e"></stop>
+                <stop offset="100%" stop-color="#cc9d2d"></stop>
               </linearGradient>
               <filter id="zeusEyeGlow" x="-100%" y="-100%" width="300%" height="300%">
                 <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
@@ -242,34 +254,44 @@
                 </feMerge>
               </filter>
             </defs>
-              <rect width="420" height="520" rx="48" fill="url(#zeusBg)"></rect>
-              <ellipse class="zeus-aura" cx="210" cy="194" rx="156" ry="170" fill="url(#zeusAura)"></ellipse>
-              <ellipse class="zeus-gold" cx="210" cy="126" rx="138" ry="102" fill="url(#zeusGold)"></ellipse>
+              <rect width="360" height="440" rx="42" fill="url(#zeusBg)"></rect>
+              <ellipse class="zeus-aura" cx="180" cy="170" rx="122" ry="132" fill="url(#zeusAura)"></ellipse>
+              <ellipse class="zeus-gold" cx="180" cy="108" rx="98" ry="78" fill="url(#zeusGold)"></ellipse>
+              <ellipse class="zeus-floor" cx="180" cy="390" rx="94" ry="14" fill="rgba(89,232,255,0.26)"></ellipse>
               <g class="zeus-bolts">
-                <path d="M60 112 L102 148 L86 188 L126 208 L102 252" fill="none" stroke="#59e8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
-                <path d="M360 112 L318 148 L334 188 L294 208 L318 252" fill="none" stroke="#59e8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M256 112 L284 126 L268 154 L296 166 L276 196" fill="none" stroke="#f9d95f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
               </g>
-              <ellipse class="zeus-floor" cx="210" cy="470" rx="116" ry="16" fill="rgba(89,232,255,0.22)"></ellipse>
               <g class="zeus-character">
-                <path d="M156 448 C160 378 174 344 210 344 C246 344 260 378 264 448 Z" fill="url(#zeusRobe)"></path>
-                <path d="M135 412 C150 376 172 356 210 348 C248 356 270 376 285 412" fill="none" stroke="rgba(244,196,106,0.28)" stroke-width="10" stroke-linecap="round"></path>
-                <ellipse cx="210" cy="188" rx="108" ry="104" fill="url(#zeusSkin)"></ellipse>
-                <path d="M150 142 C162 90 206 60 210 60 C214 60 258 90 270 142 C286 120 282 72 248 46 C230 30 219 26 210 26 C201 26 190 30 172 46 C138 72 134 120 150 142 Z" fill="url(#zeusHair)"></path>
-                <path d="M110 214 C110 154 134 106 170 72 C154 122 156 176 166 220 Z" fill="url(#zeusHair)"></path>
-                <path d="M310 214 C310 154 286 106 250 72 C266 122 264 176 254 220 Z" fill="url(#zeusHair)"></path>
-                <ellipse id="zeusEyeLeftBg" cx="170" cy="198" rx="34" ry="34" fill="#112448"></ellipse>
-                <ellipse id="zeusEyeRightBg" cx="250" cy="198" rx="34" ry="34" fill="#112448"></ellipse>
-                <ellipse id="zeusEyeLeft" cx="170" cy="198" rx="18" ry="22" fill="rgba(82,220,255,0.7)" filter="url(#zeusEyeGlow)"></ellipse>
-                <ellipse id="zeusEyeRight" cx="250" cy="198" rx="18" ry="22" fill="rgba(82,220,255,0.7)" filter="url(#zeusEyeGlow)"></ellipse>
-                <circle id="zeusEyeLeftSpark" cx="176" cy="188" r="6" fill="#defdff" opacity="0.8"></circle>
-                <circle id="zeusEyeRightSpark" cx="256" cy="188" r="6" fill="#defdff" opacity="0.8"></circle>
-                <path id="zeusBrowLeft" d="M144 152 Q170 140 196 152" fill="none" stroke="#edf7ff" stroke-width="10" stroke-linecap="round"></path>
-                <path id="zeusBrowRight" d="M224 152 Q250 140 276 152" fill="none" stroke="#edf7ff" stroke-width="10" stroke-linecap="round"></path>
-                <path d="M210 206 C204 236 202 254 198 278 C206 284 214 284 222 278 C218 254 216 236 210 206 Z" fill="none" stroke="rgba(122,76,52,0.72)" stroke-width="8" stroke-linecap="round"></path>
-                <path id="zeusMouth" d="M192 296 Q210 306 228 296" fill="none" stroke="#6a3927" stroke-width="8" stroke-linecap="round"></path>
-                <path d="M172 288 C182 334 204 368 210 378 C216 368 238 334 248 288" fill="none" stroke="#eef5ff" stroke-width="20" stroke-linecap="round"></path>
-                <path d="M172 288 C176 336 196 392 210 414 C224 392 244 336 248 288" fill="#d7e6f6" opacity="0.92"></path>
-                <path d="M166 346 C178 330 192 322 210 322 C228 322 242 330 254 346" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="8" stroke-linecap="round"></path>
+                <g class="zeus-float">
+                  <ellipse cx="180" cy="152" rx="82" ry="86" fill="url(#zeusSkin)"></ellipse>
+                  <path d="M126 134 C126 78 158 50 180 50 C202 50 234 78 234 134 C246 118 248 82 220 58 C208 46 194 38 180 38 C166 38 152 46 140 58 C112 82 114 118 126 134 Z" fill="url(#zeusHair)"></path>
+                  <path d="M104 166 C94 126 110 86 142 64 C128 104 128 140 138 176 Z" fill="url(#zeusHair)"></path>
+                  <path d="M256 166 C266 126 250 86 218 64 C232 104 232 140 222 176 Z" fill="url(#zeusHair)"></path>
+                  <ellipse id="zeusEyeLeftBg" cx="151" cy="150" rx="22" ry="24" fill="#141c36"></ellipse>
+                  <ellipse id="zeusEyeRightBg" cx="209" cy="150" rx="22" ry="24" fill="#141c36"></ellipse>
+                  <ellipse id="zeusEyeLeft" cx="151" cy="150" rx="11" ry="13" fill="rgba(82,220,255,0.72)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <ellipse id="zeusEyeRight" cx="209" cy="150" rx="11" ry="13" fill="rgba(82,220,255,0.72)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <circle id="zeusEyeLeftSpark" cx="155" cy="144" r="4" fill="#eefcff" opacity="0.85"></circle>
+                  <circle id="zeusEyeRightSpark" cx="213" cy="144" r="4" fill="#eefcff" opacity="0.85"></circle>
+                  <path id="zeusBrowLeft" d="M132 120 Q150 110 168 120" fill="none" stroke="#f5f8ff" stroke-width="7" stroke-linecap="round"></path>
+                  <path id="zeusBrowRight" d="M192 120 Q210 110 228 120" fill="none" stroke="#f5f8ff" stroke-width="7" stroke-linecap="round"></path>
+                  <circle cx="146" cy="158" r="6" fill="#ef8e7e"></circle>
+                  <circle cx="214" cy="158" r="6" fill="#ef8e7e"></circle>
+                  <path d="M180 162 C176 184 174 198 170 220 C176 224 184 224 190 220 C186 198 184 184 180 162 Z" fill="none" stroke="#925741" stroke-width="6" stroke-linecap="round"></path>
+                  <path id="zeusMouth" d="M166 208 Q180 216 194 208" fill="none" stroke="#6a3927" stroke-width="6" stroke-linecap="round"></path>
+                  <path d="M142 200 C148 244 168 278 180 288 C192 278 212 244 218 200" fill="none" stroke="#f8fbff" stroke-width="18" stroke-linecap="round"></path>
+                  <path d="M142 200 C146 246 164 300 180 324 C196 300 214 246 218 200" fill="#e3edfb"></path>
+                  <path d="M142 280 C152 268 166 262 180 262 C194 262 208 268 218 280" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="6" stroke-linecap="round"></path>
+                  <g class="zeus-body">
+                    <path d="M154 312 C158 274 166 248 180 248 C194 248 202 274 206 312 Z" fill="url(#zeusRobe)"></path>
+                    <path d="M150 312 C160 308 200 308 210 312 L204 366 C196 376 164 376 156 366 Z" fill="url(#zeusRobe)"></path>
+                    <path d="M152 314 L208 314" stroke="url(#zeusTrim)" stroke-width="6" stroke-linecap="round"></path>
+                    <path d="M118 268 C126 254 138 248 154 250" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
+                    <path class="zeus-arm zeus-arm--right" d="M208 256 C226 244 238 230 248 210" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
+                    <path d="M152 332 C148 346 144 360 142 378" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
+                    <path d="M208 332 C212 346 216 360 218 378" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
+                  </g>
+                </g>
               </g>
             </svg>
           </div>
@@ -283,7 +305,8 @@
             <span class="zeus-mood" id="zeusMood">Czuwa</span>
           </div>
           <p class="zeus-message" id="zeusMessage">Jestem po Twojej prawej stronie. Prowadzę, tłumaczę i pilnuję rytmu pracy.</p>
-          <div class="zeus-tip">Wyjaśniam funkcje, pilnuję streaka i podrzucam motywację w trakcie dnia.</div>
+          <div class="zeus-tip" id="zeusCoachline">Wyjaśniam funkcje, pilnuję streaka i podrzucam motywację w trakcie dnia.</div>
+          <div class="zeus-nudge" id="zeusNudge">Na start pokażę Ci tylko najważniejsze kroki, żeby aplikacja nie zasypała Cię opcjami.</div>
           <div class="zeus-actions">
             <button class="btn-secondary zeus-action" id="btnZeusFocus">Sprint</button>
             <button class="btn-secondary zeus-action" id="btnZeusStreak">Chroń streak</button>
@@ -292,6 +315,33 @@
         </div>
       </div>
       <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
+    </section>
+
+    <section class="panel panel--quick-actions">
+      <div class="panel-label">Jednym kliknięciem</div>
+      <div class="quick-action-grid">
+        <button class="quick-action-btn" id="btnQuickWater" type="button">
+          <strong>Wypiłem wodę</strong>
+          <span>+250 ml i szybki wpis zdrowia</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMeal" type="button">
+          <strong>Zjadłem posiłek</strong>
+          <span>Dodaj log bez wchodzenia do zakładki Health</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMove" type="button">
+          <strong>Krótki ruch</strong>
+          <span>+5 min resetu dla ciała i głowy</span>
+        </button>
+      </div>
+      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
+    </section>
+
+    <section class="panel panel--backup hidden" id="backupPrompt">
+      <div class="panel-label">Safety Net</div>
+      <p class="backup-copy" id="backupPromptText">Masz już sporo cennych danych. Zrób kopię zapasową, aby ich nie stracić.</p>
+      <div class="form-actions">
+        <button class="btn-secondary" id="btnBackupOpenSettings" type="button" style="width:auto;padding:10px 14px">Otwórz kopie zapasowe</button>
+      </div>
     </section>
 
     <section class="panel panel--routines">
@@ -864,18 +914,36 @@
      MODAL: Welcome / Onboarding (Phase 1)
      ═══════════════════════════════════════════════════════════════════════ -->
 <div class="modal modal--welcome" id="welcomeModal">
-  <div class="modal-card modal-card--welcome">
+  <div class="modal-card modal-card--welcome modal-card--wizard">
     <div class="welcome-glyph">⚡</div>
-    <h1 class="welcome-title">FocusOS</h1>
-    <p class="welcome-sub">Local-First Productivity Intelligence</p>
-    <ul class="welcome-features">
-      <li><span class="wf-icon">🧠</span><div><strong>100% Offline</strong> — dane nigdy nie opuszczają Twojej przeglądarki.</div></li>
-      <li><span class="wf-icon">📐</span><div><strong>Zaawansowana matematyka</strong> — Bayesian, Markov, EMA, K-Means.</div></li>
-      <li><span class="wf-icon">🎮</span><div><strong>System XP</strong> — odblokowuj analitykę ucząc się produktywności.</div></li>
-      <li><span class="wf-icon">🩺</span><div><strong>Bio-Tracking</strong> — woda, sen, kalorie, ruch.</div></li>
-    </ul>
-    <button class="btn-primary btn-welcome-enter" id="btnWelcomeEnter" type="button">⚡ Wejdź do aplikacji</button>
-    <p class="welcome-footer">Twoje dane: IndexedDB · Brak chmury · Brak trackingu</p>
+    <p class="welcome-kicker" id="welcomeKicker">FocusOS 2.0</p>
+    <h1 class="welcome-title" id="welcomeTitle">Jak chcesz zacząć?</h1>
+    <p class="welcome-sub" id="welcomeSubtitle">Najpierw pokażemy Ci tylko to, co potrzebne, a reszta odblokuje się z czasem albo na Twoje życzenie.</p>
+    <div class="welcome-mode-grid">
+      <button class="welcome-mode-card active" id="btnGoalZen" data-goal-mode="zen" type="button">
+        <span class="welcome-mode-tag">Tryb Zen</span>
+        <strong>Tylko skupienie</strong>
+        <span>Minimalny timer, zadanie, delikatny Zeus i zero przeładowania.</span>
+      </button>
+      <button class="welcome-mode-card" id="btnGoalPro" data-goal-mode="pro" type="button">
+        <span class="welcome-mode-tag">Tryb Pro</span>
+        <strong>Pełny biohacking</strong>
+        <span>Pokaż podgląd wszystkich modułów, a blokady zdejmuj wraz z postępem.</span>
+      </button>
+    </div>
+    <div class="welcome-tour">
+      <div class="welcome-tour-title">Samouczek One-Click</div>
+      <ol class="welcome-tour-list">
+        <li><strong>Start</strong> uruchamia pierwszą sesję.</li>
+        <li><strong>Kategorie</strong> uczą FocusOS, jak pracujesz.</li>
+        <li><strong>Statystyki</strong> pokazują wnioski dopiero wtedy, gdy ich potrzebujesz.</li>
+      </ol>
+    </div>
+    <div class="welcome-actions">
+      <button class="btn-secondary" id="btnWelcomeSkip" type="button">Pomiń teraz</button>
+      <button class="btn-primary btn-welcome-enter" id="btnWelcomeEnter" type="button">Wejdź do aplikacji</button>
+    </div>
+    <p class="welcome-footer">Dane zapisują się lokalnie: IndexedDB · localStorage · bez własnej chmury</p>
   </div>
 </div>
 

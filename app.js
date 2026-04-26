@@ -45,6 +45,8 @@ const App = (() => {
     installAvailable: false,
     language: 'pl',
     theme: 'olympus',
+    uxMode: 'zen',
+    preferredExperience: 'zen',
     googleTokenClient: null,
     listFilter: 'today',
     pomodoro: {
@@ -60,6 +62,9 @@ const App = (() => {
     zeusStyle: 'balanced',
     missionRewarded: new Set(),
     guidedEntryStarted: false,
+    userProgress: null,
+    welcomeGoalMode: 'zen',
+    saveStatusTimer: null,
   };
   const LS_KEYS = {
     sleepNotes: 'focusos_sleep_notes',
@@ -72,10 +77,12 @@ const App = (() => {
     missions: 'focusos_daily_missions',
     achievements: 'focusos_achievements',
     zeusStyle: 'focusos_zeus_style',
+    userProgress: 'focusos_user_progress',
   };
   const ONBOARDING_KEY = 'hasCompletedOnboarding';
   const TUTORIAL_COMPLETED_KEY = 'tutorialCompleted';
   const APP_SETTINGS_KEY = 'focusos_app_settings';
+  const USER_PROGRESS_KEY = 'focusos_user_progress';
   const GOOGLE_CLIENT_ID = '236650961782-14eb0ahioado9bedd7mq8frs8heuao1m.apps.googleusercontent.com';
   const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
   const FALLBACK_WALLET_ADDRESS = 'YOUR_MONAD_WALLET_ADDRESS_HERE';
@@ -106,6 +113,26 @@ const App = (() => {
     retro: 'ember',
   };
   const THEME_IDS = ['olympus', 'marble', 'ember', 'tide'];
+  const MODULE_UNLOCK_RULES = {
+    health: { sessions: 1, views: ['health'], panels: ['.panel--quick-actions'] },
+    sleep: { sessions: 3, views: ['sleep'], panels: [] },
+    advancedStats: { sessions: 5, views: ['weekly'], panels: ['.panel--advstats', '.panel--markov', '.panel--bayes'] },
+    web3: { sessions: 5, views: [], panels: ['#web3Panel'] },
+  };
+  const MODULE_LABELS = {
+    pl: {
+      health: 'Zdrowie',
+      sleep: 'Sen',
+      advancedStats: 'Zaawansowane statystyki',
+      web3: 'Web3',
+    },
+    en: {
+      health: 'Health',
+      sleep: 'Sleep',
+      advancedStats: 'Advanced stats',
+      web3: 'Web3',
+    },
+  };
   const LOCALIZED_TITLES = {
     pl: {
       Initiate: 'Inicjowany',
@@ -476,194 +503,42 @@ const App = (() => {
   }
 
   function applyLevelLocks() {
-    const locked = S.userLevel < 3;
+    const locked = !isModuleUnlocked('advancedStats') || S.uxMode === 'zen';
     document.querySelectorAll('.panel--markov, .panel--bayes').forEach(panel => {
-      let overlay = panel.querySelector('.level-lock-overlay');
-      if (locked) {
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.className = 'level-lock-overlay';
-          overlay.innerHTML = `
-            <div class="lock-icon">🔒</div>
-            <div class="lock-title">Zaawansowana Analityka</div>
-            <div class="lock-sub">Osiągnij <strong>Poziom 3</strong> (5 000 XP)<br>aby odblokować Bayesian &amp; Markov.</div>
-            <div class="lock-progress">
-              <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent4)">${S.totalXP.toLocaleString()} / 5 000 XP</div>
-              <div class="lock-progress-track"><div class="lock-progress-fill" style="width:${Math.min(100,Math.round(S.totalXP/5000*100))}%"></div></div>
-            </div>`;
-          panel.appendChild(overlay);
-        }
-      } else {
-        if (overlay) overlay.remove();
-      }
+      panel.classList.toggle('hidden', S.uxMode === 'zen');
+      applyModuleLockState(panel, 'advancedStats', locked);
     });
   }
 
   // ── Welcome Modal (Phase 1) ───────────────────────────────────────────────
 
   async function maybeShowWelcome() {
-    const seen = await DB.getSetting('onboarding_done');
-    if (!seen) await DB.setSetting('onboarding_done', true);
+    const modal = $('welcomeModal');
+    if (!modal) return;
+    setWelcomeGoalMode(S.preferredExperience || 'zen');
+    modal.classList.add('open');
   }
 
   // ── Tutorial (Phase 1) ────────────────────────────────────────────────────
 
   const TUTORIAL_STEPS = [
     {
-      targetSelector: '[data-tab="tracker"]',
+      targetId: 'btnStart',
       arrow: 'down',
-      text: '👋 Witaj w FocusOS. To pełny przewodnik po wszystkich kluczowych opcjach aplikacji.',
-      before: () => switchTab('tracker'),
-    },
-    {
-      targetId: 'taskName',
-      arrow: 'down',
-      text: '✍️ Tu wpisujesz nazwę aktualnego zadania. Im bardziej konkretna nazwa, tym lepsze analizy.',
+      text: 'To jest Twój najważniejszy przycisk. Start uruchamia sesję i od razu wprowadza Cię w rytm pracy.',
       before: () => switchTab('tracker'),
     },
     {
       targetId: 'taskCategory',
       arrow: 'down',
-      text: '🏷️ Wybierz kategorię pracy. Kategorie wpływają na statystyki produktywności, EMA i wnioski.',
+      text: 'Kategorie uczą FocusOS, jak wygląda Twoja praca. Dzięki nim Zeus później daje sensowne porady, a nie suchy wykres.',
       before: () => switchTab('tracker'),
     },
     {
-      targetId: 'btnStart',
+      targetId: 'btnDetailedReport',
       arrow: 'down',
-      text: '▶️ START rozpoczyna sesję i timer. STOP zapisuje czas i nalicza XP dla produktywnych kategorii.',
+      text: 'Statystyki i surową analitykę trzymamy tutaj. Główny ekran zostaje prosty, a szczegóły otwierasz dopiero wtedy, kiedy naprawdę chcesz je zobaczyć.',
       before: () => switchTab('tracker'),
-    },
-    {
-      targetId: 'zeusCard',
-      arrow: 'up',
-      text: '⚡ Zeus jest Twoim przewodnikiem po prawej stronie. Tłumaczy, motywuje i podpowiada następny sensowny ruch.',
-      before: () => switchTab('tracker'),
-    },
-    {
-      targetId: 'btnZeusFocus',
-      arrow: 'up',
-      text: '🧠 Przyciski Zeusa uruchamiają szybki sprint, ratowanie streaka albo blok regeneracji bez ręcznego klikania po całej aplikacji.',
-      before: () => switchTab('tracker'),
-    },
-    {
-      targetId: 'xpBarWrap',
-      arrow: 'down',
-      text: '🎮 Pasek XP pokazuje progres poziomu. Wyższe poziomy odblokowują zaawansowaną analitykę.',
-      before: () => switchTab('tracker'),
-    },
-    {
-      targetSelector: '[data-tab="daily"]',
-      arrow: 'down',
-      text: '📅 Zakładka Dzienny: analiza jednego dnia, wykresy kategorii i rozkład godzinowy.',
-      before: () => switchTab('daily'),
-    },
-    {
-      targetId: 'dailyCatChart',
-      arrow: 'up',
-      text: '🧩 Ten wykres pokazuje, gdzie realnie znika Twój czas w ciągu dnia.',
-      before: () => switchTab('daily'),
-    },
-    {
-      targetSelector: '[data-tab="weekly"]',
-      arrow: 'down',
-      text: '📊 Zakładka Tygodniowy: trendy 7-dniowe, EMA i sekwencje aktywności.',
-      before: () => switchTab('weekly'),
-    },
-    {
-      targetId: 'emaChart',
-      arrow: 'up',
-      text: '📈 EMA wygładza wahania i pokazuje realny kierunek Twojej produktywności.',
-      before: () => switchTab('weekly'),
-    },
-    {
-      targetSelector: '[data-tab="health"]',
-      arrow: 'down',
-      text: '🩺 Zakładka Zdrowie: nawodnienie, ruch i posiłki, które wspierają jakość pracy.',
-      before: () => switchTab('health'),
-    },
-    {
-      targetId: 'waterGlasses',
-      arrow: 'up',
-      text: '💧 Klikaj szklanki, aby logować wodę i budować nawyk regularnego nawodnienia.',
-      before: () => switchTab('health'),
-    },
-    {
-      targetSelector: '[data-tab="sleep"]',
-      arrow: 'down',
-      text: '🌙 Zakładka Sen: kalkulator cykli, log snu, notatki oraz lokalny budzik.',
-      before: () => switchTab('sleep'),
-    },
-    {
-      targetId: 'btnCalcSleep',
-      arrow: 'up',
-      text: '🛌 Kalkulator snu wylicza najlepsze godziny zaśnięcia na bazie cykli 90 minut + 15 min zasypiania.',
-      before: () => switchTab('sleep'),
-    },
-    {
-      targetId: 'btnSetAlarm',
-      arrow: 'up',
-      text: '⏰ Budzik działa lokalnie: sprawdza czas i uruchamia sygnał + alert bez backendu.',
-      before: () => switchTab('sleep'),
-    },
-    {
-      targetSelector: '[data-tab="settings"]',
-      arrow: 'down',
-      text: '⚙️ Ustawienia: personalizacja aplikacji, instalacja PWA i kopie zapasowe.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'languageSelect',
-      arrow: 'up',
-      text: '🌐 Tu zmienisz język interfejsu (PL/EN). Ustawienie zapisuje się lokalnie.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'themeSelect',
-      arrow: 'up',
-      text: '🎨 Tutaj zmienisz styl aplikacji: Hologram Olimpu, Marmurowy poranek, Solarny bursztyn albo Lazurowy przypływ.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'installButton',
-      arrow: 'up',
-      text: '📲 Ten przycisk pokazuje instalację systemową PWA, gdy przeglądarka zgłosi beforeinstallprompt.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'btnExportJSON',
-      arrow: 'up',
-      text: '💾 Eksport/Import JSON służy do lokalnego backupu i odtworzenia danych na innym urządzeniu.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'btnGoogleBackup',
-      arrow: 'up',
-      text: '☁️ Backup Google wysyła plik FocusOS_Backup.json na Twój Google Drive (po OAuth).',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetId: 'skillTreeGrid',
-      arrow: 'up',
-      text: '🌳 Drzewko umiejętności daje stałe bonusy do streaka, XP, głębokiego skupienia i trybu hardcore. To Twój progres systemowy.',
-      before: () => switchTab('settings'),
-    },
-    {
-      targetSelector: '[data-tab="about"]',
-      arrow: 'down',
-      text: 'ℹ️ Zakładka O nas opisuje filozofię Local-First i kanały społecznościowe FocusOS.',
-      before: () => switchTab('about'),
-    },
-    {
-      targetSelector: '[data-tab="profile"]',
-      arrow: 'down',
-      text: '👤 Profil to panel pomocniczy: plan dnia, notatki snu, sociale i zarządzanie portfelem.',
-      before: () => switchTab('profile'),
-    },
-    {
-      targetId: 'btnRestartOnboarding',
-      arrow: 'up',
-      text: '🔁 W każdej chwili możesz uruchomić ten przewodnik ponownie z profilu, jeśli chcesz wrócić do funkcji krok po kroku.',
-      before: () => switchTab('profile'),
     },
   ];
 
@@ -687,9 +562,6 @@ const App = (() => {
       $('tutorialOverlay').style.display = 'none';
       localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
       showToast(t('tutorialDone'), 'success');
-      if (localStorage.getItem(ONBOARDING_KEY) !== 'true') {
-        setTimeout(startOnboardingIfNeeded, 280);
-      }
       return;
     }
     const step = steps[S.tutorialStep];
@@ -826,6 +698,14 @@ const App = (() => {
   }
 
   function switchTab(view) {
+    if (view === 'health' && !isModuleUnlocked('health')) {
+      showToast(S.language === 'en' ? 'Health unlocks after your first focus session.' : 'Zdrowie odblokuje się po pierwszej sesji skupienia.', 'info');
+      return;
+    }
+    if (view === 'sleep' && !isModuleUnlocked('sleep')) {
+      showToast(S.language === 'en' ? 'Sleep tracking unlocks after 3 focus sessions.' : 'Sen odblokuje się po 3 sesjach skupienia.', 'info');
+      return;
+    }
     S.currentView = view;
     document.querySelectorAll('[data-tab]').forEach(b =>
       b.classList.toggle('active', b.dataset.tab === view)
@@ -848,6 +728,340 @@ const App = (() => {
   }
   function setLS(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+    queueLocalSaveStatus();
+  }
+
+  function getDefaultUserProgress() {
+    return {
+      xp: 0,
+      focusSessions: 0,
+      unlockedModules: ['focus_timer', 'basic_tasks'],
+      preferredExperience: 'zen',
+      uxMode: 'zen',
+      lastSyncedAt: null,
+    };
+  }
+
+  function normalizeUserProgress(progress) {
+    const base = getDefaultUserProgress();
+    const merged = { ...base, ...(progress || {}) };
+    merged.focusSessions = Math.max(0, Number(merged.focusSessions) || 0);
+    merged.xp = Math.max(0, Number(merged.xp) || 0);
+    merged.preferredExperience = merged.preferredExperience === 'pro' ? 'pro' : 'zen';
+    merged.uxMode = merged.uxMode === 'pro' ? 'pro' : 'zen';
+    merged.unlockedModules = [...new Set(Array.isArray(merged.unlockedModules) ? merged.unlockedModules : base.unlockedModules)];
+    return merged;
+  }
+
+  function formatModuleLabel(moduleId) {
+    return MODULE_LABELS[S.language]?.[moduleId] || MODULE_LABELS.pl[moduleId] || moduleId;
+  }
+
+  function formatModuleRequirement(moduleId) {
+    const rule = MODULE_UNLOCK_RULES[moduleId];
+    if (!rule) return '';
+    const sessionWord = S.language === 'en' ? 'focus sessions' : 'sesji skupienia';
+    return S.language === 'en'
+      ? `${rule.sessions} ${sessionWord}`
+      : `${rule.sessions} ${sessionWord}`;
+  }
+
+  function isFocusSession(task) {
+    return !!task?.duration && task.duration > 0 && DB.PRODUCTIVE.has(task.category);
+  }
+
+  function computeUnlockedModules(focusSessions) {
+    const unlocked = ['focus_timer', 'basic_tasks'];
+    Object.entries(MODULE_UNLOCK_RULES).forEach(([moduleId, rule]) => {
+      if (focusSessions >= rule.sessions) unlocked.push(moduleId);
+    });
+    return unlocked;
+  }
+
+  async function syncUserProgress() {
+    const current = normalizeUserProgress(getLS(USER_PROGRESS_KEY, getDefaultUserProgress()));
+    const [xp, allTasks] = await Promise.all([
+      DB.getTotalXP(),
+      DB.getAllCompletedTasks(),
+    ]);
+    const focusSessions = allTasks.filter(isFocusSession).length;
+    const unlockedModules = computeUnlockedModules(focusSessions);
+    S.userProgress = normalizeUserProgress({
+      ...current,
+      xp,
+      focusSessions,
+      unlockedModules,
+      preferredExperience: S.preferredExperience || current.preferredExperience,
+      uxMode: S.uxMode || current.uxMode,
+      lastSyncedAt: new Date().toISOString(),
+    });
+    localStorage.setItem(USER_PROGRESS_KEY, JSON.stringify(S.userProgress));
+    return S.userProgress;
+  }
+
+  function isModuleUnlocked(moduleId) {
+    const progress = S.userProgress || normalizeUserProgress(getLS(USER_PROGRESS_KEY, getDefaultUserProgress()));
+    return progress.unlockedModules.includes(moduleId);
+  }
+
+  function getModuleProgress(moduleId) {
+    const progress = S.userProgress || normalizeUserProgress(getLS(USER_PROGRESS_KEY, getDefaultUserProgress()));
+    const rule = MODULE_UNLOCK_RULES[moduleId];
+    return {
+      current: progress.focusSessions || 0,
+      required: rule?.sessions || 0,
+      unlocked: !rule || progress.unlockedModules.includes(moduleId),
+    };
+  }
+
+  function setSaveStatus(status = 'saved', customText = '') {
+    const el = $('saveStatus');
+    if (!el) return;
+    clearTimeout(S.saveStatusTimer);
+    el.dataset.state = status;
+    if (status === 'saving') {
+      el.textContent = S.language === 'en' ? 'Saving locally...' : 'Zapisywanie lokalnie...';
+      return;
+    }
+    el.textContent = customText || (S.language === 'en' ? 'Saved locally' : 'Dane zapisane lokalnie');
+    S.saveStatusTimer = setTimeout(() => {
+      if (el.dataset.state === 'saved') {
+        el.textContent = S.language === 'en' ? 'Saved locally' : 'Dane zapisane lokalnie';
+      }
+    }, 2200);
+  }
+
+  function queueLocalSaveStatus() {
+    setSaveStatus('saving');
+    clearTimeout(S.saveStatusTimer);
+    S.saveStatusTimer = setTimeout(() => setSaveStatus('saved'), 240);
+  }
+
+  function installLocalSaveHooks() {
+    if (window.__focusosSaveHooksInstalled) return;
+    window.__focusosSaveHooksInstalled = true;
+    [
+      'startTask',
+      'stopActiveTask',
+      'logHealth',
+      'deleteHealthLog',
+      'logSleep',
+      'deleteSleepLog',
+      'addXP',
+      'setSetting',
+      'addBackfill',
+    ].forEach(method => {
+      if (typeof DB[method] !== 'function' || DB[method].__focusWrapped) return;
+      const original = DB[method].bind(DB);
+      const wrapped = async (...args) => {
+        setSaveStatus('saving');
+        const result = await original(...args);
+        queueLocalSaveStatus();
+        return result;
+      };
+      wrapped.__focusWrapped = true;
+      DB[method] = wrapped;
+    });
+  }
+
+  function applyUxModeButtons() {
+    document.querySelectorAll('[data-ux-mode-btn]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.uxModeBtn === S.uxMode);
+    });
+  }
+
+  function setWelcomeGoalMode(mode) {
+    S.welcomeGoalMode = mode === 'pro' ? 'pro' : 'zen';
+    document.querySelectorAll('[data-goal-mode]').forEach(card => {
+      card.classList.toggle('active', card.dataset.goalMode === S.welcomeGoalMode);
+    });
+  }
+
+  function applyModuleLockState(panel, moduleId, forceLocked = false) {
+    if (!panel) return;
+    const progress = getModuleProgress(moduleId);
+    const locked = forceLocked || !progress.unlocked;
+    panel.classList.toggle('module-panel--locked', locked);
+    let overlay = panel.querySelector('.module-lock-overlay');
+    if (!locked) {
+      overlay?.remove();
+      return;
+    }
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'module-lock-overlay';
+      panel.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <div class="lock-icon">🔒</div>
+      <div class="lock-title">${escH(formatModuleLabel(moduleId))}</div>
+      <div class="lock-sub">${S.language === 'en'
+        ? `Unlock after ${formatModuleRequirement(moduleId)}.`
+        : `Odblokuje się po ${formatModuleRequirement(moduleId)}.`}</div>
+      <div class="lock-progress">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent4)">${progress.current} / ${progress.required}</div>
+        <div class="lock-progress-track"><div class="lock-progress-fill" style="width:${progress.required ? Math.min(100, Math.round(progress.current / progress.required * 100)) : 100}%"></div></div>
+      </div>
+    `;
+  }
+
+  function renderProgressiveNavigation() {
+    document.querySelectorAll('[data-progressive-module]').forEach(btn => {
+      const moduleId = btn.dataset.progressiveModule;
+      const progress = getModuleProgress(moduleId);
+      const locked = !progress.unlocked;
+      const hiddenInZen = S.uxMode === 'zen' && (moduleId === 'health' || moduleId === 'sleep');
+      btn.classList.toggle('tab-btn--locked', locked);
+      btn.disabled = locked;
+      btn.title = locked
+        ? (S.language === 'en'
+          ? `Unlock after ${formatModuleRequirement(moduleId)}`
+          : `Odblokuj po ${formatModuleRequirement(moduleId)}`)
+        : '';
+      btn.classList.toggle('hidden', hiddenInZen || (locked && S.uxMode === 'zen'));
+    });
+  }
+
+  function renderBackupSafetyNet() {
+    const prompt = $('backupPrompt');
+    if (!prompt || !S.userProgress) return;
+    const shouldShow = S.userProgress.focusSessions > 10 && !S.googleConnected && !S.walletAddress;
+    prompt.classList.toggle('hidden', !shouldShow || S.uxMode === 'zen');
+  }
+
+  function applyProgressiveDisclosure() {
+    document.body.dataset.uxMode = S.uxMode;
+    document.body.dataset.experience = S.preferredExperience;
+    applyUxModeButtons();
+    renderProgressiveNavigation();
+    renderBackupSafetyNet();
+
+    const zenOnlyHidden = [
+      '.panel--qs',
+      '.panel--routines',
+      '.panel--missions',
+      '.panel--advstats',
+      '.panel--achievements',
+      '.panel--quick-actions',
+    ];
+    zenOnlyHidden.forEach(selector => {
+      document.querySelectorAll(selector).forEach(node => {
+        node.classList.toggle('hidden', S.uxMode === 'zen');
+      });
+    });
+
+    const web3Panel = $('web3Panel');
+    if (web3Panel) {
+      const shouldHideWeb3 = S.uxMode === 'zen';
+      web3Panel.classList.toggle('hidden', shouldHideWeb3);
+      if (!shouldHideWeb3) applyModuleLockState(web3Panel, 'web3');
+    }
+
+    document.querySelectorAll('.panel--advstats, .panel--markov, .panel--bayes').forEach(panel => {
+      if (S.uxMode === 'zen') {
+        panel.classList.add('hidden');
+        return;
+      }
+      panel.classList.remove('hidden');
+      applyModuleLockState(panel, 'advancedStats');
+    });
+
+    document.querySelectorAll('.view--daily .panel--daily-donut, .view--daily .panel--daily-hours, .view--daily .panel--golden, .view--weekly .panel--week-bars, .view--weekly .panel--ema, .view--weekly .panel--markov, .view--weekly .panel--bayes').forEach(panel => {
+      panel.classList.toggle('zen-collapsed', S.uxMode === 'zen');
+    });
+
+    const quickActions = document.querySelector('.panel--quick-actions');
+    if (quickActions) {
+      const showQuickHealth = S.uxMode === 'pro' && isModuleUnlocked('health');
+      quickActions.classList.toggle('hidden', !showQuickHealth);
+    }
+  }
+
+  function setUxMode(mode, { persist = true } = {}) {
+    S.uxMode = mode === 'pro' ? 'pro' : 'zen';
+    if (persist) {
+      saveAppSettings({
+        uxMode: S.uxMode,
+        preferredExperience: S.preferredExperience,
+      });
+      const progress = normalizeUserProgress(getLS(USER_PROGRESS_KEY, getDefaultUserProgress()));
+      setLS(USER_PROGRESS_KEY, { ...progress, uxMode: S.uxMode, preferredExperience: S.preferredExperience });
+    }
+    if (S.uxMode === 'zen' && (S.currentView === 'health' || S.currentView === 'sleep')) {
+      switchTab('tracker');
+    }
+    applyProgressiveDisclosure();
+  }
+
+  function openDetailedReport() {
+    setUxMode('pro');
+    switchTab(isModuleUnlocked('advancedStats') ? 'weekly' : 'daily');
+    showToast(S.language === 'en' ? 'Detailed report opened.' : 'Otworzono szczegółowy raport.', 'info');
+  }
+
+  function getLatestSleepPrompt(logs) {
+    const hour = new Date().getHours();
+    if (hour < 5 || hour > 11) return '';
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = DB.toDateStr(yesterday);
+    const latest = logs?.[0];
+    if (latest?.date === yesterdayKey || latest?.date === DB.toDateStr()) return '';
+    return S.language === 'en'
+      ? 'I do not see last night\'s sleep yet. Log it once so I can tune today\'s suggestions.'
+      : 'Nie widzę jeszcze ostatniego snu. Zaloguj go raz, a dopasuję dzisiejsze wskazówki.';
+  }
+
+  function buildHumanAdvice(analysis) {
+    if (!analysis || !analysis.totalTasks) {
+      return {
+        coach: S.language === 'en'
+          ? 'Start one clean session and I will turn the data into simple guidance.'
+          : 'Zacznij jedną porządną sesję, a zamienię dane w proste wskazówki.',
+        nudge: S.language === 'en'
+          ? 'We keep the heavy analytics in the detailed report so the main screen stays calm.'
+          : 'Cięższą analitykę chowamy do szczegółowego raportu, żeby główny ekran był spokojny.',
+      };
+    }
+
+    const tips = [];
+    if (analysis.bestHour?.hour >= 0) {
+      tips.push(S.language === 'en'
+        ? `Your strongest focus window is around ${String(analysis.bestHour.hour).padStart(2, '0')}:00. Put the hardest task there.`
+        : `Najmocniej pracujesz około ${String(analysis.bestHour.hour).padStart(2, '0')}:00. Wstaw tam najtrudniejsze zadanie.`);
+    }
+    if (analysis.emaData?.trend === 'declining') {
+      const shadowHour = analysis.kmeans?.shadowHours?.[0];
+      tips.push(S.language === 'en'
+        ? `Your rhythm has been dipping lately${shadowHour != null ? ` around ${String(shadowHour).padStart(2, '0')}:00` : ''}. Plan a short reset there.`
+        : `Twój rytm ostatnio lekko spada${shadowHour != null ? ` około ${String(shadowHour).padStart(2, '0')}:00` : ''}. Zaplanuj tam krótką przerwę.`);
+    } else if (analysis.kmeans?.goldenHours?.length) {
+      const golden = analysis.kmeans.goldenHours.slice(0, 2).map(h => `${String(h).padStart(2, '0')}:00`).join(' i ');
+      tips.push(S.language === 'en'
+        ? `Your golden hours look like ${golden}. That is prime time for deep work.`
+        : `Twoje złote godziny wyglądają jak ${golden}. To najlepszy moment na głęboką pracę.`);
+    }
+    if (analysis.wasteBycat?.length) {
+      const topWaste = analysis.wasteBycat[0];
+      tips.push(S.language === 'en'
+        ? `The biggest leak right now is ${catLabel(topWaste.category)}. Cutting even 20 minutes there will help.`
+        : `Najwięcej czasu wycieka teraz na ${catLabel(topWaste.category)}. Ucięcie choć 20 minut dużo da.`);
+    }
+
+    return {
+      coach: tips[0] || (S.language === 'en' ? 'You are building a rhythm that likes clarity and short feedback loops.' : 'Budujesz rytm, który lubi prostotę i krótki feedback.'),
+      nudge: tips[1] || (S.language === 'en' ? 'When you want the raw math, open the detailed report and I will unpack it with you.' : 'Gdy zechcesz surowej matematyki, otwórz szczegółowy raport, a rozpakuję ją razem z Tobą.'),
+    };
+  }
+
+  function renderZeusGuidance(analysis = null, latestSleepLogs = []) {
+    const coach = $('zeusCoachline');
+    const nudge = $('zeusNudge');
+    if (!coach || !nudge) return;
+    const advice = buildHumanAdvice(analysis);
+    coach.textContent = advice.coach;
+    const sleepPrompt = getLatestSleepPrompt(latestSleepLogs);
+    nudge.textContent = sleepPrompt || advice.nudge;
   }
 
   function getZeusVisualState(mood = 'Observing', intensity = 'normal', message = '') {
@@ -1099,6 +1313,8 @@ const App = (() => {
     return {
       language: saved.language || 'pl',
       theme: resolveThemeId(saved.theme || 'olympus'),
+      uxMode: saved.uxMode === 'pro' ? 'pro' : 'zen',
+      preferredExperience: saved.preferredExperience === 'pro' ? 'pro' : 'zen',
     };
   }
 
@@ -1144,6 +1360,7 @@ const App = (() => {
     if ($('btnDisconnectWalletSettings')) $('btnDisconnectWalletSettings').disabled = !S.walletAddress;
     if ($('btnGoogleDisconnect')) $('btnGoogleDisconnect').disabled = !S.googleConnected;
     updateDashboardCounters();
+    renderBackupSafetyNet();
   }
 
   function openModeSplash(message = t('splashSub')) {
@@ -1172,6 +1389,9 @@ const App = (() => {
       splashFootnote: 'Tryb lokalny trzyma wszystko na urządzeniu. Portfel odblokowuje akcje web3. Google dodaje kopię zapasową na Dysku.',
       splashStatusIdle: 'Nie wybrano jeszcze trybu połączenia.',
       logoSub: 'Lokalnie · Bez backendu · Bez chmury',
+      uxModeZen: 'Zen',
+      uxModePro: 'Pro',
+      saveStatusLocal: 'Dane zapisane lokalnie',
       web3Panel: 'Panel Web3',
       web3Wallet: 'Portfel',
       web3Network: 'Sieć',
@@ -1233,7 +1453,17 @@ const App = (() => {
       statEfficiency: 'Efektywność',
       statSessions: 'Sesje',
       statStreak: 'Streak',
+      statTrend: 'Trend',
       statBenchmark: 'Ty vs średnia',
+      detailedReport: 'Szczegółowy raport',
+      quickActionsPanel: 'Jednym kliknięciem',
+      quickWaterTitle: 'Wypiłem wodę',
+      quickWaterSub: '+250 ml i szybki wpis zdrowia',
+      quickMealTitle: 'Zjadłem posiłek',
+      quickMealSub: 'Dodaj log bez wchodzenia do zakładki Health',
+      quickMoveTitle: 'Krótki ruch',
+      quickMoveSub: '+5 min resetu dla ciała i głowy',
+      quickActionNote: 'FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.',
       recentSessions: 'Ostatnie sesje',
       filterToday: 'Dziś',
       filterAll: 'Całość',
@@ -1277,8 +1507,24 @@ const App = (() => {
       aboutTitle: 'FocusOS - lokalna inteligencja produktywności',
       aboutCopy1: 'FocusOS to narzędzie produktywności zbudowane w filozofii <strong>Local-First</strong>: bez backendu, bez zewnętrznej chmury i z pełną kontrolą nad danymi.',
       aboutCopy2: 'Dane zostają na urządzeniu (IndexedDB i localStorage), a eksport lub backup uruchamiasz tylko wtedy, kiedy sam chcesz.',
-      welcomeSubline: 'Lokalna inteligencja produktywności',
+      welcomeKicker: 'FocusOS 2.0',
+      welcomeTitleMain: 'Jak chcesz zacząć?',
+      welcomeSubtitle: 'Najpierw pokażemy Ci tylko to, co potrzebne, a reszta odblokuje się z czasem albo na Twoje życzenie.',
+      welcomeModeZenTag: 'Tryb Zen',
+      welcomeModeZenTitle: 'Tylko skupienie',
+      welcomeModeZenCopy: 'Minimalny timer, zadanie, delikatny Zeus i zero przeładowania.',
+      welcomeModeProTag: 'Tryb Pro',
+      welcomeModeProTitle: 'Pełny biohacking',
+      welcomeModeProCopy: 'Pokaż podgląd wszystkich modułów, a blokady zdejmuj wraz z postępem.',
+      welcomeTourTitle: 'Samouczek One-Click',
+      welcomeTourStep1: 'Start uruchamia pierwszą sesję.',
+      welcomeTourStep2: 'Kategorie uczą FocusOS, jak pracujesz.',
+      welcomeTourStep3: 'Statystyki pokazują wnioski dopiero wtedy, gdy ich potrzebujesz.',
+      welcomeFooter: 'Dane zapisują się lokalnie: IndexedDB · localStorage · bez własnej chmury',
+      welcomeSkip: 'Pomiń teraz',
       welcomeEnter: 'Wejdź do aplikacji',
+      backupPromptText: 'Masz już sporo cennych danych. Zrób kopię zapasową, aby ich nie stracić.',
+      backupOpenSettings: 'Otwórz kopie zapasowe',
       profileDayplan: 'Plan dnia',
       profileNotes: 'Notatki snu',
       profileSocials: 'Sociale',
@@ -1367,10 +1613,10 @@ const App = (() => {
       settingsSaved: 'Ustawienia zapisane.',
       focusSprintFallbackName: 'Sesja sprintu skupienia',
       themeNames: {
-        olympus: 'Hologram Olimpu',
-        marble: 'Marmurowy poranek',
-        ember: 'Solarny bursztyn',
-        tide: 'Lazurowy przypływ',
+        olympus: 'Krystaliczny fokus',
+        marble: 'Jasny poranek',
+        ember: 'Ciepły zmierzch',
+        tide: 'Spokojny przypływ',
       },
       zeusVoices: {
         strict: 'Dowódca',
@@ -1378,9 +1624,9 @@ const App = (() => {
         supportive: 'Iskra',
       },
       tabs: {
-        tracker: 'Tracker',
-        daily: 'Dzień',
-        weekly: 'Tydzień',
+        tracker: 'Skupienie',
+        daily: 'Statystyki',
+        weekly: 'Raport',
         health: 'Zdrowie',
         sleep: 'Sen',
         settings: 'Ustawienia',
@@ -1396,6 +1642,9 @@ const App = (() => {
       splashFootnote: 'Local mode keeps everything on-device. Wallet mode unlocks web3 actions. Google mode adds Drive backup.',
       splashStatusIdle: 'No connection selected yet.',
       logoSub: 'Local-first · No backend · No cloud',
+      uxModeZen: 'Zen',
+      uxModePro: 'Pro',
+      saveStatusLocal: 'Saved locally',
       web3Panel: 'Web3 dashboard',
       web3Wallet: 'Wallet',
       web3Network: 'Network',
@@ -1457,7 +1706,17 @@ const App = (() => {
       statEfficiency: 'Efficiency',
       statSessions: 'Sessions',
       statStreak: 'Streak',
+      statTrend: 'Trend',
       statBenchmark: 'You vs average',
+      detailedReport: 'Detailed report',
+      quickActionsPanel: 'One-tap logging',
+      quickWaterTitle: 'Drank water',
+      quickWaterSub: '+250 ml and a fast health log',
+      quickMealTitle: 'Ate a meal',
+      quickMealSub: 'Add a log without opening Health',
+      quickMoveTitle: 'Quick movement',
+      quickMoveSub: '+5 min reset for body and mind',
+      quickActionNote: 'FocusOS saves these actions locally and refreshes the indicators right away.',
       recentSessions: 'Recent sessions',
       filterToday: 'Today',
       filterAll: 'All time',
@@ -1501,8 +1760,24 @@ const App = (() => {
       aboutTitle: 'FocusOS - local productivity intelligence',
       aboutCopy1: 'FocusOS is a productivity tool built around a <strong>Local-First</strong> philosophy: no backend, no external cloud, and full control over your data.',
       aboutCopy2: 'Your data stays on the device (IndexedDB and localStorage), and you decide when to export or create a backup.',
-      welcomeSubline: 'Local-first productivity intelligence',
+      welcomeKicker: 'FocusOS 2.0',
+      welcomeTitleMain: 'How do you want to begin?',
+      welcomeSubtitle: 'We start with only what you need, and unlock the deeper layers over time or on demand.',
+      welcomeModeZenTag: 'Zen mode',
+      welcomeModeZenTitle: 'Focus only',
+      welcomeModeZenCopy: 'Minimal timer, current task, gentle Zeus, and no visual overload.',
+      welcomeModeProTag: 'Pro mode',
+      welcomeModeProTitle: 'Full biohacking',
+      welcomeModeProCopy: 'Show every module as a preview, then unlock them as progress grows.',
+      welcomeTourTitle: 'One-click tutorial',
+      welcomeTourStep1: 'Start launches your first session.',
+      welcomeTourStep2: 'Categories teach FocusOS how you work.',
+      welcomeTourStep3: 'Statistics appear only when you actually want them.',
+      welcomeFooter: 'Data is saved locally: IndexedDB · localStorage · no private cloud',
+      welcomeSkip: 'Skip for now',
       welcomeEnter: 'Enter the app',
+      backupPromptText: 'You already have valuable data here. Create a backup so you do not lose it.',
+      backupOpenSettings: 'Open backups',
       profileDayplan: 'Day plan',
       profileNotes: 'Sleep notes',
       profileSocials: 'Socials',
@@ -1591,10 +1866,10 @@ const App = (() => {
       settingsSaved: 'Settings saved.',
       focusSprintFallbackName: 'Focus sprint session',
       themeNames: {
-        olympus: 'Olympus hologram',
-        marble: 'Marble morning',
-        ember: 'Solar ember',
-        tide: 'Azure tide',
+        olympus: 'Crystal focus',
+        marble: 'Bright morning',
+        ember: 'Warm dusk',
+        tide: 'Calm tide',
       },
       zeusVoices: {
         strict: 'Commander',
@@ -1602,9 +1877,9 @@ const App = (() => {
         supportive: 'Spark',
       },
       tabs: {
-        tracker: 'Tracker',
-        daily: 'Daily',
-        weekly: 'Weekly',
+        tracker: 'Focus',
+        daily: 'Stats',
+        weekly: 'Report',
         health: 'Health',
         sleep: 'Sleep',
         settings: 'Settings',
@@ -1633,6 +1908,9 @@ const App = (() => {
     setText('#btnModeGoogle', t('splashGoogle'));
     setText('.splash-footnote', t('splashFootnote'));
     setText('.logo-sub', t('logoSub'));
+    setText('#btnZenMode', t('uxModeZen'));
+    setText('#btnProMode', t('uxModePro'));
+    setText('#saveStatus', t('saveStatusLocal'));
     setText('.panel--web3 .panel-label', t('web3Panel'));
     setText('.web3-grid > div:nth-child(1) .web3-k', t('web3Wallet'));
     setText('.web3-grid > div:nth-child(2) .web3-k', t('web3Network'));
@@ -1686,12 +1964,52 @@ const App = (() => {
     if (qsKeys[1]) qsKeys[1].textContent = t('statEfficiency');
     if (qsKeys[2]) qsKeys[2].textContent = t('statSessions');
     if (qsKeys[3]) qsKeys[3].textContent = t('statStreak');
-    if (qsKeys[4]) qsKeys[4].textContent = t('statBenchmark');
+    if (qsKeys[4]) qsKeys[4].textContent = t('statTrend');
     setText('.lb-title', t('statBenchmark'));
     setText('.panel--log .panel-label', t('recentSessions'));
     setText('#btnFilterToday', t('filterToday'));
     setText('#btnFilterAll', t('filterAll'));
     setText('#btnSaveGoal', t('saveGoal'));
+    setText('#btnDetailedReport', t('detailedReport'));
+    setText('.panel--daily-donut .panel-label', S.language === 'en' ? 'Time by category' : 'Czas per kategoria');
+    setText('.panel--daily-hours .panel-label', S.language === 'en' ? 'Hourly layout' : 'Rozkład godzinowy');
+    setText('.panel--golden .panel-label', S.language === 'en' ? 'Golden hours - K-Means (k=2)' : 'Złote godziny - K-Means (k=2)');
+    setText('.panel--daily-insights .panel-label', S.language === 'en' ? 'Daily insights' : 'Wnioski dnia');
+    setText('.panel--day-plan .panel-label', S.language === 'en' ? 'Day plan' : 'Plan dnia');
+    setText('.panel--week-bars .panel-label', S.language === 'en' ? 'Daily time (h)' : 'Czas dzienny (h)');
+    setText('.panel--ema .panel-label', S.language === 'en' ? 'Productivity trend - EMA (14 days)' : 'Trend produktywności - EMA (14 dni)');
+    setText('.panel--markov .panel-label', S.language === 'en' ? 'Activity sequence - Markov chain' : 'Sekwencje aktywności - Markov Chain');
+    setText('.panel--bayes .panel-label', S.language === 'en' ? 'Bayesian time estimates by category' : 'Bayesian - estymacje czasu per kategoria');
+    setText('.panel--week-insights .panel-label', S.language === 'en' ? 'Weekly insights' : 'Wnioski tygodniowe');
+    setText('.panel--water .panel-label', S.language === 'en' ? 'Hydration' : 'Nawodnienie');
+    setText('.panel--meals .panel-label', S.language === 'en' ? 'Meals' : 'Posiłki');
+    setText('.panel--movement .panel-label', S.language === 'en' ? 'Movement' : 'Ruch fizyczny');
+    setText('.water-info', S.language === 'en' ? 'Tap a glass to log 250 ml:' : 'Kliknij szklankę, aby zalogować 250 ml:');
+    setText('#btnWaterUndo', S.language === 'en' ? 'Undo last' : 'Cofnij ostatnią');
+    setText('#btnLogMeal', S.language === 'en' ? '+ Add' : '+ Dodaj');
+    setText('.panel--sleep-calc .panel-label', S.language === 'en' ? 'Sleep cycle calculator' : 'Kalkulator cykli snu');
+    setText('.panel--sleep-log .panel-label', S.language === 'en' ? 'Log last sleep' : 'Loguj ostatni sen');
+    setText('.panel--sleep-hist .panel-label', S.language === 'en' ? 'Sleep history (last 7 days)' : 'Historia snu (ostatnie 7 dni)');
+    setText('.panel--sleep-alarm .panel-label', S.language === 'en' ? 'Local alarm' : 'Budzik lokalny');
+    setText('.panel--sleep-notes .panel-label', S.language === 'en' ? 'Dream notes' : 'Notes snów');
+    setText('#btnCalcSleep', S.language === 'en' ? 'Calculate' : 'Oblicz');
+    setText('#btnLogSleep', S.language === 'en' ? 'Save sleep' : 'Zapisz sen');
+    setText('#btnSetAlarm', S.language === 'en' ? 'Set alarm' : 'Ustaw budzik');
+    setText('#btnCancelAlarm', S.language === 'en' ? 'Cancel' : 'Anuluj');
+    setText('#btnAddSleepNote', t('add'));
+    setText('#btnAddSleepNoteProfile', t('add'));
+    setText('#btnAddDayPlan', t('add'));
+    setText('#btnAddDayPlanProfile', t('add'));
+    setText('.panel--quick-actions .panel-label', t('quickActionsPanel'));
+    setText('#btnQuickWater strong', t('quickWaterTitle'));
+    setText('#btnQuickWater span', t('quickWaterSub'));
+    setText('#btnQuickMeal strong', t('quickMealTitle'));
+    setText('#btnQuickMeal span', t('quickMealSub'));
+    setText('#btnQuickMove strong', t('quickMoveTitle'));
+    setText('#btnQuickMove span', t('quickMoveSub'));
+    setText('.quick-action-note', t('quickActionNote'));
+    setText('#backupPromptText', t('backupPromptText'));
+    setText('#btnBackupOpenSettings', t('backupOpenSettings'));
     setText('.panel--settings-language .panel-label', t('settingsLanguagePanel'));
     setText('.panel--settings-language .form-label', t('settingsLanguageLabel'));
     setText('.panel--settings-theme .panel-label', t('settingsThemePanel'));
@@ -1746,22 +2064,23 @@ const App = (() => {
     setText('#walletProfileInfo', t('profileNoWallet'));
     setText('#btnConnectWalletProfile', t('connectWallet'));
     setText('#btnDisconnectWallet', t('disconnectWallet'));
-    setText('.welcome-sub', t('welcomeSubline'));
+    setText('#welcomeKicker', t('welcomeKicker'));
+    setText('#welcomeTitle', t('welcomeTitleMain'));
+    setText('#welcomeSubtitle', t('welcomeSubtitle'));
+    setText('#btnGoalZen .welcome-mode-tag', t('welcomeModeZenTag'));
+    setText('#btnGoalZen strong', t('welcomeModeZenTitle'));
+    setText('#btnGoalZen span:last-child', t('welcomeModeZenCopy'));
+    setText('#btnGoalPro .welcome-mode-tag', t('welcomeModeProTag'));
+    setText('#btnGoalPro strong', t('welcomeModeProTitle'));
+    setText('#btnGoalPro span:last-child', t('welcomeModeProCopy'));
+    setText('.welcome-tour-title', t('welcomeTourTitle'));
+    const welcomeTour = document.querySelectorAll('.welcome-tour-list li');
+    if (welcomeTour[0]) welcomeTour[0].innerHTML = `<strong>${S.language === 'en' ? 'Start' : 'Start'}</strong> ${t('welcomeTourStep1')}`;
+    if (welcomeTour[1]) welcomeTour[1].innerHTML = `<strong>${S.language === 'en' ? 'Categories' : 'Kategorie'}</strong> ${t('welcomeTourStep2')}`;
+    if (welcomeTour[2]) welcomeTour[2].innerHTML = `<strong>${S.language === 'en' ? 'Statistics' : 'Statystyki'}</strong> ${t('welcomeTourStep3')}`;
+    setText('#btnWelcomeSkip', t('welcomeSkip'));
     setText('#btnWelcomeEnter', t('welcomeEnter'));
-    const welcomeFeatures = document.querySelectorAll('.welcome-features li div');
-    if (welcomeFeatures[0]) welcomeFeatures[0].innerHTML = S.language === 'en'
-      ? '<strong>100% offline</strong> - your data never leaves your browser.'
-      : '<strong>100% offline</strong> - dane nie opuszczają Twojej przeglądarki.';
-    if (welcomeFeatures[1]) welcomeFeatures[1].innerHTML = S.language === 'en'
-      ? '<strong>Advanced math</strong> - Bayesian, Markov, EMA, K-Means.'
-      : '<strong>Zaawansowana matematyka</strong> - Bayesian, Markov, EMA, K-Means.';
-    if (welcomeFeatures[2]) welcomeFeatures[2].innerHTML = S.language === 'en'
-      ? '<strong>XP system</strong> - unlock analytics while building discipline.'
-      : '<strong>System XP</strong> - odblokowuj analitykę, wzmacniając dyscyplinę.';
-    if (welcomeFeatures[3]) welcomeFeatures[3].innerHTML = S.language === 'en'
-      ? '<strong>Bio-tracking</strong> - water, sleep, calories, movement.'
-      : '<strong>Bio-tracking</strong> - woda, sen, kalorie, ruch.';
-    setText('.welcome-footer', S.language === 'en' ? 'Your data: IndexedDB · No cloud · No tracking' : 'Twoje dane: IndexedDB · Brak chmury · Brak trackingu');
+    setText('.welcome-footer', t('welcomeFooter'));
     setText('#tutSkip', t('tutorialSkip'));
     setHTML('#levelRewardModal .modal-title', `<span>🏛️</span> ${t('levelRewardTitle')}`);
     setText('#levelRewardText', t('levelRewardDefault'));
@@ -1813,10 +2132,15 @@ const App = (() => {
       if ($('xpTitle')) $('xpTitle').textContent = localizeTitle(info.title);
       $('playerTitle').textContent = t('titlePrefix', { title: localizeTitle(info.title) });
     }
+    if (S.userProgress) renderBackupSafetyNet();
+    applyProgressiveDisclosure();
+    setSaveStatus('saved', t('saveStatusLocal'));
   }
 
   function applyPersistedSettings() {
     const settings = getAppSettings();
+    S.uxMode = settings.uxMode;
+    S.preferredExperience = settings.preferredExperience;
     applyTheme(settings.theme);
     applyLanguage(settings.language);
   }
@@ -1832,6 +2156,7 @@ const App = (() => {
     await refreshActiveTask();
     await loadRecentLog();
     await loadQuickStats();
+    applyProgressiveDisclosure();
   }
 
   async function refreshActiveTask() {
@@ -2018,12 +2343,15 @@ const App = (() => {
   async function loadQuickStats() {
     const todayTasks = await DB.getTasksForDay(DB.toDateStr());
     const analysis   = MATH.analyzeDay(todayTasks);
+    const [all, latestSleep] = await Promise.all([
+      DB.getAllCompletedTasks(),
+      DB.getSleepLogs(1),
+    ]);
     $('qsTodayTime').textContent  = fmtSec(analysis.totalSec);
     $('qsEfficiency').textContent = analysis.efficiencyPct + '%';
     $('qsTaskCount').textContent  = analysis.taskCount;
 
     // Streak
-    const all  = await DB.getAllCompletedTasks();
     const { streak, bestStreak } = computeStreakFromTasks(all);
     $('qsStreak').textContent = `${streak} / ${bestStreak}`;
     if ($('streakText')) $('streakText').textContent = t('streakLabel', { value: streak });
@@ -2072,6 +2400,11 @@ const App = (() => {
     await updateMissionsFromTasks(todayTasks);
     await evaluateAchievements(all, streak);
     await renderAdvancedStats();
+    const fullAnalysis = MATH.analyzeAll(all);
+    await syncUserProgress();
+    renderZeusGuidance(fullAnalysis, latestSleep);
+    renderBackupSafetyNet();
+    applyProgressiveDisclosure();
   }
 
   // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
@@ -2181,6 +2514,7 @@ const App = (() => {
     renderDailyInsightsList(tasks, analysis);
     renderGoldenHoursDisplay(tasks);
     loadDayPlan();
+    applyProgressiveDisclosure();
   }
 
   function renderDailyCatDonut(timeByCat) {
@@ -2285,6 +2619,9 @@ const App = (() => {
     const trendMap = { improving:'📈 WZROST', declining:'📉 SPADEK', stable:'➡️ STABILNY' };
     trendEl.textContent = trendMap[emaData.trend] || '—';
     trendEl.className   = `trend-badge trend--${emaData.trend}`;
+    renderZeusGuidance({ ...analysis, emaData });
+    applyLevelLocks();
+    applyProgressiveDisclosure();
   }
 
   function renderWeeklyBars(timeByDay, weekStart) {
@@ -2347,7 +2684,10 @@ const App = (() => {
     const el = $('markovTable');
     if (!el) return;
     const transitions = MATH.topTransitions(matrix, 8);
-    if (!transitions.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za mało danych</td></tr>'; return; }
+    if (!transitions.length) {
+      el.innerHTML = `<tr><td colspan="4" class="empty-row">${S.language === 'en' ? 'Not enough data' : 'Za mało danych'}</td></tr>`;
+      return;
+    }
     el.innerHTML = transitions.map(t => `
       <tr>
         <td><span class="log-cat cat-${t.from}">${catLabel(t.from)}</span></td>
@@ -2364,7 +2704,10 @@ const App = (() => {
     const el = $('bayesTable');
     if (!el) return;
     const rows = Object.entries(bayesian).sort((a,b) => b[1].totalSeconds - a[1].totalSeconds);
-    if (!rows.length) { el.innerHTML = '<tr><td colspan="4" class="empty-row">Za mało danych</td></tr>'; return; }
+    if (!rows.length) {
+      el.innerHTML = `<tr><td colspan="4" class="empty-row">${S.language === 'en' ? 'Not enough data' : 'Za mało danych'}</td></tr>`;
+      return;
+    }
     el.innerHTML = rows.map(([cat, s]) => `
       <tr>
         <td><span class="log-cat cat-${cat}">${catLabel(cat)}</span></td>
@@ -2377,7 +2720,7 @@ const App = (() => {
   function renderWeeklyInsights(insights) {
     const el = $('weeklyInsights');
     if (!el) return;
-    el.innerHTML = (insights.length ? insights : [{ icon:'📊', text:'Za mało danych...' }])
+    el.innerHTML = (insights.length ? insights : [{ icon:'📊', text: S.language === 'en' ? 'Not enough data yet...' : 'Za mało danych...' }])
       .map(i => `<li><span class="insight-icon">${i.icon}</span>${escH(i.text)}</li>`)
       .join('');
   }
@@ -2395,6 +2738,7 @@ const App = (() => {
 
     const waterLogs = logs.filter(l => l.type === 'water');
     if (waterLogs.length) S.lastWaterLog = new Date(waterLogs[waterLogs.length-1].timestamp);
+    applyProgressiveDisclosure();
   }
 
   function renderWaterTracker(waterLogs) {
@@ -2403,7 +2747,9 @@ const App = (() => {
     const totalGlasses = waterLogs.reduce((s, l) => s + (l.value || 1), 0);
     const pct          = Math.min(Math.round(totalGlasses / GOAL * 100), 100);
 
-    $('waterCount').textContent       = `${totalGlasses} / ${GOAL} szklanek`;
+    $('waterCount').textContent       = S.language === 'en'
+      ? `${totalGlasses} / ${GOAL} glasses`
+      : `${totalGlasses} / ${GOAL} szklanek`;
     $('waterProgress').style.width    = pct + '%';
     $('waterProgressPct').textContent = pct + '%';
 
@@ -2417,7 +2763,9 @@ const App = (() => {
       btn.addEventListener('click', async () => {
         const slotState = await DB.consumeWaterSlot();
         if (!slotState.ok) {
-          showToast(`Dzienne sloty nawodnienia wykorzystane: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
+          showToast(S.language === 'en'
+            ? `Hydration slots used today: ${WATER_CAP}/${WATER_CAP}`
+            : `Dzienne sloty nawodnienia wykorzystane: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
           return;
         }
         await DB.logHealth({ type:'water', value:1, unit:'glass', note:'250ml' });
@@ -2425,14 +2773,16 @@ const App = (() => {
         await DB.addXP(20);
         await refreshXPBar();
         await loadHealthView();
-        showToast('+20 XP za nawodnienie', 'success');
+        showToast(S.language === 'en' ? '+20 XP for hydration' : '+20 XP za nawodnienie', 'success');
       });
       glasses.appendChild(btn);
     }
     if (totalGlasses > GOAL) {
       const extra = document.createElement('div');
       extra.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:var(--accent4);margin-top:6px';
-      extra.textContent   = `+${totalGlasses - GOAL} ponad cel`;
+      extra.textContent   = S.language === 'en'
+        ? `+${totalGlasses - GOAL} above goal`
+        : `+${totalGlasses - GOAL} ponad cel`;
       glasses.appendChild(extra);
     }
 
@@ -2440,8 +2790,12 @@ const App = (() => {
     if (undoBtn) {
       undoBtn.onclick = async () => {
         const ok = await DB.undoLastWater();
-        if (ok) { await loadHealthView(); showToast('Cofnięto ostatnią szklankę (slot pozostaje zużyty)', 'info'); }
-        else showToast('Brak wpisów do cofnięcia', 'warn');
+        if (ok) {
+          await loadHealthView();
+          showToast(S.language === 'en' ? 'Last glass removed (slot stays used).' : 'Cofnięto ostatnią szklankę (slot pozostaje zużyty)', 'info');
+        } else {
+          showToast(S.language === 'en' ? 'Nothing to undo.' : 'Brak wpisów do cofnięcia', 'warn');
+        }
       };
     }
   }
@@ -2453,7 +2807,7 @@ const App = (() => {
     const calSum    = $('mealCalSum');
 
     if (!mealLogs.length) {
-      container.innerHTML = '<div class="health-empty">Brak posiłków dziś</div>';
+      container.innerHTML = `<div class="health-empty">${S.language === 'en' ? 'No meals today' : 'Brak posiłków dziś'}</div>`;
       if (calTotal) calTotal.style.display = 'none';
       return;
     }
@@ -2477,10 +2831,12 @@ const App = (() => {
 
   function renderMovementLog(moveLogs) {
     const totalMin  = moveLogs.reduce((s, l) => s + (l.value || 0), 0);
-    $('movementTotal').textContent = totalMin + ' min ruchu dziś';
+    $('movementTotal').textContent = S.language === 'en'
+      ? `${totalMin} min of movement today`
+      : `${totalMin} min ruchu dziś`;
     const container = $('movementLog');
     if (!moveLogs.length) {
-      container.innerHTML = '<div class="health-empty">Brak aktywności fizycznej dziś</div>';
+      container.innerHTML = `<div class="health-empty">${S.language === 'en' ? 'No movement today' : 'Brak aktywności fizycznej dziś'}</div>`;
       return;
     }
     container.innerHTML = moveLogs.map(l => `
@@ -2545,7 +2901,10 @@ const App = (() => {
         const bedtime  = $('sleepBedtime').value;
         const wakeTime = $('sleepWakeLog').value;
         const quality  = parseInt($('sleepQuality').value) || 3;
-        if (!date || !bedtime || !wakeTime) { showToast('⚠️ Uzupełnij datę i godziny', 'warn'); return; }
+        if (!date || !bedtime || !wakeTime) {
+          showToast(S.language === 'en' ? 'Fill in the date and times.' : 'Uzupełnij datę i godziny', 'warn');
+          return;
+        }
         const [bh,bm] = bedtime.split(':').map(Number);
         const [wh,wm] = wakeTime.split(':').map(Number);
         let bedMin = bh*60+bm, wakeMin = wh*60+wm;
@@ -2554,7 +2913,9 @@ const App = (() => {
         await DB.logSleep({ date, bedtime, wakeTime, durationMin, quality });
         await DB.addXP(50);
         await refreshXPBar();
-        showToast(`🌙 Sen zapisany (${Math.round(durationMin/60*10)/10}h) — +50 XP`, 'success');
+        showToast(S.language === 'en'
+          ? `Sleep saved (${Math.round(durationMin/60*10)/10}h) - +50 XP`
+          : `Sen zapisany (${Math.round(durationMin/60*10)/10}h) - +50 XP`, 'success');
         const sleepHours = calculateSleepDurationHours(bedtime, wakeTime);
         if (sleepHours < 6) {
           zeusSpeak(`You slept ${sleepHours.toFixed(1)} hours. Even gods require more.`, 'Warning', 'high');
@@ -2562,6 +2923,7 @@ const App = (() => {
           zeusSpeak(`Recovery logged: ${sleepHours.toFixed(1)}h. A sharper mind returns.`, 'Approving');
         }
         await loadSleepHistory();
+        await loadQuickStats();
         $('sleepDate').value = $('sleepBedtime').value = $('sleepWakeLog').value = $('sleepQuality').value = '';
       });
     }
@@ -2571,7 +2933,10 @@ const App = (() => {
     const logs = await DB.getSleepLogs(7);
     const el   = $('sleepHistory');
     if (!el) return;
-    if (!logs.length) { el.innerHTML = '<div class="health-empty">Brak danych snu</div>'; return; }
+    if (!logs.length) {
+      el.innerHTML = `<div class="health-empty">${S.language === 'en' ? 'No sleep data yet' : 'Brak danych snu'}</div>`;
+      return;
+    }
     el.innerHTML = logs.map(l => {
       const stars = '★'.repeat(l.quality) + '☆'.repeat(5 - l.quality);
       const h     = Math.round(l.durationMin / 60 * 10) / 10;
@@ -2589,6 +2954,7 @@ const App = (() => {
         await loadSleepHistory();
       })
     );
+    applyProgressiveDisclosure();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -2651,9 +3017,9 @@ const App = (() => {
       await connectMonadWallet(true);
       S.appMode = 'monad';
       await DB.setSetting('app_mode', 'monad');
-      $('web3Panel')?.classList.remove('hidden');
       updateModeIndicator();
       refreshConnectionViews();
+      applyProgressiveDisclosure();
       showToast(t('walletConnected'), 'success');
     });
 
@@ -3262,6 +3628,7 @@ const App = (() => {
     $('modeSplash')?.classList.add('hidden');
     switchTab('tracker');
     await loadTrackerView();
+    applyProgressiveDisclosure();
     await maybeStartGuidedEntry();
   }
   function updateModeIndicator() {
@@ -3640,9 +4007,9 @@ const App = (() => {
     });
     const topHour = byHour.indexOf(Math.max(...byHour));
     el.innerHTML = `
-      <div class="adv-row"><strong>Best day</strong><span>${bestDay.day} · ${fmtSec(bestDay.sec)}</span></div>
-      <div class="adv-row"><strong>Longest session</strong><span>${fmtSec(longest)}</span></div>
-      <div class="adv-row"><strong>Most productive hour</strong><span>${String(topHour).padStart(2, '0')}:00</span></div>
+      <div class="adv-row"><strong>${S.language === 'en' ? 'Best day' : 'Najmocniejszy dzień'}</strong><span>${bestDay.day} · ${fmtSec(bestDay.sec)}</span></div>
+      <div class="adv-row"><strong>${S.language === 'en' ? 'Longest session' : 'Najdłuższa sesja'}</strong><span>${fmtSec(longest)}</span></div>
+      <div class="adv-row"><strong>${S.language === 'en' ? 'Best hour' : 'Najlepsza godzina'}</strong><span>${String(topHour).padStart(2, '0')}:00</span></div>
     `;
   }
 
@@ -3687,9 +4054,9 @@ const App = (() => {
       await connectMonadWallet(true);
       S.appMode = 'monad';
       await DB.setSetting('app_mode', 'monad');
-      $('web3Panel')?.classList.remove('hidden');
       updateModeIndicator();
       refreshConnectionViews();
+      applyProgressiveDisclosure();
       showToast(t('walletConnected'), 'success');
     });
     $('btnRestartOnboarding')?.addEventListener('click', () => restartOnboarding());
@@ -3712,73 +4079,12 @@ const App = (() => {
     }));
   }
 
-  const ONBOARDING_STEPS = [
-    {
-      title: 'Pasek boczny',
-      text: 'Tutaj szybko przełączasz sekcje dashboardu: Plan, notatki, sociale i portfel.',
-      before: () => { switchTab('profile'); },
-      target: () => document.querySelector('.profile-sidebar'),
-    },
-    {
-      title: 'Przycisk portfela',
-      text: 'W tej sekcji możesz sprawdzić status portfela i bezpiecznie go rozłączyć.',
-      before: () => {
-        switchTab('profile');
-        const btn = document.querySelector('[data-dashboard-section="wallet"]');
-        btn && btn.click();
-      },
-      target: () => $('btnDisconnectWallet'),
-    },
-    {
-      title: 'Sekcja planu dnia',
-      text: 'Dodawaj punkty planu dnia i śledź wykonanie z poziomu kart.',
-      before: () => {
-        switchTab('profile');
-        const btn = document.querySelector('[data-dashboard-section="dayplan"]');
-        btn && btn.click();
-      },
-      target: () => $('dayPlanInputProfile') || $('dayPlanInput'),
-    },
-  ];
-
   const GUIDED_ENTRY_KEY = 'focusos_guided_entry_requested';
 
   function startOnboardingIfNeeded() {
     if (document.body.classList.contains('app-locked')) return;
     if (localStorage.getItem(ONBOARDING_KEY) === 'true') return;
-    let step = 0;
-    const overlay = $('onboardingOverlay');
-    const tooltip = $('onboardingTooltip');
-    if (!overlay || !tooltip) return;
-
-    const placeTooltip = targetEl => {
-      const r = targetEl.getBoundingClientRect();
-      const top = Math.min(window.innerHeight - 180, r.bottom + 10);
-      const left = Math.min(window.innerWidth - 340, Math.max(12, r.left));
-      tooltip.style.top = `${top}px`;
-      tooltip.style.left = `${left}px`;
-    };
-
-    const complete = () => {
-      localStorage.setItem(ONBOARDING_KEY, 'true');
-      overlay.style.display = 'none';
-    };
-
-    const render = () => {
-      const s = ONBOARDING_STEPS[step];
-      if (!s) return complete();
-      s.before && s.before();
-      $('onboardingTitle').textContent = s.title;
-      $('onboardingText').textContent = s.text;
-      const target = s.target();
-      if (target) placeTooltip(target);
-      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? t('onboardingFinish') : t('onboardingNext');
-    };
-
-    $('btnOnboardingSkip').onclick = complete;
-    $('btnOnboardingNext').onclick = () => { step++; render(); };
-    overlay.style.display = 'block';
-    render();
+    maybeShowWelcome();
   }
 
   function restartOnboarding() {
@@ -3798,7 +4104,53 @@ const App = (() => {
     if (!shouldGuide) return;
     localStorage.removeItem(GUIDED_ENTRY_KEY);
     await maybeShowWelcome();
-    setTimeout(startTutorial, 350);
+  }
+
+  function closeWelcomeWizard() {
+    $('welcomeModal')?.classList.remove('open');
+  }
+
+  function completeWelcomeWizard({ skipTutorial = false } = {}) {
+    S.preferredExperience = S.welcomeGoalMode === 'pro' ? 'pro' : 'zen';
+    setUxMode(S.preferredExperience, { persist: false });
+    saveAppSettings({
+      uxMode: S.uxMode,
+      preferredExperience: S.preferredExperience,
+    });
+    const progress = normalizeUserProgress(getLS(USER_PROGRESS_KEY, getDefaultUserProgress()));
+    setLS(USER_PROGRESS_KEY, {
+      ...progress,
+      preferredExperience: S.preferredExperience,
+      uxMode: S.uxMode,
+    });
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    if (skipTutorial) {
+      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+    } else {
+      localStorage.removeItem(TUTORIAL_COMPLETED_KEY);
+    }
+    closeWelcomeWizard();
+    if (!skipTutorial) {
+      setTimeout(startTutorial, 180);
+    } else {
+      showToast(S.language === 'en' ? 'You can restart the tutorial from Profile.' : 'Samouczek możesz uruchomić ponownie z Profilu.', 'info');
+    }
+  }
+
+  function initWelcomeWizard() {
+    setWelcomeGoalMode(S.preferredExperience || 'zen');
+    document.querySelectorAll('[data-goal-mode]').forEach(card => {
+      card.addEventListener('click', () => setWelcomeGoalMode(card.dataset.goalMode));
+    });
+    $('btnWelcomeEnter')?.addEventListener('click', () => completeWelcomeWizard({ skipTutorial: false }));
+    $('btnWelcomeSkip')?.addEventListener('click', () => completeWelcomeWizard({ skipTutorial: true }));
+  }
+
+  function initUxModeControls() {
+    $('btnZenMode')?.addEventListener('click', () => setUxMode('zen'));
+    $('btnProMode')?.addEventListener('click', () => setUxMode('pro'));
+    $('btnDetailedReport')?.addEventListener('click', openDetailedReport);
+    $('btnBackupOpenSettings')?.addEventListener('click', () => switchTab('settings'));
   }
 
   function initZeusActions() {
@@ -3884,11 +4236,11 @@ const App = (() => {
     if (S.appMode === 'monad') {
       S.appMode = S.googleConnected ? 'google' : 'local';
       DB.setSetting('app_mode', S.appMode);
-      $('web3Panel')?.classList.add('hidden');
     }
     updateModeIndicator();
     refreshConnectionViews();
     loadProfileView();
+    applyProgressiveDisclosure();
     showToast(t('walletDisconnected'), 'success');
   }
 
@@ -3947,6 +4299,38 @@ const App = (() => {
         if (S.currentView === 'health') await loadHealthView();
       });
     }
+
+    $('btnQuickWater')?.addEventListener('click', async () => {
+      const slotState = await DB.consumeWaterSlot();
+      if (!slotState.ok) {
+        showToast(S.language === 'en' ? 'Water limit reached for today.' : 'Dzisiejszy limit wody jest już wykorzystany.', 'warn');
+        return;
+      }
+      await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: '250ml' });
+      await DB.addXP(20);
+      S.lastWaterLog = new Date();
+      if (S.currentView === 'health') await loadHealthView();
+      await loadQuickStats();
+      showToast(S.language === 'en' ? 'Water logged (+250ml).' : 'Woda zapisana (+250 ml).', 'success');
+    });
+
+    $('btnQuickMeal')?.addEventListener('click', async () => {
+      const hour = new Date().getHours();
+      const label = S.language === 'en'
+        ? (hour < 11 ? 'Quick breakfast' : hour < 17 ? 'Quick meal' : 'Quick dinner')
+        : (hour < 11 ? 'Szybkie śniadanie' : hour < 17 ? 'Szybki posiłek' : 'Lekka kolacja');
+      await DB.logHealth({ type: 'meal', value: 'quick', note: label, calories: 0 });
+      if (S.currentView === 'health') await loadHealthView();
+      await loadQuickStats();
+      showToast(S.language === 'en' ? 'Meal logged.' : 'Posiłek zapisany.', 'success');
+    });
+
+    $('btnQuickMove')?.addEventListener('click', async () => {
+      await DB.logHealth({ type: 'movement', value: 5, unit: 'min', note: S.language === 'en' ? 'Quick reset' : 'Krótki reset' });
+      if (S.currentView === 'health') await loadHealthView();
+      await loadQuickStats();
+      showToast(S.language === 'en' ? 'Movement logged (+5 min).' : 'Ruch zapisany (+5 min).', 'success');
+    });
 
     // Movement quick-log
     document.querySelectorAll('[data-move]').forEach(btn =>
@@ -4092,10 +4476,12 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function init() {
+    installLocalSaveHooks();
     await registerServiceWorker();
     await recoverHardcoreFailureIfNeeded();
     await initHardcoreMode();
     await initLevelProgression();
+    await syncUserProgress();
     S.zeusStyle = getLS(LS_KEYS.zeusStyle, 'balanced');
     S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
     S.googleConnected = localStorage.getItem(LS_KEYS.google) === '1';
@@ -4112,6 +4498,8 @@ const App = (() => {
     initExtendedSections();
     initSleepView();
     initSettingsView();
+    initWelcomeWizard();
+    initUxModeControls();
     initRoutines();
     initDeepWorkMode();
     initZeusActions();
@@ -4178,6 +4566,8 @@ const App = (() => {
     loadProfileView();
     refreshConnectionViews();
     updateModeIndicator();
+    applyProgressiveDisclosure();
+    setSaveStatus('saved');
     if (!document.body.classList.contains('app-locked')) {
       await maybeStartGuidedEntry();
     }
