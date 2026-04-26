@@ -523,21 +523,30 @@ const App = (() => {
 
   const TUTORIAL_STEPS = [
     {
+      targetId: 'taskName',
+      arrow: 'down',
+      text: {
+        pl: 'Zacznij tutaj. Nazwij jedną rzecz, którą naprawdę chcesz domknąć w tej sesji.',
+        en: 'Start here. Name the one thing you want to finish in this session.',
+      },
+      before: () => switchTab('tracker'),
+    },
+    {
       targetId: 'btnStart',
       arrow: 'down',
-      text: 'To jest Twój najważniejszy przycisk. Start uruchamia sesję i od razu wprowadza Cię w rytm pracy.',
+      text: {
+        pl: 'To jest dominujący przycisk. Uruchom sesję i pozwól aplikacji podporządkować interfejs bieżącej pracy.',
+        en: 'This is the dominant action. Start the session and let the app reorganize around the current work.',
+      },
       before: () => switchTab('tracker'),
     },
     {
-      targetId: 'taskCategory',
-      arrow: 'down',
-      text: 'Kategorie uczą FocusOS, jak wygląda Twoja praca. Dzięki nim Zeus później daje sensowne porady, a nie suchy wykres.',
-      before: () => switchTab('tracker'),
-    },
-    {
-      targetId: 'btnDetailedReport',
-      arrow: 'down',
-      text: 'Statystyki i surową analitykę trzymamy tutaj. Główny ekran zostaje prosty, a szczegóły otwierasz dopiero wtedy, kiedy naprawdę chcesz je zobaczyć.',
+      targetId: 'btnStop',
+      arrow: 'up',
+      text: {
+        pl: 'Kiedy praca jest zrobiona, domknij sesję tutaj. Zbyt wczesne zatrzymanie liczy się jako zerwana próba.',
+        en: 'When the work is done, close the session here. Stopping too early counts as a broken run.',
+      },
       before: () => switchTab('tracker'),
     },
   ];
@@ -706,7 +715,11 @@ const App = (() => {
       showToast(S.language === 'en' ? 'Sleep tracking unlocks after 3 focus sessions.' : 'Sen odblokuje się po 3 sesjach skupienia.', 'info');
       return;
     }
+    if (view !== 'tracker' && document.body.classList.contains('deep-work')) {
+      setDeepWorkMode(false);
+    }
     S.currentView = view;
+    document.body.dataset.currentView = view;
     document.querySelectorAll('[data-tab]').forEach(b =>
       b.classList.toggle('active', b.dataset.tab === view)
     );
@@ -937,7 +950,6 @@ const App = (() => {
     renderBackupSafetyNet();
 
     const zenOnlyHidden = [
-      '.panel--qs',
       '.panel--routines',
       '.panel--missions',
       '.panel--advstats',
@@ -1058,20 +1070,70 @@ const App = (() => {
     const coach = $('zeusCoachline');
     const nudge = $('zeusNudge');
     if (!coach || !nudge) return;
-    const advice = buildHumanAdvice(analysis);
-    coach.textContent = advice.coach;
+    const state = S.activeTask ? 'active' : 'idle';
+    const payload = getZeusStatePayload(state);
+    coach.textContent = payload.coach;
     const sleepPrompt = getLatestSleepPrompt(latestSleepLogs);
-    nudge.textContent = sleepPrompt || advice.nudge;
+    if (sleepPrompt && !S.activeTask) {
+      nudge.textContent = S.language === 'en'
+        ? 'Recovery first. Then lock in.'
+        : 'Najpierw regeneracja. Potem sprint.';
+      return;
+    }
+    if (analysis && !S.activeTask) {
+      if ((analysis.efficiencyPct || 0) >= 80) {
+        nudge.textContent = S.language === 'en'
+          ? 'Rhythm looks clean today.'
+          : 'Rytm wygląda dziś czysto.';
+        return;
+      }
+      if ((analysis.efficiencyPct || 0) > 0) {
+        nudge.textContent = S.language === 'en'
+          ? 'Shorter, tighter sessions win.'
+          : 'Krótsze, ciaśniejsze sesje wygrają.';
+        return;
+      }
+    }
+    nudge.textContent = payload.nudge;
   }
 
   function getZeusVisualState(mood = 'Observing', intensity = 'normal', message = '') {
     const moodKey = String(mood || '').toLowerCase();
     const text = String(message || '').toLowerCase();
-    if (intensity === 'high' || /wrath|demanding|triumphant|fired up/.test(moodKey)) return 'wrath';
-    if (/disappointed|judging|warning/.test(moodKey) || /failure|skipped|penalty/.test(text)) return 'disappointed';
-    if (/approving|proud|success/.test(moodKey)) return 'proud';
-    if (/tired|sleep|recovery/.test(moodKey) || /recover/.test(text)) return 'tired';
-    return 'neutral';
+    if (/disappointed|judging|warning/.test(moodKey) || /failure|skipped|penalty|broke|fled/.test(text)) return 'failure';
+    if (/approving|triumphant|proud/.test(moodKey) || /completed|ascended|success|clean/.test(text)) return 'success';
+    if (S.activeTask || intensity === 'high' || /demanding|fired up|focus/.test(moodKey) || /discipline|lock in|begins/.test(text)) return 'active';
+    return 'idle';
+  }
+
+  function getZeusStatePayload(state = 'idle') {
+    const states = {
+      idle: {
+        label: t('zeusStateIdle'),
+        line: t('zeusLineIdle'),
+        coach: t('zeusCoachIdle'),
+        nudge: t('zeusNudgeIdle'),
+      },
+      active: {
+        label: t('zeusStateActive'),
+        line: t('zeusLineActive'),
+        coach: t('zeusCoachActive'),
+        nudge: t('zeusNudgeActive'),
+      },
+      success: {
+        label: t('zeusStateSuccess'),
+        line: t('zeusLineSuccess'),
+        coach: t('zeusCoachSuccess'),
+        nudge: t('zeusNudgeSuccess'),
+      },
+      failure: {
+        label: t('zeusStateFailure'),
+        line: t('zeusLineFail'),
+        coach: t('zeusCoachFail'),
+        nudge: t('zeusNudgeFail'),
+      },
+    };
+    return states[state] || states.idle;
   }
 
   function applyZeusVisualState(state) {
@@ -1079,21 +1141,20 @@ const App = (() => {
     if (!card) return;
     card.dataset.zeusState = state;
     const states = {
-      neutral: { browLeft: 'M150 188 Q183 177 216 184', browRight: 'M296 184 Q329 177 362 188', mouth: 'M228 330 Q256 338 284 330', eyeOpacity: 0.52, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
-      proud: { browLeft: 'M150 186 Q183 176 216 182', browRight: 'M296 182 Q329 176 362 186', mouth: 'M226 326 Q256 347 286 326', eyeOpacity: 0.9, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
-      disappointed: { browLeft: 'M150 190 Q183 184 216 192', browRight: 'M296 192 Q329 184 362 190', mouth: 'M226 338 Q256 325 286 338', eyeOpacity: 0.28, eyeCy: 236, eyeRy: 11, sparkCy: 234 },
-      wrath: { browLeft: 'M150 199 Q183 168 216 174', browRight: 'M296 174 Q329 168 362 199', mouth: 'M220 335 Q256 346 292 335', eyeOpacity: 1, eyeCy: 235, eyeRy: 12, sparkCy: 232 },
-      tired: { browLeft: 'M150 190 Q183 186 216 190', browRight: 'M296 190 Q329 186 362 190', mouth: 'M228 333 Q256 331 284 333', eyeOpacity: 0.34, eyeCy: 241, eyeRy: 10, sparkCy: 237 },
+      idle: { browLeft: 'M98 112 Q126 102 154 112', browRight: 'M166 112 Q194 102 222 112', mouth: 'M132 190 Q160 198 188 190', eyeOpacity: 0.62, eyeCy: 138, eyeRy: 13, sparkCy: 133 },
+      active: { browLeft: 'M98 118 Q126 94 154 104', browRight: 'M166 104 Q194 94 222 118', mouth: 'M132 188 Q160 184 188 188', eyeOpacity: 1, eyeCy: 138, eyeRy: 12, sparkCy: 132 },
+      success: { browLeft: 'M98 108 Q126 100 154 108', browRight: 'M166 108 Q194 100 222 108', mouth: 'M128 184 Q160 214 192 184', eyeOpacity: 0.92, eyeCy: 138, eyeRy: 13, sparkCy: 132 },
+      failure: { browLeft: 'M98 116 Q126 126 154 118', browRight: 'M166 118 Q194 126 222 116', mouth: 'M128 198 Q160 180 192 198', eyeOpacity: 0.28, eyeCy: 140, eyeRy: 11, sparkCy: 136 },
     };
-    const cfg = states[state] || states.neutral;
+    const cfg = states[state] || states.idle;
     $('zeusBrowLeft')?.setAttribute('d', cfg.browLeft);
     $('zeusBrowRight')?.setAttribute('d', cfg.browRight);
     $('zeusMouth')?.setAttribute('d', cfg.mouth);
-    [['zeusEyeLeftBg', 40], ['zeusEyeRightBg', 40]].forEach(([id, rx]) => {
+    [['zeusEyeLeftBg', 26], ['zeusEyeRightBg', 26]].forEach(([id, rx]) => {
       const el = $(id);
       if (!el) return;
       el.setAttribute('cy', String(cfg.eyeCy));
-      el.setAttribute('ry', String(cfg.eyeRy + 8));
+      el.setAttribute('ry', String(cfg.eyeRy + 9));
       el.setAttribute('rx', String(rx));
     });
     ['zeusEyeLeft', 'zeusEyeRight'].forEach(id => {
@@ -1112,17 +1173,18 @@ const App = (() => {
   }
 
   function zeusSpeak(message, mood = 'Observing', intensity = 'normal') {
-    const negativeMoods = new Set(['Warning', 'Judging', 'Disappointed']);
-    const context = negativeMoods.has(mood) ? 'negative' : 'positive';
-    message = adaptZeusMessage(message, context);
     const msgEl = $('zeusMessage');
     const moodEl = $('zeusMood');
     const card = $('zeusCard');
     if (!msgEl || !moodEl || !card) return;
-    msgEl.textContent = message;
+    const visualState = getZeusVisualState(mood, intensity, message);
+    const payload = getZeusStatePayload(visualState);
+    msgEl.textContent = payload.line;
     msgEl.dataset.dynamic = '1';
-    moodEl.textContent = localizeZeusMood(mood);
-    applyZeusVisualState(getZeusVisualState(mood, intensity, message));
+    moodEl.textContent = payload.label;
+    $('zeusCoachline') && ($('zeusCoachline').textContent = payload.coach);
+    $('zeusNudge') && ($('zeusNudge').textContent = payload.nudge);
+    applyZeusVisualState(visualState);
     card.classList.remove('zeus-anim');
     void card.offsetWidth;
     card.classList.add('zeus-anim');
@@ -1400,12 +1462,22 @@ const App = (() => {
       web3Burn: 'Spal tokeny',
       web3Save: 'Zapisz postęp on-chain',
       trackerPanel: 'Aktywna sesja',
+      focusHeroKicker: 'Focus flow',
       trackerHeroTitle: 'Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.',
       trackerHeroSub: 'Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.',
       quickStartTitle: 'Szybki start',
+      quickStartSummary: '3 kroki do pierwszej czystej sesji.',
+      quickStartSummaryDone: 'Masz już pierwszy pełny cykl za sobą.',
+      quickStartBadge: 'Onboarding',
       quickStart1: 'Dodaj zadanie',
       quickStart2: 'Uruchom sesję',
       quickStart3: 'Zamknij pierwszą sesję',
+      focusTaskTitle: 'Dodaj jedno konkretne zadanie',
+      focusTaskCopy: 'Nazwij najbliższy blok pracy tak, żeby od razu było jasne, co domykasz.',
+      focusStartTitle: 'Uruchom jedną dominującą sesję',
+      focusStartCopy: 'Najpierw włącz sesję. Reszta interfejsu dopasuje się do bieżącej pracy.',
+      focusCompleteTitle: 'Zamknij sesję czysto',
+      focusCompleteCopy: 'Gdy praca jest zrobiona, zakończ sesję i zapisz postęp, streak oraz XP.',
       statusIdle: 'Bezczynny',
       statusTracking: 'Trwa sesja',
       streakLabel: 'Streak: {value} dni',
@@ -1425,14 +1497,42 @@ const App = (() => {
       focusCycleBreak: 'Przerwa regeneracyjna',
       deepWork: 'Głębokie skupienie',
       exitDeepWork: 'Wyjdź z głębokiego skupienia',
+      deepFocusLabel: 'Deep Focus',
+      deepFocusCopy: 'Tylko bieżące zadanie, licznik i czyste domknięcie sesji.',
+      deepFocusNeedsSession: 'Najpierw uruchom sesję, potem wchodź w Deep Focus.',
       soundOn: 'Dźwięk włączony',
       soundOff: 'Dźwięk wyłączony',
       taskPlaceholder: 'Nad czym teraz pracujesz?',
       fatigueHint: 'Zmęczenie rośnie',
       refreshData: 'Odśwież dane',
-      zeusPanel: 'Hologram Zeusa',
-      zeusTagline: 'Mentor skupienia',
-      zeusDefaultMessage: 'Jestem po Twojej prawej stronie. Prowadzę, tłumaczę i pilnuję rytmu pracy.',
+      startSessionPrimary: 'Uruchom sesję skupienia',
+      completeSession: 'Zakończ sesję',
+      stopEarly: 'Zatrzymaj za wcześnie',
+      focusHintIdle: 'Dodaj zadanie, a potem od razu wciśnij główny przycisk startu.',
+      focusHintReady: 'Zadanie jest gotowe. Teraz odpal sesję i odetnij resztę szumu.',
+      focusHintActive: 'Sesja trwa. Chroń rytm i nie rozdrabniaj uwagi.',
+      focusHintNoSession: 'Najpierw wystartuj sesję, żeby mieć co domknąć.',
+      focusHintCompleteReady: 'Masz już pełną sesję. Domknij ją czysto i odbierz XP.',
+      focusHintCompleteWait: 'Daj sobie chwilę więcej. Zbyt krótka sesja liczy się jako zerwana próba.',
+      zeusPanel: 'Asystent Zeus',
+      zeusTagline: 'Przewodnik skupienia',
+      zeusDefaultMessage: 'Twój ruch.',
+      zeusLineIdle: 'Twój ruch.',
+      zeusLineActive: 'Wchodź.',
+      zeusLineSuccess: 'Czysta sesja.',
+      zeusLineFail: 'Zerwałeś to.',
+      zeusCoachIdle: 'Jedno zadanie. Jeden start.',
+      zeusCoachActive: 'Trzymaj jeden cel aż do końca.',
+      zeusCoachSuccess: 'XP, streak i rytm są zapisane.',
+      zeusCoachFail: 'Wróć szybko, zanim rytm siądzie.',
+      zeusNudgeIdle: 'Gdy sesja ruszy, wejdź w Deep Focus.',
+      zeusNudgeActive: 'Zero przełączania. Jedna rzecz na raz.',
+      zeusNudgeSuccess: 'Złap kolejną sesję, zanim energia spadnie.',
+      zeusNudgeFail: 'Nazwij task krócej i zacznij od nowa.',
+      zeusStateIdle: 'Idle',
+      zeusStateActive: 'Focus active',
+      zeusStateSuccess: 'Success',
+      zeusStateFailure: 'Failure',
       zeusActionFocus: 'Sprint',
       zeusActionStreak: 'Chroń streak',
       zeusActionRecover: 'Regeneracja',
@@ -1481,6 +1581,9 @@ const App = (() => {
       zeusStyleHelp: 'Wybierz, jak Zeus ma do Ciebie mówić.',
       skillTreePanel: 'Drzewko umiejętności',
       skillPointsLabel: 'Punkty umiejętności: {value}',
+      skillStateUnlocked: 'Unlocked',
+      skillStateReady: 'Ready',
+      skillStateLocked: 'Locked',
       connectionsPanel: 'Połączenia i kopie zapasowe',
       connectionsCopy: 'Tutaj zarządzasz instalacją aplikacji, backupem Google Drive i dostępem do portfela.',
       wallet: 'Portfel',
@@ -1653,12 +1756,22 @@ const App = (() => {
       web3Burn: 'Burn tokens',
       web3Save: 'Save progress on-chain',
       trackerPanel: 'Active session',
+      focusHeroKicker: 'Focus flow',
       trackerHeroTitle: 'Build real focus momentum, one clean session at a time.',
       trackerHeroSub: 'Track work, protect your streak, and keep the whole system readable on every screen.',
       quickStartTitle: 'Quick start',
+      quickStartSummary: '3 steps to your first clean session.',
+      quickStartSummaryDone: 'Your first full focus loop is done.',
+      quickStartBadge: 'Onboarding',
       quickStart1: 'Add a task',
       quickStart2: 'Start a session',
       quickStart3: 'Finish your first session',
+      focusTaskTitle: 'Add one concrete task',
+      focusTaskCopy: 'Name the next work block clearly enough that the finish line is obvious.',
+      focusStartTitle: 'Start one dominant session',
+      focusStartCopy: 'Launch the session first. The rest of the interface should orbit the work in front of you.',
+      focusCompleteTitle: 'Finish the session clean',
+      focusCompleteCopy: 'When the work is done, close the session and bank the progress, streak, and XP.',
       statusIdle: 'Idle',
       statusTracking: 'Tracking',
       streakLabel: 'Streak: {value} days',
@@ -1678,14 +1791,42 @@ const App = (() => {
       focusCycleBreak: 'Recovery break',
       deepWork: 'Deep Focus',
       exitDeepWork: 'Exit Deep Focus',
+      deepFocusLabel: 'Deep Focus',
+      deepFocusCopy: 'Only the current task, the timer, and a clean way to finish.',
+      deepFocusNeedsSession: 'Start a session before entering Deep Focus.',
       soundOn: 'Sound on',
       soundOff: 'Sound off',
       taskPlaceholder: 'What are you working on?',
       fatigueHint: 'Fatigue is rising',
       refreshData: 'Refresh data',
-      zeusPanel: 'Zeus hologram',
-      zeusTagline: 'Focus sidekick',
-      zeusDefaultMessage: 'I stay on your right side to guide, explain, and keep your rhythm steady.',
+      startSessionPrimary: 'Start focus session',
+      completeSession: 'Complete session',
+      stopEarly: 'Stop early',
+      focusHintIdle: 'Add a task, then hit the main start button immediately.',
+      focusHintReady: 'The task is ready. Start the session and cut the extra noise.',
+      focusHintActive: 'The session is live. Protect the rhythm and keep your attention narrow.',
+      focusHintNoSession: 'Start a session first so there is something real to finish.',
+      focusHintCompleteReady: 'You have a full session. Close it clean and bank the XP.',
+      focusHintCompleteWait: 'Give it a little longer. A short stop still counts as a broken run.',
+      zeusPanel: 'Zeus assistant',
+      zeusTagline: 'Focus guide',
+      zeusDefaultMessage: 'Your move.',
+      zeusLineIdle: 'Your move.',
+      zeusLineActive: 'Lock in.',
+      zeusLineSuccess: 'Clean session.',
+      zeusLineFail: 'You broke it.',
+      zeusCoachIdle: 'One task. One start.',
+      zeusCoachActive: 'Hold one target to the end.',
+      zeusCoachSuccess: 'XP, streak, and rhythm are stored.',
+      zeusCoachFail: 'Get back in before the rhythm slips.',
+      zeusNudgeIdle: 'Once the session starts, go Deep Focus.',
+      zeusNudgeActive: 'No tab-hopping. One thing at a time.',
+      zeusNudgeSuccess: 'Catch the next session before the energy drops.',
+      zeusNudgeFail: 'Name the task tighter and restart.',
+      zeusStateIdle: 'Idle',
+      zeusStateActive: 'Focus active',
+      zeusStateSuccess: 'Success',
+      zeusStateFailure: 'Failure',
       zeusActionFocus: 'Sprint',
       zeusActionStreak: 'Protect streak',
       zeusActionRecover: 'Recover',
@@ -1734,6 +1875,9 @@ const App = (() => {
       zeusStyleHelp: 'Choose how Zeus talks to you.',
       skillTreePanel: 'Skill tree',
       skillPointsLabel: 'Skill points: {value}',
+      skillStateUnlocked: 'Unlocked',
+      skillStateReady: 'Ready',
+      skillStateLocked: 'Locked',
       connectionsPanel: 'Connections and backups',
       connectionsCopy: 'Manage app install, Google Drive backup, and wallet access from one place.',
       wallet: 'Wallet',
@@ -1919,31 +2063,47 @@ const App = (() => {
     setText('#btnBurnTokens', t('web3Burn'));
     setText('#btnSaveToChain', t('web3Save'));
     setText('.panel--tracker-main .panel-label', t('trackerPanel'));
+    setText('#focusHeroKicker', t('focusHeroKicker'));
     setText('.tracker-hero-title', t('trackerHeroTitle'));
     setText('.tracker-hero-sub', t('trackerHeroSub'));
     setText('.tracker-helper', t('trackerHelper'));
     setText('#fatigueHint', t('fatigueHint'));
     setText('.quick-start-title', t('quickStartTitle'));
+    setText('#quickStartSummary', t('quickStartSummary'));
+    setText('#quickStartBadge', t('quickStartBadge'));
     const quickStart = document.querySelectorAll('.quick-start-list li');
     if (quickStart[0]) quickStart[0].textContent = t('quickStart1');
     if (quickStart[1]) quickStart[1].textContent = t('quickStart2');
     if (quickStart[2]) quickStart[2].textContent = t('quickStart3');
+    setText('#focusTaskTitle', t('focusTaskTitle'));
+    setText('#focusTaskCopy', t('focusTaskCopy'));
+    setText('#focusStartTitle', t('focusStartTitle'));
+    setText('#focusStartCopy', t('focusStartCopy'));
+    setText('#focusCompleteTitle', t('focusCompleteTitle'));
+    setText('#focusCompleteCopy', t('focusCompleteCopy'));
     setText('.panel--focus-cycle .panel-label', t('focusCyclePanel'));
     setText('.panel--focus-cycle .panel-copy', t('focusCycleCopy'));
     const focusLabels = document.querySelectorAll('.focus-cycle-field span');
     if (focusLabels[0]) focusLabels[0].textContent = t('focusFieldFocus');
     if (focusLabels[1]) focusLabels[1].textContent = t('focusFieldRecovery');
     setPlaceholder('#taskName', t('taskPlaceholder'));
-    setText('#btnStart', t('start'));
-    setText('#btnStop', t('stop'));
+    setText('#btnStart', t('startSessionPrimary'));
+    setText('#btnStop', t('completeSession'));
+    setText('#btnDeepFocusStop', t('completeSession'));
+    setText('#flowPrimaryHint', t('focusHintIdle'));
+    setText('#flowCompletionHint', t('focusHintNoSession'));
     setText('#btnRefresh', t('refreshData'));
     setText('.panel--zeus .panel-label', t('zeusPanel'));
     setText('.zeus-badge', t('zeusTagline'));
-    setText('#zeusMood', localizeZeusMood('Observing'));
+    setText('#zeusMood', t('zeusStateIdle'));
     if ($('zeusMessage') && !$('zeusMessage').dataset.dynamic) $('zeusMessage').textContent = t('zeusDefaultMessage');
+    setText('#zeusCoachline', t('zeusCoachIdle'));
+    setText('#zeusNudge', t('zeusNudgeIdle'));
     setText('#btnZeusFocus', t('zeusActionFocus'));
     setText('#btnZeusStreak', t('zeusActionStreak'));
     setText('#btnZeusRecover', t('zeusActionRecover'));
+    setText('#deepFocusLabel', t('deepFocusLabel'));
+    setText('#deepFocusCopy', t('deepFocusCopy'));
     setText('.panel--routines .panel-label', t('routinesPanel'));
     const routineOptions = document.querySelectorAll('#routineType option');
     if (routineOptions[0]) routineOptions[0].textContent = t('routineMorning');
@@ -2134,6 +2294,8 @@ const App = (() => {
     }
     if (S.userProgress) renderBackupSafetyNet();
     applyProgressiveDisclosure();
+    updateFocusFlowState();
+    updateDeepFocusUI();
     setSaveStatus('saved', t('saveStatusLocal'));
   }
 
@@ -2148,6 +2310,84 @@ const App = (() => {
   // Apply local-first appearance settings immediately on startup.
   applyPersistedSettings();
 
+  function getActiveElapsedSec() {
+    if (!S.activeTask?.start_time) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(S.activeTask.start_time).getTime()) / 1000));
+  }
+
+  function updateStopButtonLabel() {
+    const label = S.activeTask && getActiveElapsedSec() < 15 * 60
+      ? t('stopEarly')
+      : t('completeSession');
+    if ($('btnStop')) $('btnStop').textContent = label;
+    if ($('btnDeepFocusStop')) $('btnDeepFocusStop').textContent = label;
+  }
+
+  function updateFocusFlowState() {
+    const hasDraft = !!$('taskName')?.value.trim();
+    const hasActive = !!S.activeTask;
+    const hasCompleted = (S.userProgress?.focusSessions || 0) > 0;
+    const activeStep = hasActive ? 'complete' : hasDraft ? 'start' : 'task';
+    const doneMap = {
+      task: hasDraft || hasActive || hasCompleted,
+      start: hasActive || hasCompleted,
+      complete: hasCompleted,
+    };
+
+    document.querySelectorAll('[data-flow-step]').forEach(node => {
+      const step = node.dataset.flowStep;
+      node.classList.toggle('is-active', activeStep === step);
+      node.classList.toggle('is-done', !!doneMap[step]);
+    });
+
+    [['checkAddTask', doneMap.task, activeStep === 'task'], ['checkStartTask', doneMap.start, activeStep === 'start'], ['checkCompleteTask', doneMap.complete, activeStep === 'complete']].forEach(([id, done, current]) => {
+      const item = $(id);
+      if (!item) return;
+      item.classList.toggle('is-done', !!done);
+      item.classList.toggle('is-active', !!current);
+    });
+
+    $('quickStartChecklist')?.classList.toggle('is-complete', hasCompleted);
+    if ($('quickStartSummary')) {
+      $('quickStartSummary').textContent = hasCompleted
+        ? t('quickStartSummaryDone')
+        : t('quickStartSummary');
+    }
+
+    if ($('btnPomodoroSkip')) $('btnPomodoroSkip').disabled = !S.pomodoro.running;
+    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = !hasActive;
+
+    if ($('flowPrimaryHint')) {
+      $('flowPrimaryHint').textContent = hasActive
+        ? t('focusHintActive')
+        : hasDraft
+          ? t('focusHintReady')
+          : t('focusHintIdle');
+    }
+
+    if ($('flowCompletionHint')) {
+      $('flowCompletionHint').textContent = hasActive
+        ? (getActiveElapsedSec() >= 15 * 60 ? t('focusHintCompleteReady') : t('focusHintCompleteWait'))
+        : t('focusHintNoSession');
+    }
+
+    updateStopButtonLabel();
+  }
+
+  function updateDeepFocusUI() {
+    const task = S.activeTask;
+    const phaseLabel = S.pomodoro.phase === 'break' ? t('focusCycleBreak') : t('focusCycleFocus');
+    const timerText = $('activeTimer')?.textContent || '00:00:00';
+    if ($('deepFocusTask')) $('deepFocusTask').textContent = task?.name || (S.language === 'en' ? 'No active session' : 'Brak aktywnej sesji');
+    if ($('deepFocusPhase')) $('deepFocusPhase').textContent = task ? phaseLabel : t('statusIdle');
+    if ($('deepFocusTimer')) $('deepFocusTimer').textContent = task ? timerText : '00:00:00';
+    if ($('deepFocusCopy')) $('deepFocusCopy').textContent = task ? t('deepFocusCopy') : t('focusHintNoSession');
+    if ($('btnDeepFocusStop')) {
+      const stopDisabled = $('btnStop') ? $('btnStop').disabled : true;
+      $('btnDeepFocusStop').disabled = !task || stopDisabled;
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // TRACKER VIEW
   // ─────────────────────────────────────────────────────────────────────────
@@ -2157,6 +2397,8 @@ const App = (() => {
     await loadRecentLog();
     await loadQuickStats();
     applyProgressiveDisclosure();
+    updateFocusFlowState();
+    updateDeepFocusUI();
   }
 
   async function refreshActiveTask() {
@@ -2172,6 +2414,7 @@ const App = (() => {
   }
 
   function setActiveUI(task) {
+    S.activeTask = task;
     $('statusDot').className = 'status-dot running';
     $('statusLabel').textContent = t('statusTracking');
     $('activeCard').style.display = 'block';
@@ -2182,8 +2425,9 @@ const App = (() => {
     $('btnStart').disabled = true;
     $('btnStop').disabled  = false;
     $('taskName').value    = '';
-    $('quickStartChecklist')?.classList.add('hidden');
     updateHardcoreStopState();
+    updateFocusFlowState();
+    updateDeepFocusUI();
   }
 
   function clearActiveUI() {
@@ -2201,6 +2445,9 @@ const App = (() => {
     $('fatigueLabel').textContent = '';
     $('btnStart').disabled = false;
     $('btnStop').disabled  = true;
+    if (document.body.classList.contains('deep-work')) setDeepWorkMode(false);
+    updateFocusFlowState();
+    updateDeepFocusUI();
   }
 
   function updateHardcoreStopState() {
@@ -2253,6 +2500,8 @@ const App = (() => {
       $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
       $('fatigueLabel').textContent = `Wydajność: ${fatigue.currentEfficiency}%`;
       $('fatigueBarWrap').classList.toggle('fatigue--warn', fatigue.shouldBreak);
+      updateStopButtonLabel();
+      updateDeepFocusUI();
     }, 1000);
   }
 
@@ -2405,6 +2654,7 @@ const App = (() => {
     renderZeusGuidance(fullAnalysis, latestSleep);
     renderBackupSafetyNet();
     applyProgressiveDisclosure();
+    updateFocusFlowState();
   }
 
   // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
@@ -3120,6 +3370,8 @@ const App = (() => {
     if ($('btnPomodoroSkip')) $('btnPomodoroSkip').textContent = S.pomodoro.phase === 'focus' ? t('focusCycleToBreak') : t('focusCycleToFocus');
     if ($('btnDeepWorkMode')) $('btnDeepWorkMode').textContent = document.body.classList.contains('deep-work') ? t('exitDeepWork') : t('deepWork');
     syncFocusSoundButton();
+    updateFocusFlowState();
+    updateDeepFocusUI();
   }
 
   async function switchPomodoroPhase() {
@@ -3207,19 +3459,40 @@ const App = (() => {
     });
   }
 
+  async function setDeepWorkMode(enabled) {
+    const overlay = $('deepFocusOverlay');
+    if (!overlay) return false;
+    if (enabled && !S.activeTask) {
+      showToast(t('deepFocusNeedsSession'), 'warn');
+      $('taskName')?.focus();
+      return false;
+    }
+    document.body.classList.toggle('deep-work', enabled);
+    overlay.classList.toggle('open', enabled);
+    overlay.setAttribute('aria-hidden', String(!enabled));
+    if (enabled) {
+      zeusSpeak('Lock in.', 'Demanding', 'high');
+      if (document.documentElement.requestFullscreen) {
+        try { await document.documentElement.requestFullscreen(); } catch {}
+      }
+    } else if (document.fullscreenElement && document.exitFullscreen) {
+      try { await document.exitFullscreen(); } catch {}
+    }
+    updatePomodoroUI();
+    updateDeepFocusUI();
+    return true;
+  }
+
   function initDeepWorkMode() {
     $('btnDeepWorkMode')?.addEventListener('click', async () => {
-      document.body.classList.toggle('deep-work');
-      const enabled = document.body.classList.contains('deep-work');
-      if (enabled) {
-        zeusSpeak('Now you work. No excuses.', 'Demanding', 'high');
-        if (document.documentElement.requestFullscreen) {
-          try { await document.documentElement.requestFullscreen(); } catch {}
-        }
-      } else if (document.fullscreenElement && document.exitFullscreen) {
-        try { await document.exitFullscreen(); } catch {}
-      }
-      updatePomodoroUI();
+      await setDeepWorkMode(!document.body.classList.contains('deep-work'));
+    });
+    $('btnDeepFocusExit')?.addEventListener('click', async () => {
+      await setDeepWorkMode(false);
+    });
+    $('btnDeepFocusStop')?.addEventListener('click', async () => {
+      if ($('btnDeepFocusStop')?.disabled) return;
+      await handleStop();
     });
   }
 
@@ -3246,18 +3519,27 @@ const App = (() => {
         const reqMet = !n.requires || hasSkill(state, n.requires);
         const levelMet = S.userLevel >= n.levelReq;
         const canUnlock = !unlocked && reqMet && levelMet && available > 0;
+        const status = unlocked ? 'unlocked' : canUnlock ? 'ready' : 'locked';
         const meta = S.language === 'en'
           ? `Tier ${n.tier} · Lv ${n.levelReq}+`
           : `Tier ${n.tier} · Poziom ${n.levelReq}+`;
-        return `<button class="skill-node ${unlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}" data-skill="${n.id}">
-          <div class="skill-name">${skillInfo.name}</div>
-          <div class="skill-desc">${skillInfo.desc}</div>
-          <div class="skill-meta">${meta}</div>
-        </button>`;
+        const stateLabel = unlocked ? t('skillStateUnlocked') : canUnlock ? t('skillStateReady') : t('skillStateLocked');
+        return `<div class="skill-node-row ${unlocked ? 'is-unlocked' : ''} ${canUnlock ? 'is-ready' : ''}">
+          <span class="skill-node-row__line" aria-hidden="true"></span>
+          <button class="skill-node skill-node--${status}" data-skill="${n.id}" data-skill-status="${status}">
+            <div class="skill-node__head">
+              <span class="skill-node__tier">T${n.tier}</span>
+              <span class="skill-node__state">${stateLabel}</span>
+            </div>
+            <div class="skill-name">${skillInfo.name}</div>
+            <div class="skill-desc">${skillInfo.desc}</div>
+            <div class="skill-meta">${meta}</div>
+          </button>
+        </div>`;
       }).join('');
       return `<div class="skill-branch">
         <div class="skill-branch-title">${branchName}</div>
-        ${items}
+        <div class="skill-branch-track">${items}</div>
       </div>`;
     };
     grid.innerHTML = [
@@ -3285,6 +3567,9 @@ const App = (() => {
     state.spentPoints = Number(state.spentPoints || 0) + 1;
     await setSkillState(state);
     await renderSkillTree();
+    const unlockedNode = document.querySelector(`[data-skill="${skillId}"]`);
+    unlockedNode?.classList.add('skill-node--new');
+    setTimeout(() => unlockedNode?.classList.remove('skill-node--new'), 1400);
     const localizedSkill = localizeSkill(skill);
     zeusSpeak(
       S.language === 'en'
@@ -4455,6 +4740,10 @@ const App = (() => {
   function initKeyboard() {
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'Escape' && document.body.classList.contains('deep-work')) {
+        setDeepWorkMode(false);
+        return;
+      }
       if (e.key === 'Enter' && !$('btnStart').disabled) handleStart();
       if (e.key === 'Escape' && !$('btnStop').disabled) handleStop();
       if (e.key === '1') switchTab('tracker');
@@ -4469,6 +4758,13 @@ const App = (() => {
     $('taskName').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleStart();
     });
+  }
+
+  function initFocusFlow() {
+    $('taskName')?.addEventListener('input', updateFocusFlowState);
+    $('taskCategory')?.addEventListener('change', updateFocusFlowState);
+    updateFocusFlowState();
+    updateDeepFocusUI();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -4492,6 +4788,7 @@ const App = (() => {
     initResponsiveHeader();
     initDateNav();
     initKeyboard();
+    initFocusFlow();
     initBackfillModal();
     await initNotifications();
     initHealthButtons();

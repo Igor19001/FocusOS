@@ -111,210 +111,241 @@
     </section>
 
     <section class="panel panel--tracker-main">
-      <div class="panel-label">Aktywna sesja</div>
-      <h1 class="tracker-hero-title">Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.</h1>
-      <p class="tracker-hero-sub">Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.</p>
-      <div class="quick-start" id="quickStartChecklist">
-        <div class="quick-start-title">Szybki start</div>
-        <ol class="quick-start-list">
-          <li>Dodaj zadanie</li>
-          <li>Uruchom sesję</li>
-          <li>Zamknij pierwszą sesję</li>
-        </ol>
-      </div>
-      <div class="tracker-status">
-        <div class="status-dot idle" id="statusDot"></div>
-        <span id="statusLabel">Bezczynny</span>
-      </div>
-      <div class="streak-banner" id="streakBanner">
-        <span class="streak-flame">*</span>
-        <span id="streakText">Streak: 0 dni</span>
-        <span id="bestStreakText">Best: 0 dni</span>
-      </div>
-      <p class="tracker-helper">Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.</p>
-      <section class="panel panel--tracker-sub panel--focus-cycle">
-        <div class="panel-label">Cykl skupienia</div>
-        <p class="panel-copy">Użyj prowadzonego sprintu skupienia z przerwą na regenerację. To uruchamia realną sesję i trzyma fazy cały czas na widoku.</p>
-        <div class="focus-cycle-grid">
-          <label class="focus-cycle-field">
-            <span>Skupienie</span>
-            <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
-          </label>
-          <label class="focus-cycle-field">
-            <span>Regeneracja</span>
-            <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
-          </label>
-          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
-          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
-        </div>
-        <div class="focus-cycle-toolbar">
-          <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
-          <div class="focus-cycle-actions">
-            <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
-            <button class="sound-toggle" id="btnFocusSound" type="button" aria-pressed="true">
-              <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
-              <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
-            </button>
+      <div class="focus-flow-shell">
+        <div class="panel-label">Aktywna sesja</div>
+        <div class="focus-hero">
+          <div class="focus-hero-copy">
+            <span class="focus-hero-kicker" id="focusHeroKicker">Focus flow</span>
+            <h1 class="tracker-hero-title">Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.</h1>
+            <p class="tracker-hero-sub">Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.</p>
+          </div>
+          <div class="focus-hero-status">
+            <div class="tracker-status">
+              <div class="status-dot idle" id="statusDot"></div>
+              <span id="statusLabel">Bezczynny</span>
+            </div>
+            <div class="streak-banner" id="streakBanner">
+              <span class="streak-flame">*</span>
+              <span id="streakText">Streak: 0 dni</span>
+              <span id="bestStreakText">Best: 0 dni</span>
+            </div>
           </div>
         </div>
-      </section>
-      <div class="active-task-card" id="activeCard" style="display:none">
-        <div class="atc-name" id="activeName">—</div>
-        <div class="atc-meta">
-          <span class="atc-cat" id="activeCat">—</span>
-          <span class="atc-timer" id="activeTimer">00:00:00</span>
-        </div>
-        <div class="fatigue-wrap" id="fatigueBarWrap">
-          <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
-          <div class="fatigue-meta">
-            <span id="fatigueLabel"></span>
-            <span id="fatigueHint">↑ zmęczenie rośnie</span>
+
+        <div class="quick-start" id="quickStartChecklist">
+          <div class="quick-start-head">
+            <div>
+              <div class="quick-start-title">Szybki start</div>
+              <p class="quick-start-copy" id="quickStartSummary">3 kroki do pierwszej czystej sesji.</p>
+            </div>
+            <span class="quick-start-badge" id="quickStartBadge">Onboarding</span>
           </div>
+          <ol class="quick-start-list">
+            <li id="checkAddTask">Dodaj zadanie</li>
+            <li id="checkStartTask">Uruchom sesję</li>
+            <li id="checkCompleteTask">Zamknij pierwszą sesję</li>
+          </ol>
         </div>
-      </div>
 
-      <div class="input-group">
-        <input type="text" id="taskName" placeholder="Nad czym teraz pracujesz?" maxlength="80" autocomplete="off"/>
-        <select id="taskCategory">
-          <option value="work">Praca</option>
-          <option value="coding">Kodowanie</option>
-          <option value="learning">Nauka</option>
-          <option value="planning">Planowanie</option>
-          <option value="reading">Czytanie</option>
-          <option value="exercise">Sport</option>
-          <option value="break">Przerwa</option>
-          <option value="entertainment">Rozrywka</option>
-          <option value="social_media">Social Media</option>
-          <option value="distraction">Rozproszenie</option>
-          <option value="other">Inne</option>
-        </select>
-      </div>
+        <div class="focus-flow-grid">
+          <section class="focus-stage-card focus-stage-card--task" data-flow-step="task">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">01</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusTaskTitle">Dodaj jedno konkretne zadanie</h2>
+                <p class="focus-stage-copy" id="focusTaskCopy">Nazwij najbliższy blok pracy tak, żeby od razu było jasne, co domykasz.</p>
+              </div>
+            </div>
+            <div class="input-group">
+              <input type="text" id="taskName" placeholder="Nad czym teraz pracujesz?" maxlength="80" autocomplete="off"/>
+              <select id="taskCategory">
+                <option value="work">Praca</option>
+                <option value="coding">Kodowanie</option>
+                <option value="learning">Nauka</option>
+                <option value="planning">Planowanie</option>
+                <option value="reading">Czytanie</option>
+                <option value="exercise">Sport</option>
+                <option value="break">Przerwa</option>
+                <option value="entertainment">Rozrywka</option>
+                <option value="social_media">Social Media</option>
+                <option value="distraction">Rozproszenie</option>
+                <option value="other">Inne</option>
+              </select>
+            </div>
+          </section>
 
-      <div class="btn-row">
-        <button class="btn-start" id="btnStart">Start</button>
-        <button class="btn-stop" id="btnStop" disabled>Stop</button>
-      </div>
+          <section class="focus-stage-card focus-stage-card--start" data-flow-step="start">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">02</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusStartTitle">Uruchom jedną dominującą sesję</h2>
+                <p class="focus-stage-copy" id="focusStartCopy">Najpierw włącz sesję. Reszta interfejsu dopasuje się do bieżącej pracy.</p>
+              </div>
+            </div>
+            <div class="btn-row btn-row--hero">
+              <button class="btn-start" id="btnStart">Uruchom sesję skupienia</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
+            </div>
+            <p class="focus-stage-hint" id="flowPrimaryHint">Dodaj zadanie, a potem od razu wciśnij główny przycisk startu.</p>
+            <div class="focus-cycle-card panel--focus-cycle">
+              <div class="focus-cycle-card__head">
+                <div>
+                  <div class="panel-label">Prowadzony cykl</div>
+                  <p class="panel-copy">Ustaw sprint i krótką regenerację, jeśli chcesz wejść od razu w gotowy rytm.</p>
+                </div>
+                <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
+              </div>
+              <div class="focus-cycle-grid">
+                <label class="focus-cycle-field">
+                  <span>Skupienie</span>
+                  <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
+                </label>
+                <label class="focus-cycle-field">
+                  <span>Regeneracja</span>
+                  <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
+                </label>
+                <button class="sound-toggle focus-cycle-btn" id="btnFocusSound" type="button" aria-pressed="true">
+                  <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
+                  <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
+                </button>
+              </div>
+            </div>
+          </section>
 
-      <div class="tracker-inline-actions">
-        <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
-        <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
+          <section class="focus-stage-card focus-stage-card--complete" data-flow-step="complete">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">03</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusCompleteTitle">Zamknij sesję czysto</h2>
+                <p class="focus-stage-copy" id="focusCompleteCopy">Gdy praca jest zrobiona, zakończ sesję i zapisz postęp, streak oraz XP.</p>
+              </div>
+            </div>
+            <div class="active-task-card" id="activeCard" style="display:none">
+              <div class="atc-name" id="activeName">—</div>
+              <div class="atc-meta">
+                <span class="atc-cat" id="activeCat">—</span>
+                <span class="atc-timer" id="activeTimer">00:00:00</span>
+              </div>
+              <div class="fatigue-wrap" id="fatigueBarWrap">
+                <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
+                <div class="fatigue-meta">
+                  <span id="fatigueLabel"></span>
+                  <span id="fatigueHint">Zmęczenie rośnie</span>
+                </div>
+              </div>
+            </div>
+            <div class="focus-completion-actions">
+              <button class="btn-stop" id="btnStop" disabled>Zakończ sesję</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
+            </div>
+            <p class="focus-stage-hint focus-stage-hint--muted" id="flowCompletionHint">Krótsze niż 15 minut zatrzymanie liczy się jako zerwana próba.</p>
+          </section>
+        </div>
+
+        <p class="tracker-helper">Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.</p>
+
+        <div class="tracker-inline-actions">
+          <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
+          <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
+        </div>
       </div>
     </section>
 
-    <section class="panel panel--zeus">
-      <div class="panel-label">Hologram Zeusa</div>
-      <div id="zeusCard" class="zeus-card" data-zeus-state="neutral">
-        <div class="zeus-stage">
-          <div class="zeus-orbit zeus-orbit--outer" aria-hidden="true"></div>
-          <div class="zeus-orbit zeus-orbit--inner" aria-hidden="true"></div>
-          <div class="zeus-particles" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
-          <div class="zeus-scanlines" aria-hidden="true"></div>
-          <div class="zeus-portrait-shell" aria-hidden="true">
-            <div class="zeus-portrait-glow"></div>
-            <svg class="zeus-portrait zeus-portrait--funko" viewBox="0 0 360 440">
-            <defs>
-              <radialGradient id="zeusBg" cx="50%" cy="38%" r="72%">
-                <stop offset="0%" stop-color="#1b2f56"></stop>
-                <stop offset="52%" stop-color="#0b1224"></stop>
-                <stop offset="100%" stop-color="#050913"></stop>
-              </radialGradient>
-              <radialGradient id="zeusAura" cx="50%" cy="28%" r="54%">
-                <stop offset="0%" stop-color="rgba(117,240,255,0.92)"></stop>
-                <stop offset="100%" stop-color="rgba(74,222,255,0)"></stop>
-              </radialGradient>
-              <radialGradient id="zeusGold" cx="50%" cy="18%" r="42%">
-                <stop offset="0%" stop-color="rgba(255,214,94,0.62)"></stop>
-                <stop offset="100%" stop-color="rgba(250,204,21,0)"></stop>
-              </radialGradient>
-              <linearGradient id="zeusSkin" x1="28%" y1="4%" x2="70%" y2="100%">
-                <stop offset="0%" stop-color="#ffd8be"></stop>
-                <stop offset="45%" stop-color="#efb08e"></stop>
-                <stop offset="100%" stop-color="#af6b53"></stop>
-              </linearGradient>
-              <linearGradient id="zeusHair" x1="30%" y1="0%" x2="72%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff"></stop>
-                <stop offset="52%" stop-color="#e2ebf8"></stop>
-                <stop offset="100%" stop-color="#9aafc8"></stop>
-              </linearGradient>
-              <linearGradient id="zeusRobe" x1="18%" y1="0%" x2="82%" y2="100%">
-                <stop offset="0%" stop-color="#fbfbff"></stop>
-                <stop offset="100%" stop-color="#dce7fb"></stop>
-              </linearGradient>
-              <linearGradient id="zeusTrim" x1="18%" y1="0%" x2="82%" y2="100%">
-                <stop offset="0%" stop-color="#f5cf6e"></stop>
-                <stop offset="100%" stop-color="#cc9d2d"></stop>
-              </linearGradient>
-              <filter id="zeusEyeGlow" x="-100%" y="-100%" width="300%" height="300%">
-                <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
-                <feMerge>
-                  <feMergeNode in="blur"></feMergeNode>
-                  <feMergeNode in="SourceGraphic"></feMergeNode>
-                </feMerge>
-              </filter>
-            </defs>
-              <rect width="360" height="440" rx="42" fill="url(#zeusBg)"></rect>
-              <ellipse class="zeus-aura" cx="180" cy="170" rx="122" ry="132" fill="url(#zeusAura)"></ellipse>
-              <ellipse class="zeus-gold" cx="180" cy="108" rx="98" ry="78" fill="url(#zeusGold)"></ellipse>
-              <ellipse class="zeus-floor" cx="180" cy="390" rx="94" ry="14" fill="rgba(89,232,255,0.26)"></ellipse>
-              <g class="zeus-bolts">
-                <path d="M256 112 L284 126 L268 154 L296 166 L276 196" fill="none" stroke="#f9d95f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
-              </g>
-              <g class="zeus-character">
-                <g class="zeus-float">
-                  <ellipse cx="180" cy="152" rx="82" ry="86" fill="url(#zeusSkin)"></ellipse>
-                  <path d="M126 134 C126 78 158 50 180 50 C202 50 234 78 234 134 C246 118 248 82 220 58 C208 46 194 38 180 38 C166 38 152 46 140 58 C112 82 114 118 126 134 Z" fill="url(#zeusHair)"></path>
-                  <path d="M104 166 C94 126 110 86 142 64 C128 104 128 140 138 176 Z" fill="url(#zeusHair)"></path>
-                  <path d="M256 166 C266 126 250 86 218 64 C232 104 232 140 222 176 Z" fill="url(#zeusHair)"></path>
-                  <ellipse id="zeusEyeLeftBg" cx="151" cy="150" rx="22" ry="24" fill="#141c36"></ellipse>
-                  <ellipse id="zeusEyeRightBg" cx="209" cy="150" rx="22" ry="24" fill="#141c36"></ellipse>
-                  <ellipse id="zeusEyeLeft" cx="151" cy="150" rx="11" ry="13" fill="rgba(82,220,255,0.72)" filter="url(#zeusEyeGlow)"></ellipse>
-                  <ellipse id="zeusEyeRight" cx="209" cy="150" rx="11" ry="13" fill="rgba(82,220,255,0.72)" filter="url(#zeusEyeGlow)"></ellipse>
-                  <circle id="zeusEyeLeftSpark" cx="155" cy="144" r="4" fill="#eefcff" opacity="0.85"></circle>
-                  <circle id="zeusEyeRightSpark" cx="213" cy="144" r="4" fill="#eefcff" opacity="0.85"></circle>
-                  <path id="zeusBrowLeft" d="M132 120 Q150 110 168 120" fill="none" stroke="#f5f8ff" stroke-width="7" stroke-linecap="round"></path>
-                  <path id="zeusBrowRight" d="M192 120 Q210 110 228 120" fill="none" stroke="#f5f8ff" stroke-width="7" stroke-linecap="round"></path>
-                  <circle cx="146" cy="158" r="6" fill="#ef8e7e"></circle>
-                  <circle cx="214" cy="158" r="6" fill="#ef8e7e"></circle>
-                  <path d="M180 162 C176 184 174 198 170 220 C176 224 184 224 190 220 C186 198 184 184 180 162 Z" fill="none" stroke="#925741" stroke-width="6" stroke-linecap="round"></path>
-                  <path id="zeusMouth" d="M166 208 Q180 216 194 208" fill="none" stroke="#6a3927" stroke-width="6" stroke-linecap="round"></path>
-                  <path d="M142 200 C148 244 168 278 180 288 C192 278 212 244 218 200" fill="none" stroke="#f8fbff" stroke-width="18" stroke-linecap="round"></path>
-                  <path d="M142 200 C146 246 164 300 180 324 C196 300 214 246 218 200" fill="#e3edfb"></path>
-                  <path d="M142 280 C152 268 166 262 180 262 C194 262 208 268 218 280" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="6" stroke-linecap="round"></path>
-                  <g class="zeus-body">
-                    <path d="M154 312 C158 274 166 248 180 248 C194 248 202 274 206 312 Z" fill="url(#zeusRobe)"></path>
-                    <path d="M150 312 C160 308 200 308 210 312 L204 366 C196 376 164 376 156 366 Z" fill="url(#zeusRobe)"></path>
-                    <path d="M152 314 L208 314" stroke="url(#zeusTrim)" stroke-width="6" stroke-linecap="round"></path>
-                    <path d="M118 268 C126 254 138 248 154 250" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
-                    <path class="zeus-arm zeus-arm--right" d="M208 256 C226 244 238 230 248 210" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
-                    <path d="M152 332 C148 346 144 360 142 378" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
-                    <path d="M208 332 C212 346 216 360 218 378" fill="none" stroke="url(#zeusSkin)" stroke-width="12" stroke-linecap="round"></path>
-                  </g>
-                </g>
-              </g>
-            </svg>
-          </div>
-        </div>
-        <div class="zeus-copy">
-          <div class="zeus-head">
-            <div>
-              <span class="zeus-badge">Mentor skupienia</span>
-              <div class="zeus-name">ZEUS // FUNKO AI</div>
+    <section class="panel--zeus" aria-live="polite">
+      <div class="panel-label">Asystent Zeus</div>
+      <div id="zeusCard" class="zeus-card" data-zeus-state="idle">
+        <div class="zeus-shell">
+          <div class="zeus-stage">
+            <div class="zeus-orbit zeus-orbit--outer" aria-hidden="true"></div>
+            <div class="zeus-orbit zeus-orbit--inner" aria-hidden="true"></div>
+            <div class="zeus-particles" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
-            <span class="zeus-mood" id="zeusMood">Czuwa</span>
+            <div class="zeus-portrait-shell" aria-hidden="true">
+              <div class="zeus-portrait-glow"></div>
+              <svg class="zeus-portrait" viewBox="0 0 320 320">
+                <defs>
+                  <radialGradient id="zeusDockBg" cx="50%" cy="32%" r="72%">
+                    <stop offset="0%" stop-color="#173769"></stop>
+                    <stop offset="52%" stop-color="#0c1730"></stop>
+                    <stop offset="100%" stop-color="#050a16"></stop>
+                  </radialGradient>
+                  <radialGradient id="zeusDockAura" cx="50%" cy="34%" r="58%">
+                    <stop offset="0%" stop-color="rgba(94,245,255,0.92)"></stop>
+                    <stop offset="100%" stop-color="rgba(94,245,255,0)"></stop>
+                  </radialGradient>
+                  <linearGradient id="zeusDockFace" x1="26%" y1="8%" x2="74%" y2="100%">
+                    <stop offset="0%" stop-color="#ffe0c7"></stop>
+                    <stop offset="52%" stop-color="#f2b891"></stop>
+                    <stop offset="100%" stop-color="#b96d4f"></stop>
+                  </linearGradient>
+                  <linearGradient id="zeusDockHair" x1="32%" y1="0%" x2="68%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff"></stop>
+                    <stop offset="50%" stop-color="#e7efff"></stop>
+                    <stop offset="100%" stop-color="#a1b8db"></stop>
+                  </linearGradient>
+                  <linearGradient id="zeusDockRobe" x1="22%" y1="0%" x2="78%" y2="100%">
+                    <stop offset="0%" stop-color="#fefefe"></stop>
+                    <stop offset="100%" stop-color="#dae7ff"></stop>
+                  </linearGradient>
+                  <filter id="zeusEyeGlow" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
+                    <feMerge>
+                      <feMergeNode in="blur"></feMergeNode>
+                      <feMergeNode in="SourceGraphic"></feMergeNode>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <rect width="320" height="320" rx="54" fill="url(#zeusDockBg)"></rect>
+                <circle class="zeus-aura" cx="160" cy="132" r="108" fill="url(#zeusDockAura)"></circle>
+                <ellipse class="zeus-floor" cx="160" cy="266" rx="86" ry="18" fill="rgba(94,245,255,0.2)"></ellipse>
+                <g class="zeus-bolts">
+                  <path d="M230 74 L254 92 L240 116 L262 132 L246 156" fill="none" stroke="#f6d26d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </g>
+                <g class="zeus-character">
+                  <path d="M102 116 C102 72 128 42 160 42 C192 42 218 72 218 116 C228 108 232 84 220 64 C206 42 186 24 160 24 C134 24 114 42 100 64 C88 84 92 108 102 116 Z" fill="url(#zeusDockHair)"></path>
+                  <path d="M92 142 C80 114 92 76 122 58 C112 90 114 122 124 154 Z" fill="url(#zeusDockHair)"></path>
+                  <path d="M228 142 C240 114 228 76 198 58 C208 90 206 122 196 154 Z" fill="url(#zeusDockHair)"></path>
+                  <circle cx="160" cy="142" r="74" fill="url(#zeusDockFace)"></circle>
+                  <ellipse id="zeusEyeLeftBg" cx="126" cy="138" rx="26" ry="22" fill="#10213a"></ellipse>
+                  <ellipse id="zeusEyeRightBg" cx="194" cy="138" rx="26" ry="22" fill="#10213a"></ellipse>
+                  <ellipse id="zeusEyeLeft" cx="126" cy="138" rx="12" ry="13" fill="rgba(82,220,255,0.78)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <ellipse id="zeusEyeRight" cx="194" cy="138" rx="12" ry="13" fill="rgba(82,220,255,0.78)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <circle id="zeusEyeLeftSpark" cx="131" cy="133" r="4" fill="#ffffff" opacity="0.9"></circle>
+                  <circle id="zeusEyeRightSpark" cx="199" cy="133" r="4" fill="#ffffff" opacity="0.9"></circle>
+                  <path id="zeusBrowLeft" d="M98 112 Q126 98 154 112" fill="none" stroke="#f8fbff" stroke-width="7" stroke-linecap="round"></path>
+                  <path id="zeusBrowRight" d="M166 112 Q194 98 222 112" fill="none" stroke="#f8fbff" stroke-width="7" stroke-linecap="round"></path>
+                  <circle cx="122" cy="154" r="6" fill="#ee8b78"></circle>
+                  <circle cx="198" cy="154" r="6" fill="#ee8b78"></circle>
+                  <path d="M160 148 C156 170 152 184 148 206 C154 210 166 210 172 206 C168 184 164 170 160 148 Z" fill="none" stroke="#8d553f" stroke-width="5" stroke-linecap="round"></path>
+                  <path id="zeusMouth" d="M128 190 Q160 208 192 190" fill="none" stroke="#6c3e2f" stroke-width="6" stroke-linecap="round"></path>
+                  <path d="M116 194 C124 226 142 244 160 250 C178 244 196 226 204 194" fill="none" stroke="#eef5ff" stroke-width="16" stroke-linecap="round"></path>
+                  <path d="M124 210 C130 236 144 266 160 278 C176 266 190 236 196 210 C180 218 142 218 124 210 Z" fill="url(#zeusDockRobe)"></path>
+                </g>
+              </svg>
+            </div>
           </div>
-          <p class="zeus-message" id="zeusMessage">Jestem po Twojej prawej stronie. Prowadzę, tłumaczę i pilnuję rytmu pracy.</p>
-          <div class="zeus-tip" id="zeusCoachline">Wyjaśniam funkcje, pilnuję streaka i podrzucam motywację w trakcie dnia.</div>
-          <div class="zeus-nudge" id="zeusNudge">Na start pokażę Ci tylko najważniejsze kroki, żeby aplikacja nie zasypała Cię opcjami.</div>
-          <div class="zeus-actions">
-            <button class="btn-secondary zeus-action" id="btnZeusFocus">Sprint</button>
-            <button class="btn-secondary zeus-action" id="btnZeusStreak">Chroń streak</button>
-            <button class="btn-secondary zeus-action" id="btnZeusRecover">Regeneracja</button>
+          <div class="zeus-copy">
+            <div class="zeus-head">
+              <div>
+                <span class="zeus-badge">Mentor skupienia</span>
+                <div class="zeus-name">ZEUS</div>
+              </div>
+              <span class="zeus-mood" id="zeusMood">Czuwa</span>
+            </div>
+            <p class="zeus-message" id="zeusMessage">Twój ruch.</p>
+            <div class="zeus-tip" id="zeusCoachline">Jedno zadanie. Jeden start.</div>
+            <div class="zeus-nudge" id="zeusNudge">Gdy sesja ruszy, wejdź w Deep Focus.</div>
           </div>
         </div>
+        <div class="zeus-actions">
+          <button class="btn-secondary zeus-action" id="btnZeusFocus">Sprint</button>
+          <button class="btn-secondary zeus-action" id="btnZeusStreak">Chroń streak</button>
+          <button class="btn-secondary zeus-action" id="btnZeusRecover">Regeneracja</button>
+        </div>
+        <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
       </div>
-      <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
     </section>
 
     <section class="panel panel--quick-actions">
@@ -1124,6 +1155,25 @@
     </div>
   </div>
 </div>
+
+<nav class="mobile-nav" aria-label="Primary navigation">
+  <button class="mobile-nav__item active" data-tab="tracker" type="button">Skupienie</button>
+  <button class="mobile-nav__item" data-tab="daily" type="button">Statystyki</button>
+  <button class="mobile-nav__item" data-tab="settings" type="button">Ustawienia</button>
+</nav>
+
+<section class="deep-focus-overlay" id="deepFocusOverlay" aria-hidden="true">
+  <div class="deep-focus-ambient" aria-hidden="true"></div>
+  <div class="deep-focus-shell">
+    <button class="deep-focus-exit" id="btnDeepFocusExit" type="button" aria-label="Exit Deep Focus">×</button>
+    <span class="deep-focus-label" id="deepFocusLabel">Deep Focus</span>
+    <div class="deep-focus-task" id="deepFocusTask">Brak aktywnej sesji</div>
+    <div class="deep-focus-phase" id="deepFocusPhase">Skupienie</div>
+    <div class="deep-focus-timer" id="deepFocusTimer">00:00:00</div>
+    <p class="deep-focus-copy" id="deepFocusCopy">Tylko bieżące zadanie, licznik i czyste domknięcie sesji.</p>
+    <button class="btn-stop deep-focus-stop" id="btnDeepFocusStop" type="button">Zakończ sesję</button>
+  </div>
+</section>
 
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
