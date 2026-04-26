@@ -35,14 +35,14 @@
   <div class="splash-grid"></div>
   <div class="splash-card">
     <h1 class="splash-title glitch-text">FocusOS Boot</h1>
-    <p class="splash-sub">Choose how you want to enter the app.</p>
+    <p class="splash-sub">Wybierz, jak chcesz wejść do aplikacji.</p>
     <div class="splash-actions">
-      <button class="btn-primary splash-btn" id="btnModeLocal" type="button">Local Demo</button>
-      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad" type="button">Connect Wallet</button>
-      <button class="btn-primary splash-btn splash-btn--google" id="btnModeGoogle" type="button">Connect Google</button>
+      <button class="btn-primary splash-btn" id="btnModeLocal" type="button">Tryb lokalny</button>
+      <button class="btn-primary splash-btn splash-btn--alt" id="btnModeMonad" type="button">Połącz portfel</button>
+      <button class="btn-primary splash-btn splash-btn--google" id="btnModeGoogle" type="button">Połącz Google</button>
     </div>
-    <p class="splash-footnote">Local mode keeps everything on-device. Wallet mode enables web3 actions. Google mode connects Drive backup.</p>
-    <p class="splash-status" id="modeSplashStatus">No connection selected yet.</p>
+    <p class="splash-footnote">Tryb lokalny trzyma wszystko na urządzeniu. Portfel odblokowuje akcje web3. Google dodaje kopię zapasową na Dysku.</p>
+    <p class="splash-status" id="modeSplashStatus">Nie wybrano jeszcze trybu połączenia.</p>
   </div>
 </section>
 
@@ -55,7 +55,7 @@
       <span class="logo-icon">⚡</span>
       <div>
         <span class="logo-title">FocusOS</span>
-        <span class="logo-sub">Local-First · No Backend · No Cloud</span>
+        <span class="logo-sub">Lokalnie · Bez backendu · Bez chmury</span>
       </div>
     </div>
     <button class="btn-hamburger" id="btnNavToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerTabNav">
@@ -74,8 +74,8 @@
     </nav>
 
     <div class="header-controls">
-      <div id="modeIndicator" class="mode-indicator">Mode: Offline</div>
-      <div id="playerTitle" class="mode-indicator">Title: Initiate</div>
+      <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
+      <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
       <div class="live-clock" id="clock">00:00:00</div>
     </div>
   </div>
@@ -92,63 +92,63 @@
   <div class="view view--tracker" data-view="tracker">
 
     <section class="panel panel--web3 hidden" id="web3Panel">
-      <div class="panel-label">Web3 Dashboard</div>
+      <div class="panel-label">Panel Web3</div>
       <div class="web3-grid">
-        <div><span class="web3-k">Wallet</span><span class="web3-v" id="walletAddressView">Not connected</span></div>
-        <div><span class="web3-k">Network</span><span class="web3-v">Monad Testnet (simulated)</span></div>
-        <div><span class="web3-k">Staked</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
+        <div><span class="web3-k">Portfel</span><span class="web3-v" id="walletAddressView">Niepołączono</span></div>
+        <div><span class="web3-k">Sieć</span><span class="web3-v">Monad Testnet (symulacja)</span></div>
+        <div><span class="web3-k">Stakowane</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
       </div>
       <div class="web3-actions">
-        <button class="btn-secondary" id="btnStakeTokens">Stake Tokens</button>
-        <button class="btn-secondary" id="btnBurnTokens">Burn Tokens</button>
-        <button class="btn-secondary" id="btnSaveToChain">Save Progress To Chain</button>
+        <button class="btn-secondary" id="btnStakeTokens">Stakuj tokeny</button>
+        <button class="btn-secondary" id="btnBurnTokens">Spal tokeny</button>
+        <button class="btn-secondary" id="btnSaveToChain">Zapisz postęp on-chain</button>
       </div>
     </section>
 
     <section class="panel panel--tracker-main">
-      <div class="panel-label">Active Session</div>
-      <h1 class="tracker-hero-title">Build real focus momentum, one clean session at a time.</h1>
-      <p class="tracker-hero-sub">Track work, protect your streak, and keep the whole system readable on every screen.</p>
+      <div class="panel-label">Aktywna sesja</div>
+      <h1 class="tracker-hero-title">Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.</h1>
+      <p class="tracker-hero-sub">Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.</p>
       <div class="quick-start" id="quickStartChecklist">
-        <div class="quick-start-title">Quick Start</div>
+        <div class="quick-start-title">Szybki start</div>
         <ol class="quick-start-list">
-          <li>Add a task</li>
-          <li>Start a session</li>
-          <li>Complete your first session</li>
+          <li>Dodaj zadanie</li>
+          <li>Uruchom sesję</li>
+          <li>Zamknij pierwszą sesję</li>
         </ol>
       </div>
       <div class="tracker-status">
         <div class="status-dot idle" id="statusDot"></div>
-        <span id="statusLabel">Idle</span>
+        <span id="statusLabel">Bezczynny</span>
       </div>
       <div class="streak-banner" id="streakBanner">
         <span class="streak-flame">*</span>
-        <span id="streakText">Streak: 0 days</span>
-        <span id="bestStreakText">Best: 0 days</span>
+        <span id="streakText">Streak: 0 dni</span>
+        <span id="bestStreakText">Best: 0 dni</span>
       </div>
-      <p class="tracker-helper">One completed focus session per day keeps the streak alive. The cycle tools below help you stay consistent instead of guessing.</p>
+      <p class="tracker-helper">Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.</p>
       <section class="panel panel--tracker-sub panel--focus-cycle">
-        <div class="panel-label">Focus Cycle</div>
-        <p class="panel-copy">Use a guided focus sprint plus recovery break. This starts a real session for you and keeps the phase timer visible.</p>
+        <div class="panel-label">Cykl skupienia</div>
+        <p class="panel-copy">Użyj prowadzonego sprintu skupienia z przerwą na regenerację. To uruchamia realną sesję i trzyma fazy cały czas na widoku.</p>
         <div class="focus-cycle-grid">
           <label class="focus-cycle-field">
-            <span>Focus</span>
-            <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Focus min"/>
+            <span>Skupienie</span>
+            <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
           </label>
           <label class="focus-cycle-field">
-            <span>Recovery</span>
-            <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Break min"/>
+            <span>Regeneracja</span>
+            <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
           </label>
-          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start Cycle</button>
-          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Next Phase</button>
+          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
+          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
         </div>
         <div class="focus-cycle-toolbar">
-          <div id="pomodoroState" class="focus-cycle-state">Focus sprint - 25:00</div>
+          <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
           <div class="focus-cycle-actions">
-            <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Deep Work</button>
+            <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
             <button class="sound-toggle" id="btnFocusSound" type="button" aria-pressed="true">
               <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
-              <span class="sound-toggle__text" id="focusSoundLabel">Sound On</span>
+              <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
             </button>
           </div>
         </div>
@@ -169,7 +169,7 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="taskName" placeholder="What are you working on?" maxlength="80" autocomplete="off"/>
+        <input type="text" id="taskName" placeholder="Nad czym teraz pracujesz?" maxlength="80" autocomplete="off"/>
         <select id="taskCategory">
           <option value="work">Praca</option>
           <option value="coding">Kodowanie</option>
@@ -194,31 +194,36 @@
     </section>
 
     <section class="panel panel--zeus">
-      <div class="panel-label">Zeus Protocol</div>
+      <div class="panel-label">Hologram Zeusa</div>
       <div id="zeusCard" class="zeus-card" data-zeus-state="neutral">
-        <div class="zeus-portrait-shell" aria-hidden="true">
-          <div class="zeus-portrait-glow"></div>
-          <div class="zeus-fire zeus-fire--left"></div>
-          <div class="zeus-fire zeus-fire--right"></div>
-          <svg class="zeus-portrait" viewBox="0 0 512 512">
+        <div class="zeus-stage">
+          <div class="zeus-orbit zeus-orbit--outer" aria-hidden="true"></div>
+          <div class="zeus-orbit zeus-orbit--inner" aria-hidden="true"></div>
+          <div class="zeus-particles" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="zeus-scanlines" aria-hidden="true"></div>
+          <div class="zeus-portrait-shell" aria-hidden="true">
+            <div class="zeus-portrait-glow"></div>
+            <svg class="zeus-portrait" viewBox="0 0 420 520">
             <defs>
               <radialGradient id="zeusBg" cx="50%" cy="36%" r="72%">
-                <stop offset="0%" stop-color="#0f2740"></stop>
-                <stop offset="58%" stop-color="#08111f"></stop>
-                <stop offset="100%" stop-color="#02050b"></stop>
+                <stop offset="0%" stop-color="#1d3f6f"></stop>
+                <stop offset="50%" stop-color="#091121"></stop>
+                <stop offset="100%" stop-color="#050913"></stop>
               </radialGradient>
               <radialGradient id="zeusAura" cx="50%" cy="28%" r="46%">
-                <stop offset="0%" stop-color="rgba(74,222,255,0.85)"></stop>
+                <stop offset="0%" stop-color="rgba(83,241,255,0.9)"></stop>
                 <stop offset="100%" stop-color="rgba(74,222,255,0)"></stop>
               </radialGradient>
               <radialGradient id="zeusGold" cx="50%" cy="16%" r="46%">
-                <stop offset="0%" stop-color="rgba(250,204,21,0.5)"></stop>
+                <stop offset="0%" stop-color="rgba(250,204,21,0.62)"></stop>
                 <stop offset="100%" stop-color="rgba(250,204,21,0)"></stop>
               </radialGradient>
-              <linearGradient id="zeusSkin" x1="30%" y1="10%" x2="65%" y2="100%">
-                <stop offset="0%" stop-color="#f4d8bc"></stop>
-                <stop offset="45%" stop-color="#dab18c"></stop>
-                <stop offset="100%" stop-color="#8b6046"></stop>
+              <linearGradient id="zeusSkin" x1="30%" y1="8%" x2="70%" y2="100%">
+                <stop offset="0%" stop-color="#f3dbbf"></stop>
+                <stop offset="45%" stop-color="#e0b88c"></stop>
+                <stop offset="100%" stop-color="#9a6848"></stop>
               </linearGradient>
               <linearGradient id="zeusHair" x1="30%" y1="0%" x2="72%" y2="100%">
                 <stop offset="0%" stop-color="#f7fbff"></stop>
@@ -226,8 +231,8 @@
                 <stop offset="100%" stop-color="#92a6bc"></stop>
               </linearGradient>
               <linearGradient id="zeusRobe" x1="18%" y1="0%" x2="82%" y2="100%">
-                <stop offset="0%" stop-color="#0a1d30"></stop>
-                <stop offset="100%" stop-color="#07101d"></stop>
+                <stop offset="0%" stop-color="#0d2241"></stop>
+                <stop offset="100%" stop-color="#09132b"></stop>
               </linearGradient>
               <filter id="zeusEyeGlow" x="-100%" y="-100%" width="300%" height="300%">
                 <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
@@ -237,50 +242,52 @@
                 </feMerge>
               </filter>
             </defs>
-            <rect width="512" height="512" fill="url(#zeusBg)"></rect>
-            <circle class="zeus-aura" cx="256" cy="168" r="180" fill="url(#zeusAura)"></circle>
-            <circle class="zeus-gold" cx="256" cy="112" r="162" fill="url(#zeusGold)"></circle>
-            <g class="zeus-bolts">
-              <path d="M110 78 L178 126 L152 176 L220 210 L182 284" fill="none" stroke="#52dcff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
-              <path d="M408 92 L344 142 L366 192 L314 220 L344 284" fill="none" stroke="#52dcff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
-            </g>
-            <path d="M115 468 C148 381 187 338 256 334 C327 338 367 381 398 468 Z" fill="url(#zeusRobe)"></path>
-            <path d="M208 355 C224 386 287 386 304 355" fill="none" stroke="rgba(77,208,255,0.3)" stroke-width="4"></path>
-            <g>
-              <path d="M141 175 C152 99 212 57 256 57 C300 57 360 99 371 175 C382 255 346 365 256 365 C166 365 130 255 141 175 Z" fill="url(#zeusSkin)"></path>
-              <path d="M179 192 C198 171 226 164 256 164 C286 164 314 171 333 192" fill="none" stroke="rgba(26,38,53,0.34)" stroke-width="10" stroke-linecap="round"></path>
-              <path id="zeusBrowLeft" d="M150 188 Q183 177 216 184" fill="none" stroke="#ecf7ff" stroke-width="10" stroke-linecap="round"></path>
-              <path id="zeusBrowRight" d="M296 184 Q329 177 362 188" fill="none" stroke="#ecf7ff" stroke-width="10" stroke-linecap="round"></path>
-              <ellipse id="zeusEyeLeftBg" cx="194" cy="235" rx="40" ry="20" fill="#09233f"></ellipse>
-              <ellipse id="zeusEyeRightBg" cx="318" cy="235" rx="40" ry="20" fill="#09233f"></ellipse>
-              <ellipse id="zeusEyeLeft" cx="194" cy="235" rx="26" ry="12" fill="rgba(82,220,255,0.52)" filter="url(#zeusEyeGlow)"></ellipse>
-              <ellipse id="zeusEyeRight" cx="318" cy="235" rx="26" ry="12" fill="rgba(82,220,255,0.52)" filter="url(#zeusEyeGlow)"></ellipse>
-              <circle id="zeusEyeLeftSpark" cx="194" cy="232" r="6" fill="#defdff" opacity="0.7"></circle>
-              <circle id="zeusEyeRightSpark" cx="318" cy="232" r="6" fill="#defdff" opacity="0.7"></circle>
-              <path d="M254 220 C245 256 239 283 232 307 C244 311 267 311 280 307" fill="none" stroke="rgba(120,74,46,0.7)" stroke-width="7" stroke-linecap="round"></path>
-              <path id="zeusMouth" d="M228 330 Q256 338 284 330" fill="none" stroke="#5e2d20" stroke-width="8" stroke-linecap="round"></path>
-              <path d="M209 322 C225 360 288 360 304 322" fill="none" stroke="#e7eef7" stroke-width="18" stroke-linecap="round"></path>
-              <path d="M210 323 C214 372 242 408 256 424 C270 408 298 372 302 323" fill="#d9e4ef" opacity="0.92"></path>
-              <path d="M172 164 C172 129 206 88 256 85 C306 88 340 129 340 164 C349 134 336 78 297 53 C281 43 267 40 256 40 C245 40 231 43 215 53 C176 78 163 134 172 164 Z" fill="url(#zeusHair)"></path>
-              <path d="M154 173 C154 121 174 84 211 52 C196 95 195 142 203 174 Z" fill="url(#zeusHair)"></path>
-              <path d="M358 173 C358 121 338 84 301 52 C316 95 317 142 309 174 Z" fill="url(#zeusHair)"></path>
-              <path d="M126 217 C118 183 122 151 142 123 C145 152 150 186 162 216 Z" fill="url(#zeusHair)"></path>
-              <path d="M386 217 C394 183 390 151 370 123 C367 152 362 186 350 216 Z" fill="url(#zeusHair)"></path>
-              <path d="M175 311 C187 357 223 394 256 409 C289 394 325 357 337 311 C327 326 313 338 295 347 C280 354 268 356 256 356 C244 356 232 354 217 347 C199 338 185 326 175 311 Z" fill="rgba(9,35,63,0.16)"></path>
-              <path d="M182 179 C184 142 215 116 256 116 C297 116 328 142 330 179" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="6" stroke-linecap="round"></path>
-            </g>
-          </svg>
+              <rect width="420" height="520" rx="48" fill="url(#zeusBg)"></rect>
+              <ellipse class="zeus-aura" cx="210" cy="194" rx="156" ry="170" fill="url(#zeusAura)"></ellipse>
+              <ellipse class="zeus-gold" cx="210" cy="126" rx="138" ry="102" fill="url(#zeusGold)"></ellipse>
+              <g class="zeus-bolts">
+                <path d="M60 112 L102 148 L86 188 L126 208 L102 252" fill="none" stroke="#59e8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M360 112 L318 148 L334 188 L294 208 L318 252" fill="none" stroke="#59e8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+              </g>
+              <ellipse class="zeus-floor" cx="210" cy="470" rx="116" ry="16" fill="rgba(89,232,255,0.22)"></ellipse>
+              <g class="zeus-character">
+                <path d="M156 448 C160 378 174 344 210 344 C246 344 260 378 264 448 Z" fill="url(#zeusRobe)"></path>
+                <path d="M135 412 C150 376 172 356 210 348 C248 356 270 376 285 412" fill="none" stroke="rgba(244,196,106,0.28)" stroke-width="10" stroke-linecap="round"></path>
+                <ellipse cx="210" cy="188" rx="108" ry="104" fill="url(#zeusSkin)"></ellipse>
+                <path d="M150 142 C162 90 206 60 210 60 C214 60 258 90 270 142 C286 120 282 72 248 46 C230 30 219 26 210 26 C201 26 190 30 172 46 C138 72 134 120 150 142 Z" fill="url(#zeusHair)"></path>
+                <path d="M110 214 C110 154 134 106 170 72 C154 122 156 176 166 220 Z" fill="url(#zeusHair)"></path>
+                <path d="M310 214 C310 154 286 106 250 72 C266 122 264 176 254 220 Z" fill="url(#zeusHair)"></path>
+                <ellipse id="zeusEyeLeftBg" cx="170" cy="198" rx="34" ry="34" fill="#112448"></ellipse>
+                <ellipse id="zeusEyeRightBg" cx="250" cy="198" rx="34" ry="34" fill="#112448"></ellipse>
+                <ellipse id="zeusEyeLeft" cx="170" cy="198" rx="18" ry="22" fill="rgba(82,220,255,0.7)" filter="url(#zeusEyeGlow)"></ellipse>
+                <ellipse id="zeusEyeRight" cx="250" cy="198" rx="18" ry="22" fill="rgba(82,220,255,0.7)" filter="url(#zeusEyeGlow)"></ellipse>
+                <circle id="zeusEyeLeftSpark" cx="176" cy="188" r="6" fill="#defdff" opacity="0.8"></circle>
+                <circle id="zeusEyeRightSpark" cx="256" cy="188" r="6" fill="#defdff" opacity="0.8"></circle>
+                <path id="zeusBrowLeft" d="M144 152 Q170 140 196 152" fill="none" stroke="#edf7ff" stroke-width="10" stroke-linecap="round"></path>
+                <path id="zeusBrowRight" d="M224 152 Q250 140 276 152" fill="none" stroke="#edf7ff" stroke-width="10" stroke-linecap="round"></path>
+                <path d="M210 206 C204 236 202 254 198 278 C206 284 214 284 222 278 C218 254 216 236 210 206 Z" fill="none" stroke="rgba(122,76,52,0.72)" stroke-width="8" stroke-linecap="round"></path>
+                <path id="zeusMouth" d="M192 296 Q210 306 228 296" fill="none" stroke="#6a3927" stroke-width="8" stroke-linecap="round"></path>
+                <path d="M172 288 C182 334 204 368 210 378 C216 368 238 334 248 288" fill="none" stroke="#eef5ff" stroke-width="20" stroke-linecap="round"></path>
+                <path d="M172 288 C176 336 196 392 210 414 C224 392 244 336 248 288" fill="#d7e6f6" opacity="0.92"></path>
+                <path d="M166 346 C178 330 192 322 210 322 C228 322 242 330 254 346" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="8" stroke-linecap="round"></path>
+              </g>
+            </svg>
+          </div>
         </div>
         <div class="zeus-copy">
           <div class="zeus-head">
-            <span class="zeus-badge">ZEUS</span>
-            <span class="zeus-mood" id="zeusMood">Observing</span>
+            <div>
+              <span class="zeus-badge">Mentor skupienia</span>
+              <div class="zeus-name">ZEUS // FUNKO AI</div>
+            </div>
+            <span class="zeus-mood" id="zeusMood">Czuwa</span>
           </div>
-          <p class="zeus-message" id="zeusMessage">Olympus is watching. Begin your discipline.</p>
+          <p class="zeus-message" id="zeusMessage">Jestem po Twojej prawej stronie. Prowadzę, tłumaczę i pilnuję rytmu pracy.</p>
+          <div class="zeus-tip">Wyjaśniam funkcje, pilnuję streaka i podrzucam motywację w trakcie dnia.</div>
           <div class="zeus-actions">
-            <button class="btn-secondary zeus-action" id="btnZeusFocus">Focus Sprint</button>
-            <button class="btn-secondary zeus-action" id="btnZeusStreak">Protect Streak</button>
-            <button class="btn-secondary zeus-action" id="btnZeusRecover">Recover</button>
+            <button class="btn-secondary zeus-action" id="btnZeusFocus">Sprint</button>
+            <button class="btn-secondary zeus-action" id="btnZeusStreak">Chroń streak</button>
+            <button class="btn-secondary zeus-action" id="btnZeusRecover">Regeneracja</button>
           </div>
         </div>
       </div>
@@ -656,9 +663,9 @@
 
   <div class="view view--settings hidden" data-view="settings">
     <section class="panel panel--settings-language">
-      <div class="panel-label">Language</div>
+      <div class="panel-label">Język</div>
       <div class="form-group">
-        <label class="form-label">Interface language</label>
+        <label class="form-label">Język interfejsu</label>
         <select class="form-input" id="languageSelect">
           <option value="pl">Polski (PL)</option>
           <option value="en">English (EN)</option>
@@ -667,19 +674,20 @@
     </section>
 
     <section class="panel panel--settings-theme">
-      <div class="panel-label">Theme</div>
+      <div class="panel-label">Motyw</div>
       <div class="form-group">
-        <label class="form-label">Select theme</label>
+        <label class="form-label">Wybierz styl aplikacji</label>
         <select class="form-input" id="themeSelect">
-          <option value="cyberpunk">Cyberpunk</option>
-          <option value="light">Light</option>
-          <option value="retro">Retro</option>
+          <option value="olympus">Hologram Olimpu</option>
+          <option value="marble">Marmurowy poranek</option>
+          <option value="ember">Solarny bursztyn</option>
+          <option value="tide">Lazurowy przypływ</option>
         </select>
       </div>
       <div class="notif-row" style="margin-top:10px">
         <div class="notif-label">
           Hardcore Mode
-          <small>Stop button disabled during active session</small>
+          <small>Przycisk Stop jest blokowany podczas aktywnej sesji</small>
         </div>
         <label class="toggle">
           <input type="checkbox" id="hardcoreModeToggle"/>
@@ -688,50 +696,50 @@
       </div>
       <div class="notif-row" style="margin-top:10px">
         <div class="notif-label">
-          Zeus Personality
-          <small>Choose how Zeus speaks to you</small>
+          Głos Zeusa
+          <small>Wybierz, jak Zeus ma do Ciebie mówić</small>
         </div>
         <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
-          <option value="strict">Strict</option>
-          <option value="balanced">Balanced</option>
-          <option value="supportive">Supportive</option>
+          <option value="strict">Dowódca</option>
+          <option value="balanced">Mentor</option>
+          <option value="supportive">Iskra</option>
         </select>
       </div>
     </section>
 
     <section class="panel panel--skilltree">
-      <div class="panel-label">Skill Tree</div>
-      <div id="skillPointsLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Skill points: 0</div>
+      <div class="panel-label">Drzewko umiejętności</div>
+      <div id="skillPointsLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Punkty umiejętności: 0</div>
       <div id="skillTreeGrid" class="skill-tree-grid"></div>
     </section>
 
     <section class="panel panel--settings-sync">
-      <div class="panel-label">Connections and backups</div>
+      <div class="panel-label">Połączenia i kopie zapasowe</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
-        Manage app install, Google Drive backup, and wallet access from one place.
+        Tutaj zarządzasz instalacją aplikacji, backupem Google Drive i dostępem do portfela.
       </p>
       <div class="connection-grid">
         <div class="connection-card">
-          <div class="connection-title">Wallet</div>
-          <div class="connection-status" id="settingsWalletStatus">No wallet connected.</div>
+          <div class="connection-title">Portfel</div>
+          <div class="connection-status" id="settingsWalletStatus">Brak podłączonego portfela.</div>
           <div class="form-actions" style="margin-top:10px">
-            <button class="btn-secondary" id="btnConnectWalletSettings" style="width:auto;padding:10px 14px">Connect Wallet</button>
-            <button class="btn-secondary" id="btnDisconnectWalletSettings" style="width:auto;padding:10px 14px">Disconnect Wallet</button>
+            <button class="btn-secondary" id="btnConnectWalletSettings" style="width:auto;padding:10px 14px">Połącz portfel</button>
+            <button class="btn-secondary" id="btnDisconnectWalletSettings" style="width:auto;padding:10px 14px">Rozłącz portfel</button>
           </div>
         </div>
         <div class="connection-card">
           <div class="connection-title">Google</div>
-          <div class="connection-status" id="settingsGoogleStatus">Google Drive backup not connected.</div>
+          <div class="connection-status" id="settingsGoogleStatus">Backup Google Drive nie jest podłączony.</div>
           <div class="form-actions" style="margin-top:10px">
-            <button class="btn-secondary" id="btnGoogleConnect" style="width:auto;padding:10px 14px">Connect Google</button>
-            <button class="btn-secondary" id="btnGoogleDisconnect" style="width:auto;padding:10px 14px">Disconnect Google</button>
+            <button class="btn-secondary" id="btnGoogleConnect" style="width:auto;padding:10px 14px">Połącz Google</button>
+            <button class="btn-secondary" id="btnGoogleDisconnect" style="width:auto;padding:10px 14px">Rozłącz Google</button>
           </div>
         </div>
       </div>
       <div class="form-actions" style="margin-top:0">
-        <button class="btn-primary hidden" id="installButton">Install FocusOS</button>
-        <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup to Google Drive</button>
-        <button class="btn-secondary" id="btnShowAccessScreen" style="width:auto;padding:10px 14px">Access screen</button>
+        <button class="btn-primary hidden" id="installButton">Zainstaluj FocusOS</button>
+        <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup na Google Drive</button>
+        <button class="btn-secondary" id="btnShowAccessScreen" style="width:auto;padding:10px 14px">Ekran dostępu</button>
       </div>
       <div class="form-actions" style="margin-top:10px">
         <button class="btn-secondary" id="btnOpenBackfill" style="width:auto;padding:10px 14px">Retro</button>
@@ -744,7 +752,7 @@
         <input type="file" id="importFileInput" accept=".json,application/json" style="display:none"/>
       </div>
       <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-        The install button appears automatically when your browser reports PWA install support.
+        Przycisk instalacji pojawia się automatycznie, gdy przeglądarka zgłosi obsługę PWA.
       </div>
     </section>
   </div><!-- /view--settings -->
@@ -784,7 +792,7 @@
         </button>
         <button class="profile-nav-btn" data-dashboard-section="socials">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 01-12 0 6 6 0 0112 0z"/><path d="M22 20a6 6 0 00-8-5.7"/><path d="M10 14.3A6 6 0 002 20"/></svg>
-          Socials
+          Sociale
           <span class="profile-nav-count" id="cntSocials">0</span>
         </button>
         <button class="profile-nav-btn" data-dashboard-section="wallet">
@@ -814,32 +822,32 @@
         </section>
 
         <section class="dash-section" data-dashboard-panel="socials">
-          <div class="panel-label">Socials</div>
+          <div class="panel-label">Sociale</div>
           <div class="form-grid cols-1">
             <div class="form-group">
-              <label class="form-label">Twitter URL</label>
-              <input class="form-input" id="socialTwitter" type="url" placeholder="https://twitter.com/..." />
+              <label class="form-label">Link do X / Twittera</label>
+              <input class="form-input" id="socialTwitter" type="url" placeholder="https://x.com/..." />
             </div>
             <div class="form-group">
-              <label class="form-label">Discord URL</label>
+              <label class="form-label">Link do Discorda</label>
               <input class="form-input" id="socialDiscord" type="url" placeholder="https://discord.gg/..." />
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn-primary" id="btnSaveSocials">Zapisz Socials</button>
+            <button class="btn-primary" id="btnSaveSocials">Zapisz linki</button>
             <button class="btn-secondary" id="btnRestartOnboarding" style="width:auto;padding:8px 12px">Uruchom samouczek ponownie</button>
           </div>
           <div id="socialsPreview" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Brak zapisanych linków.</div>
         </section>
 
         <section class="dash-section" data-dashboard-panel="wallet">
-          <div class="panel-label">Wallet</div>
-          <div id="walletProfileInfo" style="font-family:var(--font-mono);font-size:12px;margin-bottom:10px;color:var(--accent5)">No wallet connected.</div>
+          <div class="panel-label">Portfel</div>
+          <div id="walletProfileInfo" style="font-family:var(--font-mono);font-size:12px;margin-bottom:10px;color:var(--accent5)">Brak podłączonego portfela.</div>
           <div class="form-actions">
-            <button class="btn-primary" id="btnConnectWalletProfile" style="width:auto;padding:8px 14px">Connect Wallet</button>
+            <button class="btn-primary" id="btnConnectWalletProfile" style="width:auto;padding:8px 14px">Połącz portfel</button>
           </div>
           <div class="danger-zone">
-            <button class="btn-secondary" id="btnDisconnectWallet" style="width:auto;padding:8px 14px">Disconnect Wallet</button>
+            <button class="btn-secondary" id="btnDisconnectWallet" style="width:auto;padding:8px 14px">Rozłącz portfel</button>
           </div>
           <div class="danger-zone danger-zone--critical">
             <button class="btn-stop" id="btnResetData" style="width:auto;padding:8px 14px">Reset Data</button>

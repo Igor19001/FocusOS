@@ -2,16 +2,28 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { createWalletClient, custom, parseEther } from "viem";
 
 type AppMode = "local" | "monad";
+type IntegrationState = {
+  gmail: string | null;
+  github: string | null;
+};
 const ADMIN_WALLET = (import.meta.env.VITE_ADMIN_WALLET ?? "").trim();
 const TREASURY_WALLET = (import.meta.env.VITE_TREASURY_WALLET ?? ADMIN_WALLET).trim();
 const ADMIN_API_BASE_URL = (import.meta.env.VITE_ADMIN_API_BASE_URL ?? "").trim();
+const INTEGRATIONS_KEY = "focusos_integrations_v1";
 
 type Web3ContextState = {
   mode: AppMode | null;
   address: string | null;
   fcsBalance: number;
   adminWallet: string;
+  integrations: IntegrationState;
   setMode: (mode: AppMode) => Promise<void>;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  connectGmail: (email: string) => Promise<void>;
+  disconnectGmail: () => void;
+  connectGithub: (username: string) => Promise<void>;
+  disconnectGithub: () => void;
   claimTestFCS: () => Promise<void>;
   stakeTokens: (amount: number) => Promise<void>;
   burnTokens: (amount: number) => Promise<void>;
@@ -27,6 +39,24 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [mode, setModeState] = useState<AppMode | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [fcsBalance, setFcsBalance] = useState(0);
+  const [integrations, setIntegrations] = useState<IntegrationState>(() => {
+    try {
+      const raw = window.localStorage.getItem(INTEGRATIONS_KEY);
+      if (!raw) return { gmail: null, github: null };
+      const parsed = JSON.parse(raw) as Partial<IntegrationState>;
+      return {
+        gmail: parsed.gmail ?? null,
+        github: parsed.github ?? null,
+      };
+    } catch {
+      return { gmail: null, github: null };
+    }
+  });
+
+  const persistIntegrations = (next: IntegrationState) => {
+    setIntegrations(next);
+    window.localStorage.setItem(INTEGRATIONS_KEY, JSON.stringify(next));
+  };
 
   const getWalletClient = async () => {
     if (!(window as any).ethereum) return null;
@@ -55,13 +85,54 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
   };
 
+  const connectWallet = async () => {
+    if (!(window as any).ethereum) {
+      throw new Error("Wallet provider not available");
+    }
+    await setMode("monad");
+  };
+
+  const disconnectWallet = () => {
+    setModeState("local");
+    setAddress(null);
+  };
+
+  const connectGmail = async (email: string) => {
+    const nextEmail = email.trim();
+    if (!nextEmail) throw new Error("Gmail address is required");
+    persistIntegrations({ ...integrations, gmail: nextEmail });
+    setModeState((current) => current ?? "local");
+  };
+
+  const disconnectGmail = () => {
+    persistIntegrations({ ...integrations, gmail: null });
+  };
+
+  const connectGithub = async (username: string) => {
+    const nextUsername = username.trim().replace(/^@/, "");
+    if (!nextUsername) throw new Error("GitHub username is required");
+    persistIntegrations({ ...integrations, github: nextUsername });
+    setModeState((current) => current ?? "local");
+  };
+
+  const disconnectGithub = () => {
+    persistIntegrations({ ...integrations, github: null });
+  };
+
   const value = useMemo<Web3ContextState>(
     () => ({
       mode,
       address,
       fcsBalance,
       adminWallet: ADMIN_WALLET,
+      integrations,
       setMode,
+      connectWallet,
+      disconnectWallet,
+      connectGmail,
+      disconnectGmail,
+      connectGithub,
+      disconnectGithub,
       claimTestFCS: async () => setFcsBalance((v) => v + 100),
       stakeTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
       burnTokens: async (amount) => setFcsBalance((v) => Math.max(0, v - amount)),
@@ -134,7 +205,7 @@ export const Web3Provider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
       },
     }),
-    [mode, address, fcsBalance]
+    [mode, address, fcsBalance, integrations]
   );
 
   return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;

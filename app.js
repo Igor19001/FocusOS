@@ -43,8 +43,8 @@ const App = (() => {
     },
     deferredInstallPrompt: null,
     installAvailable: false,
-    language: 'en',
-    theme: 'cyberpunk',
+    language: 'pl',
+    theme: 'olympus',
     googleTokenClient: null,
     listFilter: 'today',
     pomodoro: {
@@ -100,6 +100,94 @@ const App = (() => {
       { id: 'wrath_of_zeus', name: 'Wrath of Zeus', desc: 'Hardcore success = 2x XP, fail = stronger penalty', tier: 3, levelReq: 15, requires: 'no_mercy' },
     ],
   };
+  const THEME_ALIASES = {
+    cyberpunk: 'olympus',
+    light: 'marble',
+    retro: 'ember',
+  };
+  const THEME_IDS = ['olympus', 'marble', 'ember', 'tide'];
+  const LOCALIZED_TITLES = {
+    pl: {
+      Initiate: 'Inicjowany',
+      Acolyte: 'Akolita',
+      Questbound: 'Łowca zadań',
+      'Voice of Olympus': 'Głos Olimpu',
+      'Storm Focus': 'Burzowe skupienie',
+      'Disciple of Olympus': 'Uczeń Olimpu',
+      'Champion of Zeus': 'Czempion Zeusa',
+    },
+    en: {},
+  };
+  const CATEGORY_LABELS = {
+    pl: {
+      work: 'Praca',
+      coding: 'Kodowanie',
+      learning: 'Nauka',
+      planning: 'Planowanie',
+      reading: 'Czytanie',
+      exercise: 'Ruch',
+      break: 'Przerwa',
+      entertainment: 'Rozrywka',
+      social_media: 'Social media',
+      distraction: 'Rozproszenie',
+      other: 'Inne',
+    },
+    en: {
+      work: 'Work',
+      coding: 'Coding',
+      learning: 'Learning',
+      planning: 'Planning',
+      reading: 'Reading',
+      exercise: 'Exercise',
+      break: 'Break',
+      entertainment: 'Entertainment',
+      social_media: 'Social media',
+      distraction: 'Distraction',
+      other: 'Other',
+    },
+  };
+  const ZEUS_MOOD_LABELS = {
+    pl: {
+      Observing: 'Czuwa',
+      Demanding: 'Wymaga',
+      Judging: 'Ocena',
+      Warning: 'Ostrzega',
+      Approving: 'Docenia',
+      Triumphant: 'Triumfuje',
+      Disappointed: 'Zawiedziony',
+      Neutral: 'Spokojny',
+      Proud: 'Dumny',
+      'Fired Up': 'Naładowany',
+      Tired: 'Regeneracja',
+    },
+    en: {},
+  };
+  const LOCALIZED_SKILLS = {
+    pl: {
+      consistency_1: { name: 'Regularność I', desc: '+5% bonusu do streaka' },
+      consistency_2: { name: 'Regularność II', desc: '+10% bonusu do streaka' },
+      unbreakable: { name: 'Niezłomny', desc: 'Pierwszy opuszczony dzień nie resetuje streaka' },
+      iron_routine: { name: 'Żelazna rutyna', desc: '+20 XP za ukończony rytuał' },
+      deep_focus_1: { name: 'Głębokie skupienie I', desc: '+10% XP za sesje powyżej 30 min' },
+      deep_focus_2: { name: 'Głębokie skupienie II', desc: '+20% XP za sesje powyżej 45 min' },
+      flow_state: { name: 'Stan flow', desc: 'Usuwa karę anty-grind' },
+      ultra_focus: { name: 'Ultra skupienie', desc: '+15% XP w trybie głębokiego skupienia' },
+      risk_taker: { name: 'Ryzykant', desc: '+20% XP w trybie hardcore' },
+      no_mercy: { name: 'Bez litości', desc: 'Nie możesz anulować sesji' },
+      comeback: { name: 'Powrót', desc: 'Kolejna sesja po porażce daje +30% XP' },
+      wrath_of_zeus: { name: 'Gniew Zeusa', desc: 'Sukces hardcore = 2x XP, porażka = mocniejsza kara' },
+    },
+  };
+  const MISSION_LABELS = {
+    sessions3: { pl: 'Ukończ 3 sesje', en: 'Complete 3 sessions' },
+    focus2h: { pl: 'Zrób 2 godziny skupienia', en: 'Reach 2 hours focus' },
+    noFail: { pl: 'Nie spal żadnej sesji', en: 'Do not fail any session' },
+  };
+  const ACHIEVEMENT_LABELS = {
+    first_session: { pl: 'Pierwsza ukończona sesja', en: 'First Session Completed' },
+    streak_7: { pl: '7 dni streaka', en: '7 Day Streak' },
+    focused_1000m: { pl: '1000 minut skupienia', en: '1000 Focus Minutes' },
+  };
 
   // ── Utilities ─────────────────────────────────────────────────────────────
 
@@ -114,9 +202,56 @@ const App = (() => {
   const fmtTime     = iso => iso ? new Date(iso).toLocaleTimeString('pl-PL', { hour:'2-digit', minute:'2-digit' }) : '—';
   const fmtDateShort = iso => iso ? new Date(iso).toLocaleDateString('pl-PL', { day:'2-digit', month:'2-digit' }) : '—';
   const escH        = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const catLabel    = cat => DB.CAT_LABELS[cat] || cat;
+  const localized = value => {
+    if (value && typeof value === 'object' && !Array.isArray(value) && ('pl' in value || 'en' in value)) {
+      return value[S.language] || value.pl || value.en || '';
+    }
+    return value;
+  };
+  const catLabel    = cat => CATEGORY_LABELS[S.language]?.[cat] || DB.CAT_LABELS[cat] || cat;
   const catColor    = cat => DB.CAT_COLORS[cat] || '#888';
   const FATIGUE_ZERO_XP_THRESHOLD = 40;
+
+  function resolveThemeId(themeName) {
+    return THEME_ALIASES[themeName] || (THEME_IDS.includes(themeName) ? themeName : 'olympus');
+  }
+
+  function localizeTitle(title) {
+    return LOCALIZED_TITLES[S.language]?.[title] || title;
+  }
+
+  function localizeSkill(skill) {
+    if (!skill) return skill;
+    const localizedSkill = LOCALIZED_SKILLS[S.language]?.[skill.id];
+    return localizedSkill ? { ...skill, ...localizedSkill } : skill;
+  }
+
+  function localizeZeusMood(mood) {
+    return ZEUS_MOOD_LABELS[S.language]?.[mood] || mood;
+  }
+
+  function missionLabel(key) {
+    return localized(MISSION_LABELS[key] || { pl: key, en: key });
+  }
+
+  function achievementLabel(key) {
+    return localized(ACHIEVEMENT_LABELS[key] || { pl: key, en: key });
+  }
+
+  function setText(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.textContent = localized(value);
+  }
+
+  function setHTML(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.innerHTML = localized(value);
+  }
+
+  function setPlaceholder(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.placeholder = localized(value);
+  }
 
   function getMonday(d) {
     const day = d.getDay(), diff = (day === 0 ? -6 : 1) - day;
@@ -265,12 +400,13 @@ const App = (() => {
     S.totalXP = await DB.getTotalXP();
     const prevLevel = S.userLevel || 1;
     const info = getLevelInfo(S.totalXP);
+    const localizedTitle = localizeTitle(info.title);
     S.userLevel = info.level;
     if ($('xpLevel')) $('xpLevel').textContent  = `Lv.${info.level}`;
-    if ($('xpTitle')) $('xpTitle').textContent  = info.title;
+    if ($('xpTitle')) $('xpTitle').textContent  = localizedTitle;
     if ($('xpLabel')) $('xpLabel').textContent  = `${info.totalXP.toLocaleString()} / ${info.nextMin.toLocaleString()} XP`;
     if ($('xpFill'))  $('xpFill').style.width   = info.pct + '%';
-    if ($('playerTitle')) $('playerTitle').textContent = `Title: ${info.title}`;
+    if ($('playerTitle')) $('playerTitle').textContent = t('titlePrefix', { title: localizedTitle });
     await applyLevelRewards(prevLevel, info.level);
     applyUnlockVisibility();
     await renderSkillTree();
@@ -334,7 +470,7 @@ const App = (() => {
       .map(([, reward]) => reward.feature);
     await setUnlockedFeatures([...(await getUnlockedFeatures()), ...rewardsToApply]);
     if (current.level >= 30) document.body.classList.add('olympus-champion');
-    if ($('playerTitle')) $('playerTitle').textContent = `Title: ${current.title}`;
+    if ($('playerTitle')) $('playerTitle').textContent = t('titlePrefix', { title: localizeTitle(current.title) });
     await applyUnlockVisibility();
     await renderSkillTree();
   }
@@ -395,6 +531,18 @@ const App = (() => {
       targetId: 'btnStart',
       arrow: 'down',
       text: '▶️ START rozpoczyna sesję i timer. STOP zapisuje czas i nalicza XP dla produktywnych kategorii.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'zeusCard',
+      arrow: 'up',
+      text: '⚡ Zeus jest Twoim przewodnikiem po prawej stronie. Tłumaczy, motywuje i podpowiada następny sensowny ruch.',
+      before: () => switchTab('tracker'),
+    },
+    {
+      targetId: 'btnZeusFocus',
+      arrow: 'up',
+      text: '🧠 Przyciski Zeusa uruchamiają szybki sprint, ratowanie streaka albo blok regeneracji bez ręcznego klikania po całej aplikacji.',
       before: () => switchTab('tracker'),
     },
     {
@@ -472,7 +620,7 @@ const App = (() => {
     {
       targetId: 'themeSelect',
       arrow: 'up',
-      text: '🎨 Tu przełączysz motyw (Cyberpunk / Light / Retro) oparty o CSS variables.',
+      text: '🎨 Tutaj zmienisz styl aplikacji: Hologram Olimpu, Marmurowy poranek, Solarny bursztyn albo Lazurowy przypływ.',
       before: () => switchTab('settings'),
     },
     {
@@ -494,6 +642,12 @@ const App = (() => {
       before: () => switchTab('settings'),
     },
     {
+      targetId: 'skillTreeGrid',
+      arrow: 'up',
+      text: '🌳 Drzewko umiejętności daje stałe bonusy do streaka, XP, głębokiego skupienia i trybu hardcore. To Twój progres systemowy.',
+      before: () => switchTab('settings'),
+    },
+    {
       targetSelector: '[data-tab="about"]',
       arrow: 'down',
       text: 'ℹ️ Zakładka O nas opisuje filozofię Local-First i kanały społecznościowe FocusOS.',
@@ -502,7 +656,13 @@ const App = (() => {
     {
       targetSelector: '[data-tab="profile"]',
       arrow: 'down',
-      text: '👤 Profil to panel pomocniczy: plan dnia, notatki snu, socials i zarządzanie portfelem.',
+      text: '👤 Profil to panel pomocniczy: plan dnia, notatki snu, sociale i zarządzanie portfelem.',
+      before: () => switchTab('profile'),
+    },
+    {
+      targetId: 'btnRestartOnboarding',
+      arrow: 'up',
+      text: '🔁 W każdej chwili możesz uruchomić ten przewodnik ponownie z profilu, jeśli chcesz wrócić do funkcji krok po kroku.',
       before: () => switchTab('profile'),
     },
   ];
@@ -527,6 +687,9 @@ const App = (() => {
       $('tutorialOverlay').style.display = 'none';
       localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
       showToast(t('tutorialDone'), 'success');
+      if (localStorage.getItem(ONBOARDING_KEY) !== 'true') {
+        setTimeout(startOnboardingIfNeeded, 280);
+      }
       return;
     }
     const step = steps[S.tutorialStep];
@@ -534,12 +697,10 @@ const App = (() => {
     const targetEl = resolveTutorialTarget(step);
     $('tutorialOverlay').style.display = 'block';
 
-    $('tutText').innerHTML = step.text;
+    $('tutText').innerHTML = localized(step.text);
     $('tutStep').textContent = `${S.tutorialStep + 1} / ${steps.length}`;
     const isLast = S.tutorialStep === steps.length - 1;
-    $('tutNext').textContent = isLast
-      ? (S.language === 'en' ? 'Done ✓' : 'Rozumiem ✓')
-      : (S.language === 'en' ? 'Next →' : 'Dalej →');
+    $('tutNext').textContent = isLast ? t('tutorialFinish') : t('tutorialNext');
 
     const arrow = $('tutArrow');
     arrow.className = `tut-arrow tut-arrow--${step.arrow}`;
@@ -745,7 +906,8 @@ const App = (() => {
     const card = $('zeusCard');
     if (!msgEl || !moodEl || !card) return;
     msgEl.textContent = message;
-    moodEl.textContent = mood;
+    msgEl.dataset.dynamic = '1';
+    moodEl.textContent = localizeZeusMood(mood);
     applyZeusVisualState(getZeusVisualState(mood, intensity, message));
     card.classList.remove('zeus-anim');
     void card.offsetWidth;
@@ -758,17 +920,152 @@ const App = (() => {
     }
   }
 
+  function localizeZeusBaseMessage(base) {
+    const text = String(base || '');
+    const exactMap = {
+      'You fled the trial. Olympus marks this as failure.': {
+        pl: 'Uciekłeś z próby. Olimp zapisuje to jako porażkę.',
+        en: 'You fled the trial. Olympus marks it as a failure.',
+      },
+      'Discipline initiated. Olympus expects consistency.': {
+        pl: 'Dyscyplina uruchomiona. Teraz liczy się regularność.',
+        en: 'Discipline initiated. Consistency matters now.',
+      },
+      'Another session completed. Olympus is watching.': {
+        pl: 'Kolejna sesja domknięta. To buduje prawdziwy rytm.',
+        en: 'Another session completed. The rhythm is building.',
+      },
+      'You stopped early? Even mortals show more discipline.': {
+        pl: 'Zatrzymanie przed czasem osłabia rytm. Wróć mocniej.',
+        en: 'Stopping early weakens the rhythm. Return stronger.',
+      },
+      'Session closed. Return stronger.': {
+        pl: 'Sesja zamknięta. Wróć silniejszy.',
+        en: 'Session closed. Return stronger.',
+      },
+      'Unbreakable absorbed your first missed day. Do not waste this mercy.': {
+        pl: 'Unbreakable uratowało pierwszy opuszczony dzień. Nie marnuj tej szansy.',
+        en: 'Unbreakable absorbed your first missed day. Do not waste that mercy.',
+      },
+      'A day was skipped. Olympus does not reward broken oaths.': {
+        pl: 'Dzień został pominięty. Złamane obietnice kosztują.',
+        en: 'A day was skipped. Broken vows have a cost.',
+      },
+      'Zeus voice adjusted to your preference.': {
+        pl: 'Ustawiłem nowy ton głosu Zeusa.',
+        en: 'Zeus voice updated to your preference.',
+      },
+      'Hardcore law: no skipping phases.': {
+        pl: 'Prawo hardcore: nie pomijasz faz.',
+        en: 'Hardcore law: no phase skipping.',
+      },
+      'Now you work. No excuses.': {
+        pl: 'Teraz pracujesz. Bez wymówek.',
+        en: 'Now you work. No excuses.',
+      },
+      'Daily plan task aligned with your focus session.': {
+        pl: 'Punkt planu dnia został spięty z Twoją sesją.',
+        en: 'The day-plan task is aligned with your focus session.',
+      },
+      'Ritual completed. Discipline is forged in repetition.': {
+        pl: 'Rytuał ukończony. Dyscyplina rośnie przez powtarzalność.',
+        en: 'Ritual completed. Discipline is forged through repetition.',
+      },
+      'A focused sprint begins with one clear target.': {
+        pl: 'Dobry sprint zaczyna się od jednego jasnego celu.',
+        en: 'A strong sprint begins with one clear target.',
+      },
+      'Protect the streak with one completed session before the day ends.': {
+        pl: 'Uratuj streak jedną domkniętą sesją przed końcem dnia.',
+        en: 'Protect the streak with one completed session before the day ends.',
+      },
+      'Recovery is part of discipline, not a break from it.': {
+        pl: 'Regeneracja jest częścią dyscypliny, nie ucieczką od niej.',
+        en: 'Recovery is part of discipline, not a break from it.',
+      },
+    };
+    if (exactMap[text]) return localized(exactMap[text]);
+
+    const patterns = [
+      {
+        regex: /^You ascended to level (\d+)\. Olympus acknowledges your rise\.$/,
+        pl: match => `Wskoczyłeś na poziom ${match[1]}. Olimp zauważa Twój wzrost.`,
+        en: match => `You ascended to level ${match[1]}. Olympus acknowledges your rise.`,
+      },
+      {
+        regex: /^Streak (\d+) days\. Keep climbing toward Olympus\.$/,
+        pl: match => `Streak trwa ${match[1]} dni. Wspinaj się dalej.`,
+        en: match => `Your streak is ${match[1]} days. Keep climbing.`,
+      },
+      {
+        regex: /^You slept ([\d.]+) hours\. Even gods require more\.$/,
+        pl: match => `Spałeś ${match[1]} h. Nawet bogowie potrzebują więcej regeneracji.`,
+        en: match => `You slept ${match[1]} hours. Even gods need more recovery.`,
+      },
+      {
+        regex: /^Recovery logged: ([\d.]+)h\. A sharper mind returns\.$/,
+        pl: match => `Regeneracja zapisana: ${match[1]} h. Ostrzejsza głowa wraca do gry.`,
+        en: match => `Recovery logged: ${match[1]}h. A sharper mind returns.`,
+      },
+      {
+        regex: /^Path chosen: (.+)\. Your style is being forged\.$/,
+        pl: match => `Wybrano ścieżkę: ${match[1]}. Twój styl właśnie się kuje.`,
+        en: match => `Path chosen: ${match[1]}. Your style is being forged.`,
+      },
+      {
+        regex: /^Mission completed: (.+)\. Olympus grants (\d+) XP\.$/,
+        pl: match => `Misja ukończona: ${match[1]}. Olimp przyznaje ${match[2]} XP.`,
+        en: match => `Mission completed: ${match[1]}. Olympus grants ${match[2]} XP.`,
+      },
+      {
+        regex: /^Achievement unlocked: (.+)\.$/,
+        pl: match => `Odblokowano osiągnięcie: ${match[1]}.`,
+        en: match => `Achievement unlocked: ${match[1]}.`,
+      },
+      {
+        regex: /^Last sleep: ([\d.]+)h\. Low recovery weakens focus\.$/,
+        pl: match => `Ostatni sen: ${match[1]} h. Słaba regeneracja obniża skupienie.`,
+        en: match => `Last sleep: ${match[1]}h. Low recovery weakens focus.`,
+      },
+    ];
+    for (const pattern of patterns) {
+      const match = text.match(pattern.regex);
+      if (match) return S.language === 'en' ? pattern.en(match) : pattern.pl(match);
+    }
+    return text;
+  }
+
   function adaptZeusMessage(base, context = 'neutral') {
+    const localizedBase = localizeZeusBaseMessage(base);
     const style = S.zeusStyle || 'balanced';
     if (style === 'supportive') {
-      if (context === 'negative') return `Stay steady: ${base}`;
-      return `Good momentum: ${base}`;
+      if (context === 'negative') {
+        return S.language === 'en'
+          ? `Steady now. ${localizedBase}`
+          : `Spokojnie, wracamy do rytmu. ${localizedBase}`;
+      }
+      return S.language === 'en'
+        ? `Good momentum. ${localizedBase}`
+        : `Dobry kierunek. ${localizedBase}`;
     }
     if (style === 'strict') {
-      if (context === 'negative') return `Weak discipline. ${base}`;
-      return `Olympus demands more. ${base}`;
+      if (context === 'negative') {
+        return S.language === 'en'
+          ? `Weak discipline. ${localizedBase}`
+          : `Za mało dyscypliny. ${localizedBase}`;
+      }
+      return S.language === 'en'
+        ? `Stay sharp. ${localizedBase}`
+        : `Trzymaj ostrość. ${localizedBase}`;
     }
-    return base;
+    if (context === 'negative') {
+      return S.language === 'en'
+        ? `Reset the rhythm. ${localizedBase}`
+        : `Zresetuj rytm. ${localizedBase}`;
+    }
+    return S.language === 'en'
+      ? `Keep building. ${localizedBase}`
+      : `Buduj dalej. ${localizedBase}`;
   }
 
 
@@ -800,8 +1097,8 @@ const App = (() => {
   function getAppSettings() {
     const saved = getLS(APP_SETTINGS_KEY, {});
     return {
-      language: saved.language || 'en',
-      theme: saved.theme || 'cyberpunk',
+      language: saved.language || 'pl',
+      theme: resolveThemeId(saved.theme || 'olympus'),
     };
   }
 
@@ -822,22 +1119,26 @@ const App = (() => {
 
   function refreshConnectionViews() {
     const walletText = S.walletAddress
-      ? `Connected wallet: ${S.walletAddress}`
-      : 'No wallet connected.';
+      ? t('walletStatusConnected', { address: S.walletAddress })
+      : t('walletStatusNone');
     const googleText = S.googleConnected
-      ? 'Google Drive backup connected.'
-      : 'Google Drive backup not connected.';
+      ? t('googleStatusConnected')
+      : t('googleStatusNone');
 
-    if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || 'Not connected';
+    if ($('walletAddressView')) $('walletAddressView').textContent = S.walletAddress || t('notConnected');
     if ($('settingsWalletStatus')) $('settingsWalletStatus').textContent = walletText;
     if ($('walletProfileInfo')) $('walletProfileInfo').textContent = walletText;
     if ($('settingsGoogleStatus')) $('settingsGoogleStatus').textContent = googleText;
     if ($('modeSplashStatus')) {
-      $('modeSplashStatus').textContent = S.appMode === 'monad'
-        ? walletText
-        : S.appMode === 'google'
-          ? googleText
-          : 'Local mode keeps everything on this device.';
+      if (!S.appMode) {
+        $('modeSplashStatus').textContent = t('splashStatusIdle');
+      } else {
+        $('modeSplashStatus').textContent = S.appMode === 'monad'
+          ? walletText
+          : S.appMode === 'google'
+            ? googleText
+            : t('splashFootnote');
+      }
     }
     if ($('btnDisconnectWallet')) $('btnDisconnectWallet').disabled = !S.walletAddress;
     if ($('btnDisconnectWalletSettings')) $('btnDisconnectWalletSettings').disabled = !S.walletAddress;
@@ -845,7 +1146,7 @@ const App = (() => {
     updateDashboardCounters();
   }
 
-  function openModeSplash(message = 'Choose how you want to enter the app.') {
+  function openModeSplash(message = t('splashSub')) {
     document.body.classList.add('app-locked');
     $('modeSplash')?.classList.remove('hidden');
     if ($('modeSplashStatus')) $('modeSplashStatus').textContent = message;
@@ -857,12 +1158,145 @@ const App = (() => {
   }
 
   function applyTheme(themeName) {
-    S.theme = themeName;
-    document.documentElement.setAttribute('data-theme', themeName);
+    const resolvedTheme = resolveThemeId(themeName);
+    S.theme = resolvedTheme;
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
   }
 
   const I18N = {
     pl: {
+      splashSub: 'Wybierz, jak chcesz wejść do aplikacji.',
+      splashLocal: 'Tryb lokalny',
+      splashWallet: 'Połącz portfel',
+      splashGoogle: 'Połącz Google',
+      splashFootnote: 'Tryb lokalny trzyma wszystko na urządzeniu. Portfel odblokowuje akcje web3. Google dodaje kopię zapasową na Dysku.',
+      splashStatusIdle: 'Nie wybrano jeszcze trybu połączenia.',
+      logoSub: 'Lokalnie · Bez backendu · Bez chmury',
+      web3Panel: 'Panel Web3',
+      web3Wallet: 'Portfel',
+      web3Network: 'Sieć',
+      web3Staked: 'Stakowane',
+      web3Stake: 'Stakuj tokeny',
+      web3Burn: 'Spal tokeny',
+      web3Save: 'Zapisz postęp on-chain',
+      trackerPanel: 'Aktywna sesja',
+      trackerHeroTitle: 'Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.',
+      trackerHeroSub: 'Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.',
+      quickStartTitle: 'Szybki start',
+      quickStart1: 'Dodaj zadanie',
+      quickStart2: 'Uruchom sesję',
+      quickStart3: 'Zamknij pierwszą sesję',
+      statusIdle: 'Bezczynny',
+      statusTracking: 'Trwa sesja',
+      streakLabel: 'Streak: {value} dni',
+      bestLabel: 'Best: {value} dni',
+      trackerHelper: 'Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.',
+      focusCyclePanel: 'Cykl skupienia',
+      focusCycleCopy: 'Użyj prowadzonego sprintu skupienia z przerwą na regenerację. To uruchamia realną sesję i trzyma fazy cały czas na widoku.',
+      focusFieldFocus: 'Skupienie',
+      focusFieldRecovery: 'Regeneracja',
+      focusCycleStart: 'Start cyklu',
+      focusCycleRestart: 'Restart cyklu',
+      focusCycleSkip: 'Następna faza',
+      focusCycleToBreak: 'Przejdź do przerwy',
+      focusCycleToFocus: 'Wróć do skupienia',
+      focusCycleReady: 'Cykl gotowy',
+      focusCycleFocus: 'Sprint skupienia',
+      focusCycleBreak: 'Przerwa regeneracyjna',
+      deepWork: 'Głębokie skupienie',
+      exitDeepWork: 'Wyjdź z głębokiego skupienia',
+      soundOn: 'Dźwięk włączony',
+      soundOff: 'Dźwięk wyłączony',
+      taskPlaceholder: 'Nad czym teraz pracujesz?',
+      fatigueHint: 'Zmęczenie rośnie',
+      refreshData: 'Odśwież dane',
+      zeusPanel: 'Hologram Zeusa',
+      zeusTagline: 'Mentor skupienia',
+      zeusDefaultMessage: 'Jestem po Twojej prawej stronie. Prowadzę, tłumaczę i pilnuję rytmu pracy.',
+      zeusActionFocus: 'Sprint',
+      zeusActionStreak: 'Chroń streak',
+      zeusActionRecover: 'Regeneracja',
+      routinesPanel: 'Codzienne rytuały',
+      routineMorning: 'Poranek',
+      routineEvening: 'Wieczór',
+      routinePlaceholder: 'Dodaj krok rytuału...',
+      add: 'Dodaj',
+      noMorningRoutine: 'Brak porannego rytuału.',
+      noEveningRoutine: 'Brak wieczornego rytuału.',
+      routineSectionMorning: 'Poranek',
+      routineSectionEvening: 'Wieczór',
+      missionsPanel: 'Misje dnia',
+      advStatsPanel: 'Zaawansowane statystyki',
+      achievementsPanel: 'Osiągnięcia Olimpu',
+      glancePanel: 'Dzisiejszy przegląd',
+      statFocusTime: 'Czas skupienia',
+      statEfficiency: 'Efektywność',
+      statSessions: 'Sesje',
+      statStreak: 'Streak',
+      statBenchmark: 'Ty vs średnia',
+      recentSessions: 'Ostatnie sesje',
+      filterToday: 'Dziś',
+      filterAll: 'Całość',
+      saveGoal: 'Zapisz cel',
+      noGoalSet: 'Brak ustawionego celu.',
+      goalCompleted: 'Cel ukończony ({done} / {goal} min)',
+      goalProgress: 'Postęp: {done} / {goal} min',
+      settingsLanguagePanel: 'Język',
+      settingsLanguageLabel: 'Język interfejsu',
+      settingsThemePanel: 'Motyw',
+      settingsThemeLabel: 'Wybierz styl aplikacji',
+      hardcoreLabel: 'Hardcore Mode',
+      hardcoreHelp: 'Przycisk Stop jest blokowany podczas aktywnej sesji.',
+      zeusStyleLabel: 'Głos Zeusa',
+      zeusStyleHelp: 'Wybierz, jak Zeus ma do Ciebie mówić.',
+      skillTreePanel: 'Drzewko umiejętności',
+      skillPointsLabel: 'Punkty umiejętności: {value}',
+      connectionsPanel: 'Połączenia i kopie zapasowe',
+      connectionsCopy: 'Tutaj zarządzasz instalacją aplikacji, backupem Google Drive i dostępem do portfela.',
+      wallet: 'Portfel',
+      google: 'Google',
+      connectWallet: 'Połącz portfel',
+      disconnectWallet: 'Rozłącz portfel',
+      connectGoogle: 'Połącz Google',
+      disconnectGoogle: 'Rozłącz Google',
+      installButton: 'Zainstaluj FocusOS',
+      backupGoogle: 'Backup na Google Drive',
+      accessScreen: 'Ekran dostępu',
+      retro: 'Retro wpis',
+      alerts: 'Alerty',
+      exportCSV: 'Eksport CSV',
+      exportJSON: 'Eksport JSON',
+      importJSON: 'Import JSON',
+      installHint: 'Przycisk instalacji pojawia się automatycznie, gdy przeglądarka zgłosi obsługę PWA.',
+      walletStatusNone: 'Brak podłączonego portfela.',
+      walletStatusConnected: 'Połączony portfel: {address}',
+      googleStatusNone: 'Backup Google Drive nie jest podłączony.',
+      googleStatusConnected: 'Backup Google Drive jest podłączony.',
+      notConnected: 'Niepołączono',
+      aboutPanel: 'FocusOS - lokalna inteligencja produktywności',
+      aboutTitle: 'FocusOS - lokalna inteligencja produktywności',
+      aboutCopy1: 'FocusOS to narzędzie produktywności zbudowane w filozofii <strong>Local-First</strong>: bez backendu, bez zewnętrznej chmury i z pełną kontrolą nad danymi.',
+      aboutCopy2: 'Dane zostają na urządzeniu (IndexedDB i localStorage), a eksport lub backup uruchamiasz tylko wtedy, kiedy sam chcesz.',
+      welcomeSubline: 'Lokalna inteligencja produktywności',
+      welcomeEnter: 'Wejdź do aplikacji',
+      profileDayplan: 'Plan dnia',
+      profileNotes: 'Notatki snu',
+      profileSocials: 'Sociale',
+      profileWallet: 'Portfel',
+      profileSaveSocials: 'Zapisz linki',
+      profileRestartGuide: 'Uruchom samouczek ponownie',
+      profileNoLinks: 'Brak zapisanych linków.',
+      profileNoWallet: 'Brak podłączonego portfela.',
+      profileTwitterLabel: 'Link do X / Twittera',
+      profileDiscordLabel: 'Link do Discorda',
+      profileTwitterPlaceholder: 'https://x.com/...',
+      profileDiscordPlaceholder: 'https://discord.gg/...',
+      start: 'Start',
+      stop: 'Stop',
+      titlePrefix: 'Tytuł: {title}',
+      modeWallet: 'Tryb: portfel {address}',
+      modeGoogle: 'Tryb: lokalny + Google',
+      modeLocal: 'Tryb: lokalny offline',
       installUnavailable: 'Instalacja nie jest teraz dostępna. Otwórz aplikację przez HTTPS lub już jest zainstalowana.',
       installReady: 'Możesz teraz zainstalować aplikację.',
       installDone: 'Instalacja uruchomiona.',
@@ -874,18 +1308,219 @@ const App = (() => {
       backupDone: 'Backup wysłany na Google Drive jako FocusOS_Backup.json',
       backupFailed: 'Błąd backupu Google: ',
       tutorialDone: 'Samouczek zakończony',
+      tutorialSkip: 'Pomiń',
+      tutorialNext: 'Dalej →',
+      tutorialFinish: 'Rozumiem ✓',
+      onboardingSkip: 'Pomiń',
+      onboardingNext: 'Dalej',
+      onboardingFinish: 'Zamknij',
+      rewardContinue: 'Dalej',
+      levelRewardTitle: 'Nagroda poziomu odblokowana',
+      levelRewardDefault: 'Odblokowano nową nagrodę.',
+      resetCancel: 'Anuluj',
+      languageSwitched: 'Język interfejsu zaktualizowany.',
+      hardcoreConfirm: 'Tryb Hardcore V2: bez pauzy i bez anulowania. Sesja musi zostać ukończona albo zaliczona jako porażka. Kontynuować?',
+      hardcoreEnabled: 'Tryb hardcore włączony.',
+      hardcoreDisabled: 'Tryb hardcore wyłączony.',
+      walletConnected: 'Portfel połączony.',
+      walletDisconnected: 'Portfel rozłączony.',
+      noActiveWallet: 'Brak aktywnego portfela.',
+      accessScreenReopened: 'Ekran dostępu został ponownie otwarty.',
+      dailyGoalSet: 'Ustawiono cel dzienny: {value} min.',
+      dailyGoalCleared: 'Wyczyszczono cel dzienny.',
+      focusSprintStarted: 'Sprint skupienia rozpoczęty.',
+      recoveryBreakStarted: 'Przerwa regeneracyjna rozpoczęta.',
+      focusCycleStarted: 'Cykl skupienia rozpoczęty.',
+      focusSoundEnabled: 'Dźwięk cyklu skupienia włączony.',
+      focusSoundMuted: 'Dźwięk cyklu skupienia wyciszony.',
+      noSkillPoints: 'Brak dostępnych punktów umiejętności.',
+      skillRequiresLevel: 'Wymagany poziom: {level}.',
+      skillRequiresPrevious: 'Najpierw odblokuj poprzednią umiejętność.',
+      googleServicesMissing: 'Usługi Google Identity Services nie zostały załadowane.',
+      missingAccessToken: 'Brak tokenu dostępu.',
+      googleConnectedToast: 'Google połączone.',
+      googleNotConnected: 'Google nie jest połączone.',
+      googleDisconnected: 'Google rozłączone.',
+      connectionAttemptFailed: 'Nie udało się połączyć. Przechodzę do trybu lokalnego.',
+      monadOnlyStake: 'Stakowanie działa tylko w trybie Monad.',
+      stakeSuccess: 'Zastakowano 25 FCS. Łącznie: {total} FCS.',
+      monadOnlyBurn: 'Spalanie działa tylko w trybie Monad.',
+      burnSuccess: 'Symulacja spalania zakończona. Hook omijający karę zmęczenia można podpiąć on-chain.',
+      monadOnlyChainSave: 'Zapis on-chain działa tylko w trybie Monad.',
+      chainSaveSuccess: 'Postęp podpisany i wysłany w symulacji.',
+      chainSaveCanceled: 'Podpis anulowany: {message}',
+      noWalletChainSave: 'Nie wykryto portfela. Zakończono lokalną symulację zapisu on-chain.',
+      socialsSaved: 'Linki społecznościowe zapisane.',
+      recoveryBreakPrepared: 'Przerwa regeneracyjna gotowa. Zapisz sen albo zrób porządny reset.',
+      dayPlanEmpty: 'Brak punktów planu na dziś.',
+      sleepNotesEmpty: 'Brak notatek snu.',
+      hardcoreRefreshFail: 'Sesja hardcore przerwana po odświeżeniu. XP -{value}.',
+      taskNameRequired: 'Wpisz nazwę zadania.',
+      taskStartToast: 'Start: "{name}"',
+      genericError: 'Błąd: {message}',
+      hardcoreWaitPhase: 'Tryb hardcore: poczekaj na zakończenie fazy.',
+      levelUpToast: 'Awans! Wszedłeś na poziom {level} - {title}.',
+      sessionCompletedToast: 'Sesja zakończona: "{name}" (+{xp} XP)',
+      sessionStoppedToast: 'Sesja zatrzymana: "{name}"',
+      xpPenaltyToast: 'Kara XP: -{value}',
+      notificationsEnabled: 'Powiadomienia włączone.',
+      settingsSaved: 'Ustawienia zapisane.',
+      focusSprintFallbackName: 'Sesja sprintu skupienia',
+      themeNames: {
+        olympus: 'Hologram Olimpu',
+        marble: 'Marmurowy poranek',
+        ember: 'Solarny bursztyn',
+        tide: 'Lazurowy przypływ',
+      },
+      zeusVoices: {
+        strict: 'Dowódca',
+        balanced: 'Mentor',
+        supportive: 'Iskra',
+      },
       tabs: {
         tracker: 'Tracker',
-        daily: 'Daily',
-        weekly: 'Weekly',
-        health: 'Health',
-        sleep: 'Sleep',
-        settings: 'Settings',
-        about: 'About',
-        profile: 'Profile',
+        daily: 'Dzień',
+        weekly: 'Tydzień',
+        health: 'Zdrowie',
+        sleep: 'Sen',
+        settings: 'Ustawienia',
+        about: 'O aplikacji',
+        profile: 'Profil',
       },
     },
     en: {
+      splashSub: 'Choose how you want to enter the app.',
+      splashLocal: 'Local mode',
+      splashWallet: 'Connect wallet',
+      splashGoogle: 'Connect Google',
+      splashFootnote: 'Local mode keeps everything on-device. Wallet mode unlocks web3 actions. Google mode adds Drive backup.',
+      splashStatusIdle: 'No connection selected yet.',
+      logoSub: 'Local-first · No backend · No cloud',
+      web3Panel: 'Web3 dashboard',
+      web3Wallet: 'Wallet',
+      web3Network: 'Network',
+      web3Staked: 'Staked',
+      web3Stake: 'Stake tokens',
+      web3Burn: 'Burn tokens',
+      web3Save: 'Save progress on-chain',
+      trackerPanel: 'Active session',
+      trackerHeroTitle: 'Build real focus momentum, one clean session at a time.',
+      trackerHeroSub: 'Track work, protect your streak, and keep the whole system readable on every screen.',
+      quickStartTitle: 'Quick start',
+      quickStart1: 'Add a task',
+      quickStart2: 'Start a session',
+      quickStart3: 'Finish your first session',
+      statusIdle: 'Idle',
+      statusTracking: 'Tracking',
+      streakLabel: 'Streak: {value} days',
+      bestLabel: 'Best: {value} days',
+      trackerHelper: 'One completed focus session per day keeps the streak alive. The tools below help you stay consistent without guesswork.',
+      focusCyclePanel: 'Focus cycle',
+      focusCycleCopy: 'Use a guided focus sprint plus a recovery break. It starts a real session and keeps the current phase visible the whole time.',
+      focusFieldFocus: 'Focus',
+      focusFieldRecovery: 'Recovery',
+      focusCycleStart: 'Start cycle',
+      focusCycleRestart: 'Restart cycle',
+      focusCycleSkip: 'Next phase',
+      focusCycleToBreak: 'Start break',
+      focusCycleToFocus: 'Back to focus',
+      focusCycleReady: 'Cycle ready',
+      focusCycleFocus: 'Focus sprint',
+      focusCycleBreak: 'Recovery break',
+      deepWork: 'Deep Focus',
+      exitDeepWork: 'Exit Deep Focus',
+      soundOn: 'Sound on',
+      soundOff: 'Sound off',
+      taskPlaceholder: 'What are you working on?',
+      fatigueHint: 'Fatigue is rising',
+      refreshData: 'Refresh data',
+      zeusPanel: 'Zeus hologram',
+      zeusTagline: 'Focus sidekick',
+      zeusDefaultMessage: 'I stay on your right side to guide, explain, and keep your rhythm steady.',
+      zeusActionFocus: 'Sprint',
+      zeusActionStreak: 'Protect streak',
+      zeusActionRecover: 'Recover',
+      routinesPanel: 'Daily routines',
+      routineMorning: 'Morning',
+      routineEvening: 'Evening',
+      routinePlaceholder: 'Add a routine step...',
+      add: 'Add',
+      noMorningRoutine: 'No morning routine yet.',
+      noEveningRoutine: 'No evening routine yet.',
+      routineSectionMorning: 'Morning',
+      routineSectionEvening: 'Evening',
+      missionsPanel: 'Daily missions',
+      advStatsPanel: 'Advanced stats',
+      achievementsPanel: 'Olympus achievements',
+      glancePanel: 'Today at a glance',
+      statFocusTime: 'Focus time',
+      statEfficiency: 'Efficiency',
+      statSessions: 'Sessions',
+      statStreak: 'Streak',
+      statBenchmark: 'You vs average',
+      recentSessions: 'Recent sessions',
+      filterToday: 'Today',
+      filterAll: 'All time',
+      saveGoal: 'Save goal',
+      noGoalSet: 'No goal set.',
+      goalCompleted: 'Goal completed ({done} / {goal} min)',
+      goalProgress: 'Progress: {done} / {goal} min',
+      settingsLanguagePanel: 'Language',
+      settingsLanguageLabel: 'Interface language',
+      settingsThemePanel: 'Theme',
+      settingsThemeLabel: 'Choose the app style',
+      hardcoreLabel: 'Hardcore Mode',
+      hardcoreHelp: 'The Stop button is disabled during an active session.',
+      zeusStyleLabel: 'Zeus voice',
+      zeusStyleHelp: 'Choose how Zeus talks to you.',
+      skillTreePanel: 'Skill tree',
+      skillPointsLabel: 'Skill points: {value}',
+      connectionsPanel: 'Connections and backups',
+      connectionsCopy: 'Manage app install, Google Drive backup, and wallet access from one place.',
+      wallet: 'Wallet',
+      google: 'Google',
+      connectWallet: 'Connect wallet',
+      disconnectWallet: 'Disconnect wallet',
+      connectGoogle: 'Connect Google',
+      disconnectGoogle: 'Disconnect Google',
+      installButton: 'Install FocusOS',
+      backupGoogle: 'Backup to Google Drive',
+      accessScreen: 'Access screen',
+      retro: 'Retro entry',
+      alerts: 'Alerts',
+      exportCSV: 'Export CSV',
+      exportJSON: 'Export JSON',
+      importJSON: 'Import JSON',
+      installHint: 'The install button appears automatically when your browser reports PWA install support.',
+      walletStatusNone: 'No wallet connected.',
+      walletStatusConnected: 'Connected wallet: {address}',
+      googleStatusNone: 'Google Drive backup is not connected.',
+      googleStatusConnected: 'Google Drive backup is connected.',
+      notConnected: 'Not connected',
+      aboutPanel: 'FocusOS - local productivity intelligence',
+      aboutTitle: 'FocusOS - local productivity intelligence',
+      aboutCopy1: 'FocusOS is a productivity tool built around a <strong>Local-First</strong> philosophy: no backend, no external cloud, and full control over your data.',
+      aboutCopy2: 'Your data stays on the device (IndexedDB and localStorage), and you decide when to export or create a backup.',
+      welcomeSubline: 'Local-first productivity intelligence',
+      welcomeEnter: 'Enter the app',
+      profileDayplan: 'Day plan',
+      profileNotes: 'Sleep notes',
+      profileSocials: 'Socials',
+      profileWallet: 'Wallet',
+      profileSaveSocials: 'Save links',
+      profileRestartGuide: 'Run tutorial again',
+      profileNoLinks: 'No saved links yet.',
+      profileNoWallet: 'No wallet connected.',
+      profileTwitterLabel: 'X / Twitter link',
+      profileDiscordLabel: 'Discord link',
+      profileTwitterPlaceholder: 'https://x.com/...',
+      profileDiscordPlaceholder: 'https://discord.gg/...',
+      start: 'Start',
+      stop: 'Stop',
+      titlePrefix: 'Title: {title}',
+      modeWallet: 'Mode: wallet {address}',
+      modeGoogle: 'Mode: local + Google',
+      modeLocal: 'Mode: local offline',
       installUnavailable: 'Install prompt is unavailable right now. Use HTTPS or app may already be installed.',
       installReady: 'App can now be installed.',
       installDone: 'Install prompt opened.',
@@ -897,6 +1532,75 @@ const App = (() => {
       backupDone: 'Backup uploaded to Google Drive as FocusOS_Backup.json',
       backupFailed: 'Google backup failed: ',
       tutorialDone: 'Tutorial completed',
+      tutorialSkip: 'Skip',
+      tutorialNext: 'Next →',
+      tutorialFinish: 'Done ✓',
+      onboardingSkip: 'Skip',
+      onboardingNext: 'Next',
+      onboardingFinish: 'Finish',
+      rewardContinue: 'Continue',
+      levelRewardTitle: 'Level reward unlocked',
+      levelRewardDefault: 'A new reward has been unlocked.',
+      resetCancel: 'Cancel',
+      languageSwitched: 'Interface language updated.',
+      hardcoreConfirm: 'Hardcore Mode V2: no pause and no cancel. The session must finish or fail. Continue?',
+      hardcoreEnabled: 'Hardcore mode enabled.',
+      hardcoreDisabled: 'Hardcore mode disabled.',
+      walletConnected: 'Wallet connected.',
+      walletDisconnected: 'Wallet disconnected.',
+      noActiveWallet: 'No active wallet connected.',
+      accessScreenReopened: 'Access screen reopened.',
+      dailyGoalSet: 'Daily goal set: {value} min.',
+      dailyGoalCleared: 'Daily goal cleared.',
+      focusSprintStarted: 'Focus sprint started.',
+      recoveryBreakStarted: 'Recovery break started.',
+      focusCycleStarted: 'Focus cycle started.',
+      focusSoundEnabled: 'Focus cycle sound enabled.',
+      focusSoundMuted: 'Focus cycle sound muted.',
+      noSkillPoints: 'No skill points available.',
+      skillRequiresLevel: 'Requires level {level}.',
+      skillRequiresPrevious: 'Unlock the previous skill first.',
+      googleServicesMissing: 'Google Identity Services did not load.',
+      missingAccessToken: 'Missing access token.',
+      googleConnectedToast: 'Google connected.',
+      googleNotConnected: 'Google is not connected.',
+      googleDisconnected: 'Google disconnected.',
+      connectionAttemptFailed: 'Connection failed. Switching to local mode.',
+      monadOnlyStake: 'Staking is available in Monad mode only.',
+      stakeSuccess: 'Staked 25 FCS. Total staked: {total} FCS.',
+      monadOnlyBurn: 'Burn is available in Monad mode only.',
+      burnSuccess: 'Burn simulation complete. A fatigue-penalty bypass hook can be implemented on-chain.',
+      monadOnlyChainSave: 'On-chain save is available in Monad mode only.',
+      chainSaveSuccess: 'Progress signed and submitted in simulation.',
+      chainSaveCanceled: 'Signature canceled: {message}',
+      noWalletChainSave: 'No wallet detected. Local on-chain save simulation completed.',
+      socialsSaved: 'Social links saved.',
+      recoveryBreakPrepared: 'Recovery break is ready. Log sleep or take a proper reset.',
+      dayPlanEmpty: 'No day-plan items yet.',
+      sleepNotesEmpty: 'No sleep notes yet.',
+      hardcoreRefreshFail: 'Hardcore session failed after refresh. XP -{value}.',
+      taskNameRequired: 'Enter a task name.',
+      taskStartToast: 'Start: "{name}"',
+      genericError: 'Error: {message}',
+      hardcoreWaitPhase: 'Hardcore mode: wait for the phase to finish.',
+      levelUpToast: 'Level up! You reached level {level} - {title}.',
+      sessionCompletedToast: 'Session completed: "{name}" (+{xp} XP)',
+      sessionStoppedToast: 'Session stopped: "{name}"',
+      xpPenaltyToast: 'XP penalty: -{value}',
+      notificationsEnabled: 'Notifications enabled.',
+      settingsSaved: 'Settings saved.',
+      focusSprintFallbackName: 'Focus sprint session',
+      themeNames: {
+        olympus: 'Olympus hologram',
+        marble: 'Marble morning',
+        ember: 'Solar ember',
+        tide: 'Azure tide',
+      },
+      zeusVoices: {
+        strict: 'Commander',
+        balanced: 'Mentor',
+        supportive: 'Spark',
+      },
       tabs: {
         tracker: 'Tracker',
         daily: 'Daily',
@@ -910,10 +1614,173 @@ const App = (() => {
     },
   };
 
-  const t = key => {
+  const t = (key, params = {}) => {
     const langPack = I18N[S.language] || I18N.pl;
-    return langPack[key] || I18N.pl[key] || key;
+    const fallbackPack = I18N.pl;
+    const resolve = pack => key.split('.').reduce((acc, part) => acc?.[part], pack);
+    const value = resolve(langPack) ?? resolve(fallbackPack) ?? key;
+    if (typeof value !== 'string') return value;
+    return value.replace(/\{(\w+)\}/g, (_, token) => {
+      if (token in params) return String(params[token]);
+      return `{${token}}`;
+    });
   };
+
+  function applyStaticTranslations() {
+    setText('.splash-sub', t('splashSub'));
+    setText('#btnModeLocal', t('splashLocal'));
+    setText('#btnModeMonad', t('splashWallet'));
+    setText('#btnModeGoogle', t('splashGoogle'));
+    setText('.splash-footnote', t('splashFootnote'));
+    setText('.logo-sub', t('logoSub'));
+    setText('.panel--web3 .panel-label', t('web3Panel'));
+    setText('.web3-grid > div:nth-child(1) .web3-k', t('web3Wallet'));
+    setText('.web3-grid > div:nth-child(2) .web3-k', t('web3Network'));
+    setText('.web3-grid > div:nth-child(3) .web3-k', t('web3Staked'));
+    setText('#btnStakeTokens', t('web3Stake'));
+    setText('#btnBurnTokens', t('web3Burn'));
+    setText('#btnSaveToChain', t('web3Save'));
+    setText('.panel--tracker-main .panel-label', t('trackerPanel'));
+    setText('.tracker-hero-title', t('trackerHeroTitle'));
+    setText('.tracker-hero-sub', t('trackerHeroSub'));
+    setText('.tracker-helper', t('trackerHelper'));
+    setText('#fatigueHint', t('fatigueHint'));
+    setText('.quick-start-title', t('quickStartTitle'));
+    const quickStart = document.querySelectorAll('.quick-start-list li');
+    if (quickStart[0]) quickStart[0].textContent = t('quickStart1');
+    if (quickStart[1]) quickStart[1].textContent = t('quickStart2');
+    if (quickStart[2]) quickStart[2].textContent = t('quickStart3');
+    setText('.panel--focus-cycle .panel-label', t('focusCyclePanel'));
+    setText('.panel--focus-cycle .panel-copy', t('focusCycleCopy'));
+    const focusLabels = document.querySelectorAll('.focus-cycle-field span');
+    if (focusLabels[0]) focusLabels[0].textContent = t('focusFieldFocus');
+    if (focusLabels[1]) focusLabels[1].textContent = t('focusFieldRecovery');
+    setPlaceholder('#taskName', t('taskPlaceholder'));
+    setText('#btnStart', t('start'));
+    setText('#btnStop', t('stop'));
+    setText('#btnRefresh', t('refreshData'));
+    setText('.panel--zeus .panel-label', t('zeusPanel'));
+    setText('.zeus-badge', t('zeusTagline'));
+    setText('#zeusMood', localizeZeusMood('Observing'));
+    if ($('zeusMessage') && !$('zeusMessage').dataset.dynamic) $('zeusMessage').textContent = t('zeusDefaultMessage');
+    setText('#btnZeusFocus', t('zeusActionFocus'));
+    setText('#btnZeusStreak', t('zeusActionStreak'));
+    setText('#btnZeusRecover', t('zeusActionRecover'));
+    setText('.panel--routines .panel-label', t('routinesPanel'));
+    const routineOptions = document.querySelectorAll('#routineType option');
+    if (routineOptions[0]) routineOptions[0].textContent = t('routineMorning');
+    if (routineOptions[1]) routineOptions[1].textContent = t('routineEvening');
+    setPlaceholder('#routineInput', t('routinePlaceholder'));
+    setText('#btnAddRoutine', t('add'));
+    const routineTitles = document.querySelectorAll('.routine-title');
+    if (routineTitles[0]) routineTitles[0].textContent = t('routineSectionMorning');
+    if (routineTitles[1]) routineTitles[1].textContent = t('routineSectionEvening');
+    setText('#routineMorningList .health-empty', t('noMorningRoutine'));
+    setText('#routineEveningList .health-empty', t('noEveningRoutine'));
+    setText('.panel--missions .panel-label', t('missionsPanel'));
+    setText('.panel--advstats .panel-label', t('advStatsPanel'));
+    setText('.panel--achievements .panel-label', t('achievementsPanel'));
+    setText('.panel-label[style*="margin-top:14px"]', t('glancePanel'));
+    const qsKeys = document.querySelectorAll('.qs-key');
+    if (qsKeys[0]) qsKeys[0].textContent = t('statFocusTime');
+    if (qsKeys[1]) qsKeys[1].textContent = t('statEfficiency');
+    if (qsKeys[2]) qsKeys[2].textContent = t('statSessions');
+    if (qsKeys[3]) qsKeys[3].textContent = t('statStreak');
+    if (qsKeys[4]) qsKeys[4].textContent = t('statBenchmark');
+    setText('.lb-title', t('statBenchmark'));
+    setText('.panel--log .panel-label', t('recentSessions'));
+    setText('#btnFilterToday', t('filterToday'));
+    setText('#btnFilterAll', t('filterAll'));
+    setText('#btnSaveGoal', t('saveGoal'));
+    setText('.panel--settings-language .panel-label', t('settingsLanguagePanel'));
+    setText('.panel--settings-language .form-label', t('settingsLanguageLabel'));
+    setText('.panel--settings-theme .panel-label', t('settingsThemePanel'));
+    setText('.panel--settings-theme .form-label', t('settingsThemeLabel'));
+    const notifLabels = document.querySelectorAll('.panel--settings-theme .notif-label');
+    if (notifLabels[0]) {
+      const small = notifLabels[0].querySelector('small');
+      notifLabels[0].childNodes[0].textContent = t('hardcoreLabel');
+      if (small) small.textContent = t('hardcoreHelp');
+    }
+    if (notifLabels[1]) {
+      const small = notifLabels[1].querySelector('small');
+      notifLabels[1].childNodes[0].textContent = t('zeusStyleLabel');
+      if (small) small.textContent = t('zeusStyleHelp');
+    }
+    setText('.panel--skilltree .panel-label', t('skillTreePanel'));
+    setText('.panel--settings-sync .panel-label', t('connectionsPanel'));
+    setText('.panel--settings-sync > p', t('connectionsCopy'));
+    setText('.connection-card:nth-child(1) .connection-title', t('wallet'));
+    setText('.connection-card:nth-child(2) .connection-title', t('google'));
+    setText('#btnConnectWalletSettings', t('connectWallet'));
+    setText('#btnDisconnectWalletSettings', t('disconnectWallet'));
+    setText('#btnGoogleConnect', t('connectGoogle'));
+    setText('#btnGoogleDisconnect', t('disconnectGoogle'));
+    setText('#installButton', t('installButton'));
+    setText('#btnGoogleBackup', t('backupGoogle'));
+    setText('#btnShowAccessScreen', t('accessScreen'));
+    setText('#btnOpenBackfill', t('retro'));
+    setText('#btnOpenNotif', t('alerts'));
+    setText('#btnExport', t('exportCSV'));
+    setText('#btnExportJSON', t('exportJSON'));
+    setText('#btnImportJSON', t('importJSON'));
+    setText('#installHint', t('installHint'));
+    setText('.panel--about .panel-label', t('aboutPanel'));
+    setText('.panel--about h2', t('aboutTitle'));
+    setHTML('.panel--about p:nth-of-type(1)', t('aboutCopy1'));
+    setHTML('.panel--about p:nth-of-type(2)', t('aboutCopy2'));
+    const profileNav = document.querySelectorAll('.profile-nav-btn');
+    if (profileNav[0]) profileNav[0].childNodes[2].textContent = t('profileDayplan');
+    if (profileNav[1]) profileNav[1].childNodes[2].textContent = t('profileNotes');
+    if (profileNav[2]) profileNav[2].childNodes[2].textContent = t('profileSocials');
+    if (profileNav[3]) profileNav[3].childNodes[2].textContent = t('profileWallet');
+    setText('[data-dashboard-panel="socials"] .panel-label', t('profileSocials'));
+    setText('[data-dashboard-panel="wallet"] .panel-label', t('profileWallet'));
+    setText('[data-dashboard-panel="socials"] .form-group:nth-child(1) .form-label', t('profileTwitterLabel'));
+    setText('[data-dashboard-panel="socials"] .form-group:nth-child(2) .form-label', t('profileDiscordLabel'));
+    setPlaceholder('#socialTwitter', t('profileTwitterPlaceholder'));
+    setPlaceholder('#socialDiscord', t('profileDiscordPlaceholder'));
+    setText('#btnSaveSocials', t('profileSaveSocials'));
+    setText('#btnRestartOnboarding', t('profileRestartGuide'));
+    setText('#socialsPreview', t('profileNoLinks'));
+    setText('#walletProfileInfo', t('profileNoWallet'));
+    setText('#btnConnectWalletProfile', t('connectWallet'));
+    setText('#btnDisconnectWallet', t('disconnectWallet'));
+    setText('.welcome-sub', t('welcomeSubline'));
+    setText('#btnWelcomeEnter', t('welcomeEnter'));
+    const welcomeFeatures = document.querySelectorAll('.welcome-features li div');
+    if (welcomeFeatures[0]) welcomeFeatures[0].innerHTML = S.language === 'en'
+      ? '<strong>100% offline</strong> - your data never leaves your browser.'
+      : '<strong>100% offline</strong> - dane nie opuszczają Twojej przeglądarki.';
+    if (welcomeFeatures[1]) welcomeFeatures[1].innerHTML = S.language === 'en'
+      ? '<strong>Advanced math</strong> - Bayesian, Markov, EMA, K-Means.'
+      : '<strong>Zaawansowana matematyka</strong> - Bayesian, Markov, EMA, K-Means.';
+    if (welcomeFeatures[2]) welcomeFeatures[2].innerHTML = S.language === 'en'
+      ? '<strong>XP system</strong> - unlock analytics while building discipline.'
+      : '<strong>System XP</strong> - odblokowuj analitykę, wzmacniając dyscyplinę.';
+    if (welcomeFeatures[3]) welcomeFeatures[3].innerHTML = S.language === 'en'
+      ? '<strong>Bio-tracking</strong> - water, sleep, calories, movement.'
+      : '<strong>Bio-tracking</strong> - woda, sen, kalorie, ruch.';
+    setText('.welcome-footer', S.language === 'en' ? 'Your data: IndexedDB · No cloud · No tracking' : 'Twoje dane: IndexedDB · Brak chmury · Brak trackingu');
+    setText('#tutSkip', t('tutorialSkip'));
+    setHTML('#levelRewardModal .modal-title', `<span>🏛️</span> ${t('levelRewardTitle')}`);
+    setText('#levelRewardText', t('levelRewardDefault'));
+    setText('#btnCloseLevelReward', t('rewardContinue'));
+    setText('#btnResetDataCancel', t('resetCancel'));
+    setText('#btnOnboardingSkip', t('onboardingSkip'));
+  }
+
+  function applyThemeOptionLabels() {
+    document.querySelectorAll('#themeSelect option').forEach(option => {
+      option.textContent = t(`themeNames.${option.value}`);
+    });
+  }
+
+  function applyZeusVoiceLabels() {
+    document.querySelectorAll('#zeusStyleSelect option').forEach(option => {
+      option.textContent = t(`zeusVoices.${option.value}`);
+    });
+  }
 
   function applyLanguage(lang) {
     S.language = lang;
@@ -922,18 +1789,29 @@ const App = (() => {
       const tabId = btn.dataset.tab;
       if (I18N[lang]?.tabs?.[tabId]) btn.textContent = I18N[lang].tabs[tabId];
     });
+    applyStaticTranslations();
+    applyThemeOptionLabels();
+    applyZeusVoiceLabels();
     const nextBtn = $('tutNext');
     if (nextBtn) {
-      nextBtn.textContent = lang === 'en' ? 'Next →' : 'Dalej →';
+      nextBtn.textContent = t('tutorialNext');
     }
     const installHint = $('installHint');
     if (installHint && !S.installAvailable) {
-      installHint.textContent = lang === 'en'
-        ? 'PWA install appears when browser allows it.'
-        : 'Instalacja PWA będzie dostępna, gdy przeglądarka zgłosi możliwość instalacji.';
+      installHint.textContent = t('installHint');
     }
     if ($('alarmStatus') && !S.alarm.time) {
       updateAlarmStatus(t('alarmIdle'));
+    }
+    updateModeIndicator();
+    refreshConnectionViews();
+    updatePomodoroUI();
+    if (S.activeTask) setActiveUI(S.activeTask);
+    else clearActiveUI();
+    if ($('playerTitle') && S.totalXP >= 0) {
+      const info = getLevelInfo(S.totalXP);
+      if ($('xpTitle')) $('xpTitle').textContent = localizeTitle(info.title);
+      $('playerTitle').textContent = t('titlePrefix', { title: localizeTitle(info.title) });
     }
   }
 
@@ -970,7 +1848,7 @@ const App = (() => {
 
   function setActiveUI(task) {
     $('statusDot').className = 'status-dot running';
-    $('statusLabel').textContent = 'Tracking';
+    $('statusLabel').textContent = t('statusTracking');
     $('activeCard').style.display = 'block';
     $('activeCard').classList.add('timer-emphasis');
     setTimeout(() => $('activeCard')?.classList.remove('timer-emphasis'), 220);
@@ -988,11 +1866,11 @@ const App = (() => {
     S.sessionStart = null;
     clearInterval(S.timerInterval); S.timerInterval = null;
     $('statusDot').className     = 'status-dot idle';
-    $('statusLabel').textContent = 'Idle';
+    $('statusLabel').textContent = t('statusIdle');
     $('activeCard').style.display = 'block';
     $('activeCard').classList.remove('timer-emphasis');
-    $('activeName').textContent   = 'Ready to focus';
-    $('activeCat').textContent    = 'Focus Sprint';
+    $('activeName').textContent   = S.language === 'en' ? 'Ready to focus' : 'Gotowy do skupienia';
+    $('activeCat').textContent    = t('focusCycleFocus');
     $('activeTimer').textContent  = '00:00:00';
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
@@ -1033,7 +1911,7 @@ const App = (() => {
       await setSkillState(skillState);
     }
     markMissionFailure();
-    showToast(`Hardcore session failed after refresh. XP -${failPenalty}`, 'warn', 6000);
+    showToast(t('hardcoreRefreshFail', { value: failPenalty }), 'warn', 6000);
     zeusSpeak('You fled the trial. Olympus marks this as failure.', 'Judging', 'high');
   }
 
@@ -1056,7 +1934,7 @@ const App = (() => {
   async function handleStart() {
     const name     = $('taskName').value.trim();
     const category = $('taskCategory').value;
-    if (!name) { showToast('⚠️ Wpisz nazwę zadania', 'warn'); $('taskName').focus(); return; }
+    if (!name) { showToast(`⚠️ ${t('taskNameRequired')}`, 'warn'); $('taskName').focus(); return; }
     try {
       const task = await DB.startTask(name, category);
       S.sessionStart = new Date(task.start_time);
@@ -1065,15 +1943,15 @@ const App = (() => {
       markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
-      showToast(`▶ Start: "${name}"`, 'success');
+      showToast(`▶ ${t('taskStartToast', { name })}`, 'success');
       zeusSpeak('Discipline initiated. Olympus expects consistency.', 'Demanding', 'high');
       await loadRecentLog(); await loadQuickStats();
-    } catch (e) { showToast('❌ Błąd: ' + e.message, 'error'); }
+    } catch (e) { showToast(`❌ ${t('genericError', { message: e.message })}`, 'error'); }
   }
 
   async function handleStop() {
     if (S.hardcoreMode) {
-      showToast('Hardcore mode: wait for phase completion.', 'warn');
+      showToast(t('hardcoreWaitPhase'), 'warn');
       return;
     }
     try {
@@ -1109,20 +1987,20 @@ const App = (() => {
           const nextLevel = getLevelInfo(newTotal).level;
           await refreshXPBar();
           if (nextLevel > prevLevel) {
-            showToast(`Level up! You reached level ${nextLevel} - ${getLevelInfo(newTotal).title}.`, 'success', 6000);
+            showToast(t('levelUpToast', { level: nextLevel, title: localizeTitle(getLevelInfo(newTotal).title) }), 'success', 6000);
             zeusSpeak(`You ascended to level ${nextLevel}. Olympus acknowledges your rise.`, 'Triumphant', 'high');
           } else {
-            showToast(`Session completed: "${stopped.name}" (+${xp + bonusXP} XP)`, 'info');
+            showToast(t('sessionCompletedToast', { name: stopped.name, xp: xp + bonusXP }), 'info');
             zeusSpeak('Another session completed. Olympus is watching.', 'Approving', 'high');
           }
         } else {
-          showToast(`Session stopped: "${stopped.name}"`, 'info');
+          showToast(t('sessionStoppedToast', { name: stopped.name }), 'info');
           if (interrupted) {
             const penalty = S.hardcoreMode ? 20 : 35;
             await applyXPPenalty(penalty);
             markMissionFailure();
             zeusSpeak('You stopped early? Even mortals show more discipline.', 'Disappointed', 'high');
-            showToast(`XP penalty: -${penalty}`, 'warn');
+            showToast(t('xpPenaltyToast', { value: penalty }), 'warn');
           } else {
             zeusSpeak('Session closed. Return stronger.', 'Neutral');
           }
@@ -1132,7 +2010,7 @@ const App = (() => {
       await loadRecentLog();
       await loadQuickStats();
     } catch (e) {
-      showToast('Error: ' + e.message, 'error');
+      showToast(t('genericError', { message: e.message }), 'error');
     }
   }
 
@@ -1148,8 +2026,8 @@ const App = (() => {
     const all  = await DB.getAllCompletedTasks();
     const { streak, bestStreak } = computeStreakFromTasks(all);
     $('qsStreak').textContent = `${streak} / ${bestStreak}`;
-    if ($('streakText')) $('streakText').textContent = `Streak: ${streak} days`;
-    if ($('bestStreakText')) $('bestStreakText').textContent = `Best: ${bestStreak} days`;
+    if ($('streakText')) $('streakText').textContent = t('streakLabel', { value: streak });
+    if ($('bestStreakText')) $('bestStreakText').textContent = t('bestLabel', { value: bestStreak });
     const streakMeta = getLS(LS_KEYS.streakMeta, { lastSeenStreak: 0, lastActiveDate: null });
     const days = new Set(all.map(t => (t.start_time || '').slice(0, 10)).filter(Boolean));
     const yesterday = new Date();
@@ -1239,7 +2117,7 @@ const App = (() => {
     tasks = tasks.slice(0, 40);
     const container = $('recentLog');
     if (!tasks.length) {
-      container.innerHTML = '<div class="log-empty">No sessions yet. Start your first focus session.</div>';
+      container.innerHTML = `<div class="log-empty">${S.language === 'en' ? 'No sessions yet. Start your first focus session.' : 'Brak sesji. Uruchom pierwszą sesję skupienia.'}</div>`;
       return;
     }
     container.innerHTML = tasks.map(t => {
@@ -1730,14 +2608,15 @@ const App = (() => {
       const lang = e.target.value === 'en' ? 'en' : 'pl';
       applyLanguage(lang);
       saveAppSettings({ language: lang });
-      showToast(lang === 'en' ? 'Language switched to English.' : 'Zmieniono język na polski.', 'success');
+      showToast(t('languageSwitched'), 'success');
     });
 
     $('themeSelect')?.addEventListener('change', e => {
       const theme = e.target.value;
       applyTheme(theme);
-      saveAppSettings({ theme });
-      showToast(`Motyw: ${theme}`, 'success');
+      saveAppSettings({ theme: S.theme });
+      e.target.value = S.theme;
+      showToast(`${t('settingsThemePanel')}: ${t(`themeNames.${S.theme}`)}`, 'success');
     });
 
     const hardcoreToggle = document.getElementById('hardcoreModeToggle');
@@ -1745,7 +2624,7 @@ const App = (() => {
       hardcoreToggle.checked = S.hardcoreMode;
       hardcoreToggle.addEventListener('change', async () => {
         if (hardcoreToggle.checked) {
-          const ok = window.confirm('Hardcore Mode V2: no pause, no cancel. Session must complete or fail. Continue?');
+          const ok = window.confirm(t('hardcoreConfirm'));
           if (!ok) {
             hardcoreToggle.checked = false;
             return;
@@ -1753,7 +2632,7 @@ const App = (() => {
         }
         S.hardcoreMode = hardcoreToggle.checked;
         await DB.setSetting('hardcore_mode', S.hardcoreMode);
-        showToast(S.hardcoreMode ? 'Hardcore mode enabled' : 'Hardcore mode disabled', 'info');
+        showToast(S.hardcoreMode ? t('hardcoreEnabled') : t('hardcoreDisabled'), 'info');
         updateHardcoreStopState();
       });
     }
@@ -1775,7 +2654,7 @@ const App = (() => {
       $('web3Panel')?.classList.remove('hidden');
       updateModeIndicator();
       refreshConnectionViews();
-      showToast('Wallet connected.', 'success');
+      showToast(t('walletConnected'), 'success');
     });
 
     $('btnDisconnectWalletSettings')?.addEventListener('click', () => disconnectWalletFlow());
@@ -1785,7 +2664,7 @@ const App = (() => {
     $('btnGoogleDisconnect')?.addEventListener('click', () => disconnectGoogleFlow());
     $('btnShowAccessScreen')?.addEventListener('click', () => {
       openModeSplash();
-      showToast('Access screen reopened.', 'info');
+      showToast(t('accessScreenReopened'), 'info');
     });
   }
 
@@ -1797,7 +2676,7 @@ const App = (() => {
       const value = Math.max(0, parseInt($('dailyGoalMin')?.value || '0', 10) || 0);
       await DB.setSetting('daily_goal_min', value);
       await refreshDailyGoal();
-      showToast(value > 0 ? `Daily goal set: ${value} min` : 'Daily goal cleared', 'success');
+      showToast(value > 0 ? t('dailyGoalSet', { value }) : t('dailyGoalCleared'), 'success');
     });
   }
 
@@ -1808,7 +2687,7 @@ const App = (() => {
     if (!fill || !label) return;
     if (!goalMin) {
       fill.style.width = '0%';
-      label.textContent = 'No goal set.';
+      label.textContent = t('noGoalSet');
       return;
     }
     let totalSec = todaySec;
@@ -1820,8 +2699,8 @@ const App = (() => {
     const pct = Math.min(100, Math.round((totalSec / goalSec) * 100));
     fill.style.width = `${pct}%`;
     label.textContent = pct >= 100
-      ? `Goal completed (${Math.round(totalSec / 60)} / ${goalMin} min)`
-      : `Progress: ${Math.round(totalSec / 60)} / ${goalMin} min`;
+      ? t('goalCompleted', { done: Math.round(totalSec / 60), goal: goalMin })
+      : t('goalProgress', { done: Math.round(totalSec / 60), goal: goalMin });
   }
 
   function ringAlarm() {
@@ -1861,19 +2740,19 @@ const App = (() => {
     const label = $('focusSoundLabel');
     const icon = $('focusSoundIcon');
     if (btn) btn.setAttribute('aria-pressed', String(!!S.pomodoro.sound));
-    if (label) label.textContent = S.pomodoro.sound ? 'Sound On' : 'Sound Off';
+    if (label) label.textContent = S.pomodoro.sound ? t('soundOn') : t('soundOff');
     if (icon) icon.textContent = S.pomodoro.sound ? 'ON' : 'OFF';
   }
 
   function updatePomodoroUI() {
     const el = $('pomodoroState');
     if (!el) return;
-    const phaseLabel = S.pomodoro.phase === 'focus' ? 'Focus sprint' : 'Recovery break';
-    const statusLabel = S.pomodoro.running ? phaseLabel : 'Cycle ready';
+    const phaseLabel = S.pomodoro.phase === 'focus' ? t('focusCycleFocus') : t('focusCycleBreak');
+    const statusLabel = S.pomodoro.running ? phaseLabel : t('focusCycleReady');
     el.textContent = `${statusLabel} - ${formatMMSS(Math.max(0, S.pomodoro.remainingSec))}`;
-    if ($('btnPomodoroStart')) $('btnPomodoroStart').textContent = S.pomodoro.running ? 'Restart Cycle' : 'Start Cycle';
-    if ($('btnPomodoroSkip')) $('btnPomodoroSkip').textContent = S.pomodoro.phase === 'focus' ? 'Start Break' : 'Back To Focus';
-    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').textContent = document.body.classList.contains('deep-work') ? 'Exit Deep Work' : 'Deep Work';
+    if ($('btnPomodoroStart')) $('btnPomodoroStart').textContent = S.pomodoro.running ? t('focusCycleRestart') : t('focusCycleStart');
+    if ($('btnPomodoroSkip')) $('btnPomodoroSkip').textContent = S.pomodoro.phase === 'focus' ? t('focusCycleToBreak') : t('focusCycleToFocus');
+    if ($('btnDeepWorkMode')) $('btnDeepWorkMode').textContent = document.body.classList.contains('deep-work') ? t('exitDeepWork') : t('deepWork');
     syncFocusSoundButton();
   }
 
@@ -1893,7 +2772,7 @@ const App = (() => {
       }
     }
     updatePomodoroUI();
-    showToast(S.pomodoro.phase === 'focus' ? 'Focus sprint started' : 'Recovery break started', 'info');
+    showToast(S.pomodoro.phase === 'focus' ? t('focusSprintStarted') : t('recoveryBreakStarted'), 'info');
   }
 
   function startPomodoroLoop() {
@@ -1929,7 +2808,7 @@ const App = (() => {
         sound: S.pomodoro.sound,
       });
       if (!S.activeTask) {
-        const name = $('taskName')?.value?.trim() || 'Focus Sprint Session';
+        const name = $('taskName')?.value?.trim() || t('focusSprintFallbackName');
         $('taskName').value = name;
         await handleStart();
       }
@@ -1937,7 +2816,7 @@ const App = (() => {
       S.pomodoro.remainingSec = S.pomodoro.focusMin * 60;
       startPomodoroLoop();
       updatePomodoroUI();
-      showToast('Focus cycle started', 'success');
+      showToast(t('focusCycleStarted'), 'success');
     });
 
     $('btnPomodoroSkip')?.addEventListener('click', async () => {
@@ -1958,7 +2837,7 @@ const App = (() => {
         sound: S.pomodoro.sound,
       });
       syncFocusSoundButton();
-      showToast(S.pomodoro.sound ? 'Focus cycle sound enabled' : 'Focus cycle sound muted', 'info');
+      showToast(S.pomodoro.sound ? t('focusSoundEnabled') : t('focusSoundMuted'), 'info');
     });
   }
 
@@ -1990,17 +2869,24 @@ const App = (() => {
     const grid = $('skillTreeGrid');
     if (!grid) return;
     const { available, state } = await getSkillPointsInfo();
-    if ($('skillPointsLabel')) $('skillPointsLabel').textContent = `Skill points: ${available}`;
+    if ($('skillPointsLabel')) $('skillPointsLabel').textContent = t('skillPointsLabel', { value: available });
+    const branchNames = S.language === 'en'
+      ? { discipline: 'Discipline', focus: 'Focus', power: 'Power' }
+      : { discipline: 'Dyscyplina', focus: 'Skupienie', power: 'Moc' };
     const mkBranch = (branchName, nodes) => {
       const items = nodes.map(n => {
+        const skillInfo = localizeSkill(n);
         const unlocked = hasSkill(state, n.id);
         const reqMet = !n.requires || hasSkill(state, n.requires);
         const levelMet = S.userLevel >= n.levelReq;
         const canUnlock = !unlocked && reqMet && levelMet && available > 0;
+        const meta = S.language === 'en'
+          ? `Tier ${n.tier} · Lv ${n.levelReq}+`
+          : `Tier ${n.tier} · Poziom ${n.levelReq}+`;
         return `<button class="skill-node ${unlocked ? 'unlocked' : ''} ${canUnlock ? 'can-unlock' : ''}" data-skill="${n.id}">
-          <div class="skill-name">${n.name}</div>
-          <div class="skill-desc">${n.desc}</div>
-          <div class="skill-meta">Tier ${n.tier} · Lv ${n.levelReq}+</div>
+          <div class="skill-name">${skillInfo.name}</div>
+          <div class="skill-desc">${skillInfo.desc}</div>
+          <div class="skill-meta">${meta}</div>
         </button>`;
       }).join('');
       return `<div class="skill-branch">
@@ -2009,9 +2895,9 @@ const App = (() => {
       </div>`;
     };
     grid.innerHTML = [
-      mkBranch('Discipline', SKILL_TREE.discipline),
-      mkBranch('Focus', SKILL_TREE.focus),
-      mkBranch('Power', SKILL_TREE.power),
+      mkBranch(branchNames.discipline, SKILL_TREE.discipline),
+      mkBranch(branchNames.focus, SKILL_TREE.focus),
+      mkBranch(branchNames.power, SKILL_TREE.power),
     ].join('');
     grid.querySelectorAll('[data-skill]').forEach(btn => {
       btn.addEventListener('click', async e => {
@@ -2025,15 +2911,22 @@ const App = (() => {
     const { available, state } = await getSkillPointsInfo();
     const skill = allSkillsFlat().find(s => s.id === skillId);
     if (!skill) return;
-    if (available <= 0) return showToast('No skill points available', 'warn');
+    if (available <= 0) return showToast(t('noSkillPoints'), 'warn');
     if (hasSkill(state, skillId)) return;
-    if (S.userLevel < skill.levelReq) return showToast(`Requires level ${skill.levelReq}`, 'warn');
-    if (skill.requires && !hasSkill(state, skill.requires)) return showToast('Unlock previous skill first', 'warn');
+    if (S.userLevel < skill.levelReq) return showToast(t('skillRequiresLevel', { level: skill.levelReq }), 'warn');
+    if (skill.requires && !hasSkill(state, skill.requires)) return showToast(t('skillRequiresPrevious'), 'warn');
     state.unlocked.push(skillId);
     state.spentPoints = Number(state.spentPoints || 0) + 1;
     await setSkillState(state);
     await renderSkillTree();
-    zeusSpeak(`Path chosen: ${skill.name}. Your style is being forged.`, 'Fired Up', 'high');
+    const localizedSkill = localizeSkill(skill);
+    zeusSpeak(
+      S.language === 'en'
+        ? `Path chosen: ${localizedSkill.name}. Your style is being forged.`
+        : `Wybrano ścieżkę: ${localizedSkill.name}. Twój styl działania właśnie się kształtuje.`,
+      'Fired Up',
+      'high',
+    );
   }
 
   function updateAlarmStatus(msg, colorVar = '--accent4') {
@@ -2156,7 +3049,7 @@ const App = (() => {
 
   async function requestGoogleAccess({ uploadBackup = false } = {}) {
     if (!window.google?.accounts?.oauth2) {
-      showToast('Google Identity Services not loaded.', 'error');
+      showToast(t('googleServicesMissing'), 'error');
       return;
     }
     if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID_HERE')) {
@@ -2170,7 +3063,7 @@ const App = (() => {
         scope: GOOGLE_SCOPES,
         callback: async (resp) => {
           if (!resp?.access_token) {
-            showToast(t('backupFailed') + 'Missing access token.', 'error');
+            showToast(t('backupFailed') + t('missingAccessToken'), 'error');
             return;
           }
           setGoogleConnectionState(true, resp.access_token);
@@ -2183,7 +3076,7 @@ const App = (() => {
                 S.appMode = 'google';
                 await DB.setSetting('app_mode', 'google');
               }
-              showToast('Google connected.', 'success');
+              showToast(t('googleConnectedToast'), 'success');
             }
           } catch (err) {
             showToast(t('backupFailed') + err.message, 'error', 7000);
@@ -2240,7 +3133,7 @@ const App = (() => {
 
     if ('Notification' in window && Notification.permission === 'default') {
       const perm = await Notification.requestPermission();
-      if (perm === 'granted') showToast('🔔 Powiadomienia włączone!', 'success');
+      if (perm === 'granted') showToast(`🔔 ${t('notificationsEnabled')}`, 'success');
     }
 
     $('btnOpenNotif').addEventListener('click', () => {
@@ -2260,7 +3153,7 @@ const App = (() => {
       S.notif.breakEnabled     = $('notifBreak').checked;
       S.notif.breakThresholdM  = parseInt($('notifBreakM').value) || 90;
       await DB.setSetting('notif_settings', S.notif);
-      showToast('✅ Ustawienia zapisane', 'success');
+      showToast(`✅ ${t('settingsSaved')}`, 'success');
       $('notifModal').classList.remove('open');
     });
 
@@ -2358,7 +3251,7 @@ const App = (() => {
       }
     } catch (error) {
       console.warn('[mode-splash] selection failed', error);
-      showToast('Connection attempt failed. Continuing in local mode.', 'warn');
+      showToast(t('connectionAttemptFailed'), 'warn');
       S.appMode = 'local';
       await DB.setSetting('app_mode', 'local');
       $('web3Panel')?.classList.add('hidden');
@@ -2375,15 +3268,15 @@ const App = (() => {
     const el = $('modeIndicator');
     if (!el) return;
     if (S.appMode === 'monad') {
-      const short = S.walletAddress ? `${S.walletAddress.slice(0, 6)}...${S.walletAddress.slice(-4)}` : 'Not connected';
-      el.textContent = `Mode: Wallet ${short}`;
+      const short = S.walletAddress ? `${S.walletAddress.slice(0, 6)}...${S.walletAddress.slice(-4)}` : t('notConnected');
+      el.textContent = t('modeWallet', { address: short });
       return;
     }
     if (S.appMode === 'google' || S.googleConnected) {
-      el.textContent = 'Mode: Local + Google';
+      el.textContent = t('modeGoogle');
       return;
     }
-    el.textContent = 'Mode: Local Offline';
+    el.textContent = t('modeLocal');
   }
 
   async function connectMonadWallet(forceRequest = false) {
@@ -2417,19 +3310,19 @@ const App = (() => {
   }
 
   async function stakeTokens() {
-    if (S.appMode !== 'monad') return showToast('Staking is available in Monad mode only', 'warn');
+    if (S.appMode !== 'monad') return showToast(t('monadOnlyStake'), 'warn');
     S.stakedFCS += 25;
     $('stakedAmountView').textContent = `${S.stakedFCS} FCS`;
-    showToast(`Staked 25 FCS. Total staked: ${S.stakedFCS} FCS`, 'success');
+    showToast(t('stakeSuccess', { total: S.stakedFCS }), 'success');
   }
 
   async function burnTokens() {
-    if (S.appMode !== 'monad') return showToast('Burn is available in Monad mode only', 'warn');
-    showToast('Burn simulation complete. Fatigue-penalty bypass hook can be implemented on-chain.', 'info');
+    if (S.appMode !== 'monad') return showToast(t('monadOnlyBurn'), 'warn');
+    showToast(t('burnSuccess'), 'info');
   }
 
   async function saveProgressToChain() {
-    if (S.appMode !== 'monad') return showToast('On-chain save is available in Monad mode only', 'warn');
+    if (S.appMode !== 'monad') return showToast(t('monadOnlyChainSave'), 'warn');
     const payload = { day: DB.toDateStr(), xp: S.totalXP, ts: Date.now() };
     if (window.ethereum && S.walletAddress) {
       try {
@@ -2437,14 +3330,14 @@ const App = (() => {
           method: 'personal_sign',
           params: [JSON.stringify(payload), S.walletAddress],
         });
-        showToast('Progress signed and submitted (simulation)', 'success');
+        showToast(t('chainSaveSuccess'), 'success');
         return;
       } catch (e) {
-        showToast(`Signature canceled: ${e.message}`, 'warn');
+        showToast(t('chainSaveCanceled', { message: e.message }), 'warn');
         return;
       }
     }
-    showToast('No wallet detected, local chain-save simulation completed', 'info');
+    showToast(t('noWalletChainSave'), 'info');
   }
 
   async function initModeSplash() {
@@ -2485,7 +3378,7 @@ const App = (() => {
   function loadDayPlan() {
     const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
     const items = getLS(key, []);
-    renderList(['dayPlanList', 'dayPlanListProfile'], items, 'Brak punktów planu na dziś', idx => {
+    renderList(['dayPlanList', 'dayPlanListProfile'], items, t('dayPlanEmpty'), idx => {
       items.splice(idx, 1);
       setLS(key, items);
       loadDayPlan();
@@ -2509,7 +3402,7 @@ const App = (() => {
   function loadSleepNotes() {
     const key = `${LS_KEYS.sleepNotes}:${DB.toDateStr()}`;
     const items = getLS(key, []);
-    renderList(['sleepNotesList', 'sleepNotesListProfile'], items, 'Brak notatek snów', idx => {
+    renderList(['sleepNotesList', 'sleepNotesListProfile'], items, t('sleepNotesEmpty'), idx => {
       items.splice(idx, 1);
       setLS(key, items);
       loadSleepNotes();
@@ -2537,7 +3430,8 @@ const App = (() => {
       if (!container) return;
       const items = state[key] || [];
       if (!items.length) {
-        container.innerHTML = `<div class="health-empty">No ${key} routine yet.</div>`;
+        const emptyText = key === 'morning' ? t('noMorningRoutine') : t('noEveningRoutine');
+        container.innerHTML = `<div class="health-empty">${emptyText}</div>`;
         return;
       }
       container.innerHTML = items.map((it, idx) => {
@@ -2554,7 +3448,11 @@ const App = (() => {
 
     const all = [...(state.morning || []), ...(state.evening || [])].length;
     const doneCount = Object.keys(state.completions || {}).filter(k => k.startsWith(`${today}:`) && state.completions[k]).length;
-    if ($('routineProgress')) $('routineProgress').textContent = `${doneCount} / ${all} completed today`;
+    if ($('routineProgress')) {
+      $('routineProgress').textContent = S.language === 'en'
+        ? `${doneCount} / ${all} completed today`
+        : `${doneCount} / ${all} wykonanych dzisiaj`;
+    }
 
     document.querySelectorAll('[data-routine][data-ridx]').forEach(cb => {
       cb.addEventListener('change', async e => {
@@ -2608,9 +3506,9 @@ const App = (() => {
     const state = getLS(LS_KEYS.missions, {});
     if (!state[today]) {
       state[today] = {
-        sessions3: { progress: 0, target: 3, done: false, xp: 50, label: 'Complete 3 sessions' },
-        focus2h: { progress: 0, target: 120, done: false, xp: 100, label: 'Reach 2 hours focus' },
-        noFail: { progress: 1, target: 1, done: false, xp: 150, label: 'Do not fail any session' },
+        sessions3: { progress: 0, target: 3, done: false, xp: 50, label: missionLabel('sessions3') },
+        focus2h: { progress: 0, target: 120, done: false, xp: 100, label: missionLabel('focus2h') },
+        noFail: { progress: 1, target: 1, done: false, xp: 150, label: missionLabel('noFail') },
       };
       setLS(LS_KEYS.missions, state);
     }
@@ -2635,7 +3533,7 @@ const App = (() => {
           S.missionRewarded.add(`${today}:${key}`);
           await DB.addXP(m.xp);
           await refreshXPBar();
-          zeusSpeak(`Mission completed: ${m.label}. Olympus grants ${m.xp} XP.`, 'Triumphant', 'high');
+          zeusSpeak(`Mission completed: ${missionLabel(key)}. Olympus grants ${m.xp} XP.`, 'Triumphant', 'high');
         }
       }
     }
@@ -2657,10 +3555,10 @@ const App = (() => {
     const { missions } = getTodayMissionState();
     const el = $('missionList');
     if (!el) return;
-    el.innerHTML = Object.values(missions).map(m => {
+    el.innerHTML = Object.entries(missions).map(([key, m]) => {
       const pct = Math.round((m.progress / m.target) * 100);
       return `<div class="mission-row ${m.done ? 'done' : ''}">
-        <div class="mission-label">${escH(m.label)}</div>
+        <div class="mission-label">${escH(missionLabel(key))}</div>
         <div class="mission-meta">${m.progress} / ${m.target} · ${m.xp} XP</div>
         <div class="xp-track"><div class="xp-fill" style="width:${Math.min(100, pct)}%"></div></div>
       </div>`;
@@ -2686,15 +3584,15 @@ const App = (() => {
     let unlocked = null;
     if (!a.first_session && completedSessions >= 1) {
       a.first_session = true;
-      unlocked = 'First Session Completed';
+      unlocked = achievementLabel('first_session');
     }
     if (!a.streak_7 && streakNow >= 7) {
       a.streak_7 = true;
-      unlocked = '7 Day Streak';
+      unlocked = achievementLabel('streak_7');
     }
     if (!a.focused_1000m && totalMin >= 1000) {
       a.focused_1000m = true;
-      unlocked = '1000 Focus Minutes';
+      unlocked = achievementLabel('focused_1000m');
     }
     saveAchievements(a);
     renderAchievements();
@@ -2706,9 +3604,9 @@ const App = (() => {
     const el = $('achievementsList');
     if (!el) return;
     const rows = [
-      { key: 'first_session', title: 'First Session Completed' },
-      { key: 'streak_7', title: '7 Day Streak' },
-      { key: 'focused_1000m', title: '1000 Focus Minutes' },
+      { key: 'first_session', title: achievementLabel('first_session') },
+      { key: 'streak_7', title: achievementLabel('streak_7') },
+      { key: 'focused_1000m', title: achievementLabel('focused_1000m') },
     ];
     el.innerHTML = rows.map(r => `
       <div class="achievement-row ${a[r.key] ? 'unlocked' : ''}">
@@ -2722,7 +3620,7 @@ const App = (() => {
     const all = await DB.getAllCompletedTasks();
     const el = $('advancedStatsList');
     if (!el || !all.length) {
-      if (el) el.innerHTML = '<div class="health-empty">No data yet.</div>';
+      if (el) el.innerHTML = `<div class="health-empty">${S.language === 'en' ? 'No data yet.' : 'Brak danych jeszcze.'}</div>`;
       return;
     }
     const byDay = {};
@@ -2781,7 +3679,7 @@ const App = (() => {
         discord: $('socialDiscord').value.trim(),
       };
       setLS(LS_KEYS.socials, data);
-      showToast('Socials zapisane', 'success');
+      showToast(t('socialsSaved'), 'success');
       loadProfileView();
     });
     $('btnDisconnectWallet')?.addEventListener('click', () => disconnectWalletFlow());
@@ -2792,7 +3690,7 @@ const App = (() => {
       $('web3Panel')?.classList.remove('hidden');
       updateModeIndicator();
       refreshConnectionViews();
-      showToast('Wallet connected.', 'success');
+      showToast(t('walletConnected'), 'success');
     });
     $('btnRestartOnboarding')?.addEventListener('click', () => restartOnboarding());
     $('btnResetData')?.addEventListener('click', () => openResetDataModal());
@@ -2817,7 +3715,7 @@ const App = (() => {
   const ONBOARDING_STEPS = [
     {
       title: 'Pasek boczny',
-      text: 'Tutaj szybko przełączasz sekcje dashboardu: Plan, Notes, Socials i Portfel.',
+      text: 'Tutaj szybko przełączasz sekcje dashboardu: Plan, notatki, sociale i portfel.',
       before: () => { switchTab('profile'); },
       target: () => document.querySelector('.profile-sidebar'),
     },
@@ -2874,7 +3772,7 @@ const App = (() => {
       $('onboardingText').textContent = s.text;
       const target = s.target();
       if (target) placeTooltip(target);
-      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? 'Finish' : 'Next';
+      $('btnOnboardingNext').textContent = step === ONBOARDING_STEPS.length - 1 ? t('onboardingFinish') : t('onboardingNext');
     };
 
     $('btnOnboardingSkip').onclick = complete;
@@ -2894,12 +3792,13 @@ const App = (() => {
   async function maybeStartGuidedEntry() {
     if (S.guidedEntryStarted || document.body.classList.contains('app-locked')) return;
     S.guidedEntryStarted = true;
-    const shouldGuide = localStorage.getItem(GUIDED_ENTRY_KEY) === 'true';
+    const shouldGuide = localStorage.getItem(GUIDED_ENTRY_KEY) === 'true'
+      || localStorage.getItem(TUTORIAL_COMPLETED_KEY) !== 'true'
+      || localStorage.getItem(ONBOARDING_KEY) !== 'true';
     if (!shouldGuide) return;
     localStorage.removeItem(GUIDED_ENTRY_KEY);
     await maybeShowWelcome();
-    setTimeout(startTutorial, 900);
-    setTimeout(startOnboardingIfNeeded, 450);
+    setTimeout(startTutorial, 350);
   }
 
   function initZeusActions() {
@@ -2940,7 +3839,7 @@ const App = (() => {
       S.pomodoro.remainingSec = Math.max(300, S.pomodoro.breakMin * 60);
       S.pomodoro.running = false;
       updatePomodoroUI();
-      showToast('Recovery break prepared. Log sleep or take a proper reset.', 'info');
+      showToast(t('recoveryBreakPrepared'), 'info');
       zeusSpeak('Recovery is part of discipline, not a break from it.', 'Tired');
     });
   }
@@ -2951,11 +3850,11 @@ const App = (() => {
     const preview = [];
     if (socials.twitter) preview.push(`Twitter: ${socials.twitter}`);
     if (socials.discord) preview.push(`Discord: ${socials.discord}`);
-    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : 'Brak zapisanych linków.';
+    if ($('socialsPreview')) $('socialsPreview').textContent = preview.length ? preview.join(' | ') : t('profileNoLinks');
     if ($('walletProfileInfo')) {
       $('walletProfileInfo').textContent = S.walletAddress
-        ? `Połączony portfel: ${S.walletAddress}`
-        : 'Brak połączonego portfela';
+        ? t('walletStatusConnected', { address: S.walletAddress })
+        : t('profileNoWallet');
     }
     refreshConnectionViews();
     updateDashboardCounters();
@@ -2975,7 +3874,7 @@ const App = (() => {
 
   function disconnectWalletFlow() {
     if (!S.walletAddress) {
-      showToast('Brak aktywnego portfela', 'warn');
+      showToast(t('noActiveWallet'), 'warn');
       return;
     }
     if (!window.confirm('Krok 1/2: Czy na pewno chcesz rozpocząć rozłączanie portfela?')) return;
@@ -2990,7 +3889,7 @@ const App = (() => {
     updateModeIndicator();
     refreshConnectionViews();
     loadProfileView();
-    showToast('Portfel rozłączony', 'success');
+    showToast(t('walletDisconnected'), 'success');
   }
 
   function openResetDataModal() {
@@ -3292,7 +4191,7 @@ const App = (() => {
 
   function disconnectGoogleFlow() {
     if (!S.googleConnected) {
-      showToast('Google is not connected.', 'warn');
+      showToast(t('googleNotConnected'), 'warn');
       return;
     }
     setGoogleConnectionState(false, null);
@@ -3300,7 +4199,7 @@ const App = (() => {
       S.appMode = S.walletAddress ? 'monad' : 'local';
       DB.setSetting('app_mode', S.appMode);
     }
-    showToast('Google disconnected.', 'success');
+    showToast(t('googleDisconnected'), 'success');
   }
 
   return { init, _loadSleepHistory: loadSleepHistory };
