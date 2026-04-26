@@ -4195,3 +4195,180 @@ button:disabled {
     font-size: 14px;
   }
 }
+
+/* Layout stability overrides */
+.main {
+  isolation: isolate;
+  overflow-x: auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+.view--tracker,
+.view--settings,
+.profile-dashboard,
+.skill-tree-grid,
+.connection-grid,
+.daily-stats,
+.qs-grid,
+.zeus-shell,
+.zeus-copy {
+  min-width: 0;
+}
+
+.panel,
+.panel--tracker-main,
+.panel--qs,
+.panel--log,
+.panel--quick-actions,
+.panel--backup,
+.panel--routines,
+.panel--missions,
+.panel--advstats,
+.panel--achievements,
+.panel--skilltree,
+.panel--settings-sync,
+.profile-content,
+.skill-branch,
+.skill-node,
+.ds-card {
+  min-width: 0;
+}
+
+.profile-sidebar,
+.panel--zeus,
+.zeus-mood,
+.zeus-badge {
+  flex-shrink: 0;
+}
+
+.view--tracker {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  gap: 24px;
+  align-items: start;
+}
+
+.view--settings {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.panel--zeus {
+  position: sticky;
+  top: 96px;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  min-width: 340px;
+  max-width: 420px;
+  justify-self: stretch;
+  align-self: start;
+  z-index: 24;
+}
+
+.panel--tracker-main,
+.panel--qs,
+.panel--log,
+.panel--quick-actions,
+.panel--backup,
+.panel--routines,
+.panel--missions,
+.panel--advstats,
+.panel--achievements {
+  position: relative;
+  z-index: 1;
+}
+
+.zeus-card,
+.zeus-shell,
+.zeus-copy,
+.zeus-head,
+.zeus-message,
+.zeus-actions {
+  min-width: 0;
+}
+
+.zeus-shell {
+  grid-template-columns: minmax(138px, 148px) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.zeus-message {
+  overflow-wrap: anywhere;
+}
+
+.skill-tree-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.connection-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.daily-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.qs-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.profile-dashboard {
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profile-sidebar {
+  min-width: 220px;
+}
+
+.panel--advstats,
+.panel--bayes,
+.panel--markov {
+  overflow-x: auto;
+}
+
+@media (max-width: 1320px) {
+  .view--tracker {
+    grid-template-columns: 1fr;
+  }
+
+  .panel--zeus {
+    position: relative;
+    top: 0;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .profile-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    min-width: 0;
+  }
+
+  .skill-tree-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .daily-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .panel--zeus {
+    width: 100%;
+  }
+
+  .zeus-shell {
+    grid-template-columns: minmax(108px, 124px) minmax(0, 1fr);
+  }
+}
