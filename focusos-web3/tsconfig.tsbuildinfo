@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/backgroundscene.tsx","./src/focustutorial.tsx","./src/gamehud.tsx","./src/web3provider.tsx","./src/zeusavatar.tsx","./src/i18n.ts","./src/main.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/backgroundscene.tsx","./src/focustutorial.tsx","./src/gamehud.tsx","./src/web3provider.tsx","./src/zeusavatar.tsx","./src/i18n.ts","./src/main.tsx","./src/components/home.tsx","./src/components/navigationdrawer.tsx","./src/components/onboarding.tsx","./src/components/secondarypanel.tsx"],"version":"5.9.3"}

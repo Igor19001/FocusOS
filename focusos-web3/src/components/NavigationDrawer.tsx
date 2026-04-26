@@ -21,6 +21,7 @@ interface NavigationDrawerProps {
   onSelectSection: (section: NavSection) => void;
   isMobile: boolean;
   isSessionRunning: boolean;
+  isProMode?: boolean;
 }
 
 export default function NavigationDrawer({
@@ -30,6 +31,7 @@ export default function NavigationDrawer({
   onSelectSection,
   isMobile,
   isSessionRunning,
+  isProMode = false,
 }: NavigationDrawerProps) {
   const menuItems: Array<{
     id: NavSection;
@@ -69,10 +71,19 @@ export default function NavigationDrawer({
     },
   ];
 
-  // Desktop Sidebar (always visible, collapses to icon bar)
+  // Progressive Disclosure: hide advanced items when not in Pro mode
+  const visibleItems = menuItems.filter((it) => {
+    if (!isProMode && (it.id === "health" || it.id === "web3")) return false;
+    return true;
+  });
+
+  // Desktop Sidebar (togglable)
   if (!isMobile) {
+    // Hidden by default when isOpen=false — App should control opening
+    if (!isOpen) return null;
+
     return (
-      <div className="fixed left-0 top-0 h-screen w-20 lg:w-72 bg-slate-950/95 border-r border-slate-800 flex flex-col z-30 transition-all duration-300">
+      <div className="fixed left-0 top-0 h-screen w-72 bg-slate-950/95 border-r border-slate-800 flex flex-col z-30 transition-all duration-300">
         {/* Header */}
         <div className="p-4 lg:p-6 border-b border-slate-800">
           <button
@@ -87,8 +98,8 @@ export default function NavigationDrawer({
         </div>
 
         {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-2">
-          {menuItems.map((item) => (
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {visibleItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onSelectSection(item.id)}
@@ -100,7 +111,7 @@ export default function NavigationDrawer({
               } ${isSessionRunning ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               <div className="flex justify-center lg:justify-start">{item.icon}</div>
-              <div className="hidden lg:block text-left">
+              <div className="text-left">
                 <div className="text-xs font-semibold uppercase tracking-wide">
                   {item.label}
                 </div>
@@ -135,7 +146,7 @@ export default function NavigationDrawer({
         <div className="flex justify-between items-center max-w-6xl mx-auto">
           {/* Quick Access Icons */}
           <div className="flex gap-3">
-            {menuItems.slice(0, 3).map((item) => (
+            {visibleItems.slice(0, 3).map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
@@ -205,7 +216,7 @@ export default function NavigationDrawer({
 
               {/* Menu Items */}
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {menuItems.map((item) => (
+                {visibleItems.map((item) => (
                   <motion.button
                     key={item.id}
                     whileTap={{ scale: 0.98 }}

@@ -40,6 +40,9 @@ interface SecondaryPanelProps {
   gmailAddress?: string;
   onConnectGmail?: (email: string) => void;
   onDisconnectGmail?: () => void;
+  // Progressive Disclosure
+  isProMode?: boolean;
+  onToggleProMode?: () => void;
 }
 
 export default function SecondaryPanel({
@@ -58,6 +61,8 @@ export default function SecondaryPanel({
   gmailAddress,
   onConnectGmail,
   onDisconnectGmail,
+  isProMode = false,
+  onToggleProMode,
 }: SecondaryPanelProps) {
   const { t } = useTranslation();
 
@@ -317,6 +322,18 @@ export default function SecondaryPanel({
             </div>
 
             <div className="space-y-2">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+                <label className="flex items-center justify-between gap-2 text-slate-300 font-semibold mb-2">
+                  <span>Advanced Mode (Pro)</span>
+                  <button
+                    onClick={() => onToggleProMode?.()}
+                    className="px-3 py-1 rounded-lg border border-slate-700 text-sm text-slate-200 hover:bg-slate-900/50 transition"
+                  >
+                    {isProMode ? "ENABLED" : "DISABLED"}
+                  </button>
+                </label>
+                <p className="text-xs text-slate-400">When enabled, Health & Web3 widgets become available in the menu.</p>
+              </div>
               <button className="w-full py-3 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-900/50 transition text-sm font-semibold flex items-center justify-center gap-2">
                 <Shield size={16} />
                 Privacy & Security
