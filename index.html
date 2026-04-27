@@ -58,202 +58,104 @@
         <span class="logo-sub">Lokalnie · Bez backendu · Bez chmury</span>
       </div>
     </div>
-    <button class="btn-hamburger" id="btnNavToggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="headerDrawer">
-      <span></span><span></span><span></span>
-    </button>
-
-    <div class="header-drawer" id="headerDrawer">
-      <nav class="tab-nav" id="headerTabNav">
-        <button class="tab-btn active" data-tab="tracker">Skupienie</button>
-        <button class="tab-btn" data-tab="daily">Statystyki</button>
-        <button class="tab-btn" data-tab="weekly">Raport</button>
-        <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
-        <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
-        <button class="tab-btn" data-tab="settings">Ustawienia</button>
-        <button class="tab-btn" data-tab="about">O aplikacji</button>
-        <button class="tab-btn" data-tab="profile">Profil</button>
-      </nav>
-
-      <div class="header-controls">
-        <div class="mode-toggle" id="uxModeToggle" aria-label="Tryb interfejsu">
-          <button class="mode-toggle__btn active" id="btnZenMode" type="button" data-ux-mode-btn="zen">Zen</button>
-          <button class="mode-toggle__btn" id="btnProMode" type="button" data-ux-mode-btn="pro">Pro</button>
-        </div>
-        <div id="saveStatus" class="mode-indicator mode-indicator--save">Dane zapisane lokalnie</div>
-        <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
-        <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
-        <div class="live-clock" id="clock">00:00:00</div>
+    <div class="header-right">
+      <div class="live-clock" id="clock">00:00:00</div>
+      <button class="btn-menu-open" id="btnMenuOpen" type="button" aria-label="Otwórz menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <!-- Legacy: kept for JS compatibility, not displayed -->
+    <div class="header-legacy-hidden">
+      <button class="btn-hamburger" id="btnNavToggle" type="button" aria-expanded="false" aria-controls="headerDrawer"></button>
+      <div class="header-drawer" id="headerDrawer">
+        <nav class="tab-nav" id="headerTabNav">
+          <button class="tab-btn active" data-tab="tracker">Skupienie</button>
+          <button class="tab-btn" data-tab="daily">Statystyki</button>
+          <button class="tab-btn" data-tab="weekly">Raport</button>
+          <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
+          <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
+          <button class="tab-btn" data-tab="settings">Ustawienia</button>
+          <button class="tab-btn" data-tab="about">O aplikacji</button>
+          <button class="tab-btn" data-tab="profile">Profil</button>
+        </nav>
       </div>
     </div>
   </div>
 </header>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
-     MAIN
+     APP SIDEBAR — Navigation, Tools, Progressive Disclosure
      ═══════════════════════════════════════════════════════════════════════ -->
-<main class="main">
+<aside class="app-sidebar" id="appSidebar" aria-hidden="true">
+  <div class="sidebar-header">
+    <span class="sidebar-title">⚡ FocusOS</span>
+    <button class="sidebar-close" id="btnSidebarClose" type="button" aria-label="Zamknij menu">×</button>
+  </div>
 
-  <!-- ─────────────────────────────────────────────────────────────────────
-       VIEW: TRACKER
-       ───────────────────────────────────────────────────────────────────── -->
-  <div class="view view--tracker" data-view="tracker">
+  <!-- Status & Mode toggle -->
+  <div class="sidebar-status-bar">
+    <div id="saveStatus" class="mode-indicator mode-indicator--save">Dane zapisane lokalnie</div>
+    <div id="modeIndicator" class="mode-indicator">Tryb: lokalny offline</div>
+    <div id="playerTitle" class="mode-indicator">Tytuł: Inicjowany</div>
+    <div class="mode-toggle" id="uxModeToggle" aria-label="Tryb interfejsu">
+      <button class="mode-toggle__btn active" id="btnZenMode" type="button" data-ux-mode-btn="zen">Zen</button>
+      <button class="mode-toggle__btn" id="btnProMode" type="button" data-ux-mode-btn="pro">Pro</button>
+    </div>
+  </div>
 
-    <section class="panel panel--web3 hidden" id="web3Panel">
-      <div class="panel-label">Panel Web3</div>
-      <div class="web3-grid">
-        <div><span class="web3-k">Portfel</span><span class="web3-v" id="walletAddressView">Niepołączono</span></div>
-        <div><span class="web3-k">Sieć</span><span class="web3-v">Monad Testnet (symulacja)</span></div>
-        <div><span class="web3-k">Stakowane</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
+  <!-- Navigation -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Nawigacja</div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-nav-btn active" data-tab="tracker" type="button"><span class="sn-icon">⚡</span>Skupienie</button>
+      <button class="sidebar-nav-btn" data-tab="daily" type="button"><span class="sn-icon">📊</span>Statystyki</button>
+      <button class="sidebar-nav-btn" data-tab="weekly" type="button"><span class="sn-icon">📈</span>Raport tygodniowy</button>
+      <button class="sidebar-nav-btn" data-tab="health" data-progressive-module="health" type="button"><span class="sn-icon">💪</span>Zdrowie<span class="sn-lock" id="sidebarHealthLock">🔒</span></button>
+      <button class="sidebar-nav-btn" data-tab="sleep" data-progressive-module="sleep" type="button"><span class="sn-icon">🌙</span>Sen<span class="sn-lock" id="sidebarSleepLock">🔒</span></button>
+      <button class="sidebar-nav-btn" data-tab="settings" type="button"><span class="sn-icon">⚙️</span>Ustawienia</button>
+      <button class="sidebar-nav-btn" data-tab="about" type="button"><span class="sn-icon">ℹ️</span>O aplikacji</button>
+      <button class="sidebar-nav-btn" data-tab="profile" type="button"><span class="sn-icon">👤</span>Profil</button>
+    </nav>
+  </div>
+
+  <!-- XP + Quick Stats -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Poziom i postęp</div>
+    <section class="panel panel--qs">
+      <div class="xp-bar-wrap" id="xpBarWrap">
+        <div class="xp-bar-header">
+          <span class="xp-level" id="xpLevel">Lv.1</span>
+          <span class="xp-label" id="xpLabel">0 / 1000 XP</span>
+          <span class="xp-title" id="xpTitle">Novice</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
       </div>
-      <div class="web3-actions">
-        <button class="btn-secondary" id="btnStakeTokens">Stakuj tokeny</button>
-        <button class="btn-secondary" id="btnBurnTokens">Spal tokeny</button>
-        <button class="btn-secondary" id="btnSaveToChain">Zapisz postęp on-chain</button>
+      <div class="panel-label" style="margin-top:14px">Today at a glance</div>
+      <div class="qs-grid">
+        <div class="qs-card"><span class="qs-value" id="qsTodayTime">—</span><span class="qs-key">Focus time</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsEfficiency">—</span><span class="qs-key">Efficiency</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsTaskCount">—</span><span class="qs-key">Sessions</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsStreak">0</span><span class="qs-key">Streak</span></div>
+        <div class="qs-card"><span id="qsEMA" class="qs-ema">—</span><span class="qs-key">Trend</span></div>
       </div>
-    </section>
-
-    <section class="panel panel--tracker-main">
-      <div class="focus-flow-shell">
-        <div class="panel-label">Aktywna sesja</div>
-        <div class="focus-hero">
-          <div class="focus-hero-copy">
-            <span class="focus-hero-kicker" id="focusHeroKicker">Focus flow</span>
-            <h1 class="tracker-hero-title">Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.</h1>
-            <p class="tracker-hero-sub">Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.</p>
-          </div>
-          <div class="focus-hero-status">
-            <div class="tracker-status">
-              <div class="status-dot idle" id="statusDot"></div>
-              <span id="statusLabel">Bezczynny</span>
-            </div>
-            <div class="streak-banner" id="streakBanner">
-              <span class="streak-flame">*</span>
-              <span id="streakText">Streak: 0 dni</span>
-              <span id="bestStreakText">Best: 0 dni</span>
-            </div>
-          </div>
+      <div class="goal-wrap" id="goalWrap" style="margin-top:12px">
+        <div class="meal-input-row" style="margin-bottom:8px">
+          <input class="form-input" id="dailyGoalMin" type="number" min="30" max="960" step="15" placeholder="Daily goal (min)" style="width:170px"/>
+          <button class="btn-secondary" id="btnSaveGoal" style="width:auto;padding:10px 14px">Save Goal</button>
         </div>
-
-        <div class="quick-start" id="quickStartChecklist">
-          <div class="quick-start-head">
-            <div>
-              <div class="quick-start-title">Szybki start</div>
-              <p class="quick-start-copy" id="quickStartSummary">3 kroki do pierwszej czystej sesji.</p>
-            </div>
-            <span class="quick-start-badge" id="quickStartBadge">Onboarding</span>
-          </div>
-          <ol class="quick-start-list">
-            <li id="checkAddTask">Dodaj zadanie</li>
-            <li id="checkStartTask">Uruchom sesję</li>
-            <li id="checkCompleteTask">Zamknij pierwszą sesję</li>
-          </ol>
-        </div>
-
-        <div class="focus-flow-grid">
-          <section class="focus-stage-card focus-stage-card--task" data-flow-step="task">
-            <div class="focus-stage-top">
-              <span class="focus-stage-index">01</span>
-              <div>
-                <h2 class="focus-stage-title" id="focusTaskTitle">Dodaj jedno konkretne zadanie</h2>
-                <p class="focus-stage-copy" id="focusTaskCopy">Nazwij najbliższy blok pracy tak, żeby od razu było jasne, co domykasz.</p>
-              </div>
-            </div>
-            <div class="input-group">
-              <input type="text" id="taskName" placeholder="Nad czym teraz pracujesz?" maxlength="80" autocomplete="off"/>
-              <select id="taskCategory">
-                <option value="work">Praca</option>
-                <option value="coding">Kodowanie</option>
-                <option value="learning">Nauka</option>
-                <option value="planning">Planowanie</option>
-                <option value="reading">Czytanie</option>
-                <option value="exercise">Sport</option>
-                <option value="break">Przerwa</option>
-                <option value="entertainment">Rozrywka</option>
-                <option value="social_media">Social Media</option>
-                <option value="distraction">Rozproszenie</option>
-                <option value="other">Inne</option>
-              </select>
-            </div>
-          </section>
-
-          <section class="focus-stage-card focus-stage-card--start" data-flow-step="start">
-            <div class="focus-stage-top">
-              <span class="focus-stage-index">02</span>
-              <div>
-                <h2 class="focus-stage-title" id="focusStartTitle">Uruchom jedną dominującą sesję</h2>
-                <p class="focus-stage-copy" id="focusStartCopy">Najpierw włącz sesję. Reszta interfejsu dopasuje się do bieżącej pracy.</p>
-              </div>
-            </div>
-            <div class="btn-row btn-row--hero">
-              <button class="btn-start" id="btnStart">Uruchom sesję skupienia</button>
-              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
-            </div>
-            <p class="focus-stage-hint" id="flowPrimaryHint">Dodaj zadanie, a potem od razu wciśnij główny przycisk startu.</p>
-            <div class="focus-cycle-card panel--focus-cycle">
-              <div class="focus-cycle-card__head">
-                <div>
-                  <div class="panel-label">Prowadzony cykl</div>
-                  <p class="panel-copy">Ustaw sprint i krótką regenerację, jeśli chcesz wejść od razu w gotowy rytm.</p>
-                </div>
-                <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
-              </div>
-              <div class="focus-cycle-grid">
-                <label class="focus-cycle-field">
-                  <span>Skupienie</span>
-                  <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
-                </label>
-                <label class="focus-cycle-field">
-                  <span>Regeneracja</span>
-                  <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
-                </label>
-                <button class="sound-toggle focus-cycle-btn" id="btnFocusSound" type="button" aria-pressed="true">
-                  <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
-                  <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section class="focus-stage-card focus-stage-card--complete" data-flow-step="complete">
-            <div class="focus-stage-top">
-              <span class="focus-stage-index">03</span>
-              <div>
-                <h2 class="focus-stage-title" id="focusCompleteTitle">Zamknij sesję czysto</h2>
-                <p class="focus-stage-copy" id="focusCompleteCopy">Gdy praca jest zrobiona, zakończ sesję i zapisz postęp, streak oraz XP.</p>
-              </div>
-            </div>
-            <div class="active-task-card" id="activeCard" style="display:none">
-              <div class="atc-name" id="activeName">—</div>
-              <div class="atc-meta">
-                <span class="atc-cat" id="activeCat">—</span>
-                <span class="atc-timer" id="activeTimer">00:00:00</span>
-              </div>
-              <div class="fatigue-wrap" id="fatigueBarWrap">
-                <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
-                <div class="fatigue-meta">
-                  <span id="fatigueLabel"></span>
-                  <span id="fatigueHint">Zmęczenie rośnie</span>
-                </div>
-              </div>
-            </div>
-            <div class="focus-completion-actions">
-              <button class="btn-stop" id="btnStop" disabled>Zakończ sesję</button>
-              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
-              <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
-            </div>
-            <p class="focus-stage-hint focus-stage-hint--muted" id="flowCompletionHint">Krótsze niż 15 minut zatrzymanie liczy się jako zerwana próba.</p>
-          </section>
-        </div>
-
-        <p class="tracker-helper">Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.</p>
-
-        <div class="tracker-inline-actions">
-          <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
-          <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
-        </div>
+        <div class="xp-track"><div class="xp-fill" id="goalFill" style="width:0%"></div></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="goalLabel">No goal set.</div>
+      </div>
+      <div class="leaderboard-strip">
+        <div class="lb-title">You vs world average</div>
+        <div id="lbRows"></div>
       </div>
     </section>
+  </div>
 
+  <!-- Zeus Mentor -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Mentor Zeus</div>
     <section class="panel--zeus" aria-live="polite">
       <div class="panel-label">Asystent Zeus</div>
       <div id="zeusCard" class="zeus-card" data-zeus-state="idle">
@@ -349,9 +251,12 @@
         <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
       </div>
     </section>
+  </div>
 
+  <!-- Quick Actions -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Szybkie akcje</div>
     <section class="panel panel--quick-actions">
-      <div class="panel-label">Jednym kliknięciem</div>
       <div class="quick-action-grid">
         <button class="quick-action-btn" id="btnQuickWater" type="button">
           <strong>Wypiłem wodę</strong>
@@ -368,15 +273,45 @@
       </div>
       <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
     </section>
+  </div>
 
-    <section class="panel panel--backup hidden" id="backupPrompt">
-      <div class="panel-label">Safety Net</div>
-      <p class="backup-copy" id="backupPromptText">Masz już sporo cennych danych. Zrób kopię zapasową, aby ich nie stracić.</p>
-      <div class="form-actions">
-        <button class="btn-secondary" id="btnBackupOpenSettings" type="button" style="width:auto;padding:10px 14px">Otwórz kopie zapasowe</button>
+  <!-- Recent Sessions -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Ostatnie sesje</div>
+    <section class="panel panel--log">
+      <div class="panel-header">
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Today</button>
+          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">All time</button>
+          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
+        </div>
+      </div>
+      <div class="log-list" id="recentLog">
+        <div class="log-empty">No sessions yet. Start your first focus session.</div>
       </div>
     </section>
+  </div>
 
+  <!-- Web3 -->
+  <div class="sidebar-section">
+    <section class="panel panel--web3 hidden" id="web3Panel">
+      <div class="panel-label">Panel Web3</div>
+      <div class="web3-grid">
+        <div><span class="web3-k">Portfel</span><span class="web3-v" id="walletAddressView">Niepołączono</span></div>
+        <div><span class="web3-k">Sieć</span><span class="web3-v">Monad Testnet (symulacja)</span></div>
+        <div><span class="web3-k">Stakowane</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
+      </div>
+      <div class="web3-actions">
+        <button class="btn-secondary" id="btnStakeTokens">Stakuj tokeny</button>
+        <button class="btn-secondary" id="btnBurnTokens">Spal tokeny</button>
+        <button class="btn-secondary" id="btnSaveToChain">Zapisz postęp on-chain</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Routines, Missions, Achievements -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Rutyny i misje</div>
     <section class="panel panel--routines">
       <div class="panel-label">Daily Routines</div>
       <div class="meal-input-row">
@@ -399,82 +334,174 @@
       </div>
       <div id="routineProgress" class="routine-progress">0 / 0 completed today</div>
     </section>
-
-    <section class="panel panel--missions">
+    <section class="panel panel--missions" style="margin-top:12px">
       <div class="panel-label">Daily Missions</div>
       <div id="missionList"><div class="health-empty">Loading missions...</div></div>
     </section>
-
-    <section class="panel panel--advstats">
+    <section class="panel panel--advstats" style="margin-top:12px">
       <div class="panel-label">Advanced Stats</div>
       <div id="advancedStatsList"><div class="health-empty">No data yet.</div></div>
     </section>
-
-    <section class="panel panel--achievements">
+    <section class="panel panel--achievements" style="margin-top:12px">
       <div class="panel-label">Olympus Achievements</div>
       <div id="achievementsList"><div class="health-empty">No achievements yet.</div></div>
     </section>
+  </div>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-    <!-- Quick stats + XP bar + Leaderboard -->
-    <section class="panel panel--qs">
-      <div class="xp-bar-wrap" id="xpBarWrap">
-        <div class="xp-bar-header">
-          <span class="xp-level" id="xpLevel">Lv.1</span>
-          <span class="xp-label" id="xpLabel">0 / 1000 XP</span>
-          <span class="xp-title" id="xpTitle">Novice</span>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MAIN
+     ═══════════════════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       VIEW: TRACKER
+       ───────────────────────────────────────────────────────────────────── -->
+  <div class="view view--tracker" data-view="tracker">
+
+    <!-- ── FOCUS CORE: minimal hero ───────────────────────────────────────── -->
+    <section class="focus-core" id="focusCore">
+
+      <!-- Status + Streak row -->
+      <div class="fc-status-row">
+        <div class="tracker-status">
+          <div class="status-dot idle" id="statusDot"></div>
+          <span id="statusLabel">Bezczynny</span>
         </div>
-        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
-      </div>
-      <div class="panel-label" style="margin-top:14px">Today at a glance</div>
-      <div class="qs-grid">
-        <div class="qs-card">
-          <span class="qs-value" id="qsTodayTime">—</span>
-          <span class="qs-key">Focus time</span>
-        </div>
-        <div class="qs-card">
-          <span class="qs-value" id="qsEfficiency">—</span>
-          <span class="qs-key">Efficiency</span>
-        </div>
-        <div class="qs-card">
-          <span class="qs-value" id="qsTaskCount">—</span>
-          <span class="qs-key">Sessions</span>
-        </div>
-        <div class="qs-card">
-          <span class="qs-value" id="qsStreak">0</span>
-          <span class="qs-key">Streak</span>
-        </div>
-        <div class="qs-card">
-          <span id="qsEMA" class="qs-ema">—</span>
-          <span class="qs-key">Trend</span>
+        <div class="streak-banner" id="streakBanner">
+          <span class="streak-flame">*</span>
+          <span id="streakText">Streak: 0 dni</span>
+          <span id="bestStreakText">Best: 0 dni</span>
         </div>
       </div>
-      <div class="goal-wrap" id="goalWrap" style="margin-top:12px">
-        <div class="meal-input-row" style="margin-bottom:8px">
-          <input class="form-input" id="dailyGoalMin" type="number" min="30" max="960" step="15" placeholder="Daily goal (min)" style="width:170px"/>
-          <button class="btn-secondary" id="btnSaveGoal" style="width:auto;padding:10px 14px">Save Goal</button>
+
+      <!-- HERO: Active task card (JS-controlled display) -->
+      <div class="active-task-card fc-hero-display" id="activeCard" style="display:none">
+        <span class="fc-timer-digits" id="activeTimer">00:00:00</span>
+        <span class="fc-active-name" id="activeName">Gotowy do skupienia</span>
+        <div class="fc-active-cat-row">
+          <span class="atc-cat" id="activeCat"></span>
         </div>
-        <div class="xp-track"><div class="xp-fill" id="goalFill" style="width:0%"></div></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="goalLabel">No goal set.</div>
+        <div class="fatigue-wrap" id="fatigueBarWrap">
+          <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
+          <div class="fatigue-meta">
+            <span id="fatigueLabel"></span>
+            <span id="fatigueHint">Zmęczenie rośnie</span>
+          </div>
+        </div>
       </div>
-      <div class="leaderboard-strip">
-        <div class="lb-title">You vs world average</div>
-        <div id="lbRows"></div>
+
+      <!-- Task input (fades out during active session) -->
+      <div class="fc-input-wrap" id="fcInputWrap">
+        <div class="input-group">
+          <input type="text" id="taskName" placeholder="Co teraz robisz?" maxlength="80" autocomplete="off"/>
+          <select id="taskCategory">
+            <option value="work">Praca</option>
+            <option value="coding">Kodowanie</option>
+            <option value="learning">Nauka</option>
+            <option value="planning">Planowanie</option>
+            <option value="reading">Czytanie</option>
+            <option value="exercise">Sport</option>
+            <option value="break">Przerwa</option>
+            <option value="entertainment">Rozrywka</option>
+            <option value="social_media">Social Media</option>
+            <option value="distraction">Rozproszenie</option>
+            <option value="other">Inne</option>
+          </select>
+        </div>
       </div>
+
+      <!-- CTA Buttons -->
+      <div class="fc-btn-row" id="fcBtnRow">
+        <button class="btn-start" id="btnStart">Zacznij skupienie</button>
+        <button class="btn-stop" id="btnStop" disabled>Zakończ sesję</button>
+      </div>
+
+      <!-- Pomodoro + Deep Work (progressive disclosure) -->
+      <details class="fc-advanced-details">
+        <summary class="fc-advanced-toggle">Cykl Pomodoro i tryby skupienia</summary>
+        <div class="focus-cycle-card panel--focus-cycle">
+          <div class="focus-cycle-card__head">
+            <div>
+              <div class="panel-label">Prowadzony cykl</div>
+              <p class="panel-copy">Ustaw sprint i krótką regenerację, jeśli chcesz wejść od razu w gotowy rytm.</p>
+            </div>
+            <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
+          </div>
+          <div class="focus-cycle-grid">
+            <label class="focus-cycle-field">
+              <span>Skupienie</span>
+              <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
+            </label>
+            <label class="focus-cycle-field">
+              <span>Regeneracja</span>
+              <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
+            </label>
+            <button class="sound-toggle focus-cycle-btn" id="btnFocusSound" type="button" aria-pressed="true">
+              <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
+              <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
+            </button>
+          </div>
+        </div>
+        <div class="btn-row btn-row--hero" style="margin-top:10px">
+          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
+          <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
+          <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
+        </div>
+        <p class="focus-stage-hint" id="flowPrimaryHint">Dodaj zadanie, a potem od razu wciśnij główny przycisk startu.</p>
+        <p class="focus-stage-hint focus-stage-hint--muted" id="flowCompletionHint">Krótsze niż 15 minut zatrzymanie liczy się jako zerwana próba.</p>
+      </details>
+
+      <!-- Onboarding checklist -->
+      <div class="quick-start" id="quickStartChecklist">
+        <div class="quick-start-head">
+          <div>
+            <div class="quick-start-title">Szybki start</div>
+            <p class="quick-start-copy" id="quickStartSummary">3 kroki do pierwszej czystej sesji.</p>
+          </div>
+          <span class="quick-start-badge" id="quickStartBadge">Onboarding</span>
+        </div>
+        <ol class="quick-start-list">
+          <li id="checkAddTask">Dodaj zadanie</li>
+          <li id="checkStartTask">Uruchom sesję</li>
+          <li id="checkCompleteTask">Zamknij pierwszą sesję</li>
+        </ol>
+      </div>
+
+      <!-- Backup prompt -->
+      <section class="panel panel--backup hidden" id="backupPrompt">
+        <div class="panel-label">Safety Net</div>
+        <p class="backup-copy" id="backupPromptText">Masz już sporo cennych danych. Zrób kopię zapasową, aby ich nie stracić.</p>
+        <div class="form-actions">
+          <button class="btn-secondary" id="btnBackupOpenSettings" type="button" style="width:auto;padding:10px 14px">Otwórz kopie zapasowe</button>
+        </div>
+      </section>
+
+      <!-- Secondary inline actions -->
+      <div class="tracker-inline-actions">
+        <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
+        <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
+      </div>
+
     </section>
 
-    <section class="panel panel--log">
-      <div class="panel-header">
-        <div class="panel-label">Recent sessions</div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Today</button>
-          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">All time</button>
-          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
-        </div>
-      </div>
-      <div class="log-list" id="recentLog">
-        <div class="log-empty">No sessions yet. Start your first focus session.</div>
-      </div>
-    </section>
+    <!-- Localization + JS anchors (hidden, IDs needed by app.js) -->
+    <div class="fc-loc-anchors" aria-hidden="true">
+      <span class="focus-hero-kicker" id="focusHeroKicker"></span>
+      <h1 class="tracker-hero-title"></h1>
+      <p class="tracker-hero-sub"></p>
+      <p class="tracker-helper"></p>
+      <h2 class="focus-stage-title" id="focusTaskTitle"></h2>
+      <p class="focus-stage-copy" id="focusTaskCopy"></p>
+      <h2 class="focus-stage-title" id="focusStartTitle"></h2>
+      <p class="focus-stage-copy" id="focusStartCopy"></p>
+      <h2 class="focus-stage-title" id="focusCompleteTitle"></h2>
+      <p class="focus-stage-copy" id="focusCompleteCopy"></p>
+      <div data-flow-step="task"></div>
+      <div data-flow-step="start"></div>
+      <div data-flow-step="complete"></div>
+    </div>
 
   </div><!-- /view--tracker -->
 
@@ -1162,6 +1189,7 @@
   <button class="mobile-nav__item active" data-tab="tracker" type="button">Skupienie</button>
   <button class="mobile-nav__item" data-tab="daily" type="button">Statystyki</button>
   <button class="mobile-nav__item" data-tab="settings" type="button">Ustawienia</button>
+  <button class="mobile-nav__item" data-id="menu" id="btnMobileMenu" type="button">Menu</button>
 </nav>
 
 <section class="deep-focus-overlay" id="deepFocusOverlay" aria-hidden="true">
@@ -1177,6 +1205,91 @@
   </div>
 </section>
 
+
+<!-- Sidebar + Session-Active wiring -->
+<script>
+(function () {
+  function openSidebar() {
+    var s = document.getElementById('appSidebar');
+    var b = document.getElementById('sidebarBackdrop');
+    if (!s) return;
+    s.classList.add('open');
+    s.setAttribute('aria-hidden', 'false');
+    if (b) b.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    var s = document.getElementById('appSidebar');
+    var b = document.getElementById('sidebarBackdrop');
+    if (!s) return;
+    s.classList.remove('open');
+    s.setAttribute('aria-hidden', 'true');
+    if (b) b.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var btnOpen   = document.getElementById('btnMenuOpen');
+    var btnMobile = document.getElementById('btnMobileMenu');
+    var btnClose  = document.getElementById('btnSidebarClose');
+    var backdrop  = document.getElementById('sidebarBackdrop');
+
+    if (btnOpen)   btnOpen.addEventListener('click', openSidebar);
+    if (btnMobile) btnMobile.addEventListener('click', openSidebar);
+    if (btnClose)  btnClose.addEventListener('click', closeSidebar);
+    if (backdrop)  backdrop.addEventListener('click', closeSidebar);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeSidebar();
+    });
+
+    /* Sidebar nav buttons: close sidebar then delegate to switchTab */
+    document.querySelectorAll('#appSidebar [data-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        closeSidebar();
+        /* switchTab is defined in app.js — call after sidebar closes */
+        setTimeout(function () {
+          if (typeof switchTab === 'function') switchTab(btn.dataset.tab);
+        }, 60);
+      });
+    });
+
+    /* Mirror active state: sync sidebar-nav-btn with current view */
+    var observer = new MutationObserver(function () {
+      var cur = document.body.dataset.currentView || 'tracker';
+      document.querySelectorAll('.sidebar-nav-btn[data-tab]').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.tab === cur);
+      });
+      document.querySelectorAll('.mobile-nav__item[data-tab]').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.tab === cur);
+      });
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-current-view'] });
+
+    /* session-active class: watch statusDot for 'running' state */
+    var dot = document.getElementById('statusDot');
+    if (dot) {
+      var dotObserver = new MutationObserver(function () {
+        document.body.classList.toggle('session-active', dot.classList.contains('running'));
+      });
+      dotObserver.observe(dot, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    /* Hide health/sleep lock icons once modules are unlocked */
+    function refreshSidebarLocks() {
+      ['health', 'sleep'].forEach(function (mod) {
+        var lock = document.getElementById('sidebar' + mod.charAt(0).toUpperCase() + mod.slice(1) + 'Lock');
+        if (!lock) return;
+        var unlocked = document.body.dataset['module_' + mod] === 'unlocked' ||
+          document.querySelector('[data-progressive-module="' + mod + '"]')?.dataset.unlocked === 'true';
+        if (unlocked) lock.style.display = 'none';
+      });
+    }
+    setInterval(refreshSidebarLocks, 2000);
+    refreshSidebarLocks();
+  });
+})();
+</script>
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
 <script src="db.js"></script>
