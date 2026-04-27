@@ -5286,6 +5286,37 @@ select.form-input,
   }
 }
 
+/* ── Header language selector ───────────────────────────────────────────── */
+.header-lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  line-height: 1;
+  min-width: 46px;
+  text-align: center;
+}
+
+.header-lang-select:hover {
+  background: rgba(255,255,255,0.11);
+  border-color: rgba(255,255,255,0.2);
+  color: var(--text);
+}
+
+.header-lang-select option {
+  background: #0e1525;
+  color: var(--text);
+}
+
 /* ── Zeus Settings Section ───────────────────────────────────────────────── */
 .zeus-cfg-row {
   display: flex;

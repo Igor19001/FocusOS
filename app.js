@@ -3490,6 +3490,7 @@ const App = (() => {
     const themeSelect = $('themeSelect');
     if (languageSelect) languageSelect.value = S.language;
     if (themeSelect) themeSelect.value = S.theme;
+    if ($('headerLangSelect')) $('headerLangSelect').value = S.language;
     refreshConnectionViews();
   }
 
@@ -3498,8 +3499,21 @@ const App = (() => {
       const lang = e.target.value === 'en' ? 'en' : 'pl';
       applyLanguage(lang);
       saveAppSettings({ language: lang });
+      if ($('headerLangSelect')) $('headerLangSelect').value = lang;
       showToast(t('languageSwitched'), 'success');
     });
+
+    const headerLangSel = $('headerLangSelect');
+    if (headerLangSel) {
+      headerLangSel.value = S.language;
+      headerLangSel.addEventListener('change', e => {
+        const lang = e.target.value === 'en' ? 'en' : 'pl';
+        applyLanguage(lang);
+        saveAppSettings({ language: lang });
+        if ($('languageSelect')) $('languageSelect').value = lang;
+        showToast(t('languageSwitched'), 'success');
+      });
+    }
 
     $('themeSelect')?.addEventListener('change', e => {
       const theme = e.target.value;
