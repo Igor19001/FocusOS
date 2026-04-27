@@ -5286,6 +5286,29 @@ select.form-input,
   }
 }
 
+/* ── Header quick-nav buttons (Settings + Profile) ─────────────────────── */
+.header-quick-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-muted);
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+}
+
+.header-quick-btn:hover {
+  color: var(--accent);
+  background: rgba(244, 196, 106, 0.1);
+}
+
 /* ── Zeus Chat ───────────────────────────────────────────────────────────── */
 .zeus-chat {
   margin-top: 12px;

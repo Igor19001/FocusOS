@@ -60,6 +60,8 @@
     </div>
     <div class="header-right">
       <div class="live-clock" id="clock">00:00:00</div>
+      <button class="header-quick-btn" id="btnHeaderSettings" type="button" title="Ustawienia" aria-label="Ustawienia">⚙️</button>
+      <button class="header-quick-btn" id="btnHeaderProfile" type="button" title="Profil" aria-label="Profil">👤</button>
       <button class="btn-menu-open" id="btnMenuOpen" type="button" aria-label="Otwórz menu">
         <span></span><span></span><span></span>
       </button>
@@ -278,45 +280,6 @@
     </section>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Szybkie akcje</div>
-    <section class="panel panel--quick-actions">
-      <div class="quick-action-grid">
-        <button class="quick-action-btn" id="btnQuickWater" type="button">
-          <strong>Wypiłem wodę</strong>
-          <span>+250 ml i szybki wpis zdrowia</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMeal" type="button">
-          <strong>Zjadłem posiłek</strong>
-          <span>Dodaj log bez wchodzenia do zakładki Health</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMove" type="button">
-          <strong>Krótki ruch</strong>
-          <span>+5 min resetu dla ciała i głowy</span>
-        </button>
-      </div>
-      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
-    </section>
-  </div>
-
-  <!-- Recent Sessions -->
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Ostatnie sesje</div>
-    <section class="panel panel--log">
-      <div class="panel-header">
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Today</button>
-          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">All time</button>
-          <button class="btn-refresh" id="btnRefreshLog" title="Refresh">↻</button>
-        </div>
-      </div>
-      <div class="log-list" id="recentLog">
-        <div class="log-empty">No sessions yet. Start your first focus session.</div>
-      </div>
-    </section>
-  </div>
-
   <!-- Web3 -->
   <div class="sidebar-section">
     <section class="panel panel--web3 hidden" id="web3Panel">
@@ -337,44 +300,6 @@
     </section>
   </div>
 
-  <!-- Routines, Missions, Achievements -->
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Rutyny i misje</div>
-    <section class="panel panel--routines">
-      <div class="panel-label">Daily Routines</div>
-      <div class="meal-input-row">
-        <select class="form-input" id="routineType" style="width:140px">
-          <option value="morning">Morning</option>
-          <option value="evening">Evening</option>
-        </select>
-        <input class="form-input" id="routineInput" type="text" placeholder="Add routine step..." />
-        <button class="btn-primary" id="btnAddRoutine" style="width:auto;padding:9px 14px">Add</button>
-      </div>
-      <div class="routine-cols">
-        <div>
-          <div class="routine-title">Morning</div>
-          <div id="routineMorningList"><div class="health-empty">No morning routine yet.</div></div>
-        </div>
-        <div>
-          <div class="routine-title">Evening</div>
-          <div id="routineEveningList"><div class="health-empty">No evening routine yet.</div></div>
-        </div>
-      </div>
-      <div id="routineProgress" class="routine-progress">0 / 0 completed today</div>
-    </section>
-    <section class="panel panel--missions" style="margin-top:12px">
-      <div class="panel-label">Daily Missions</div>
-      <div id="missionList"><div class="health-empty">Loading missions...</div></div>
-    </section>
-    <section class="panel panel--advstats" style="margin-top:12px">
-      <div class="panel-label">Advanced Stats</div>
-      <div id="advancedStatsList"><div class="health-empty">No data yet.</div></div>
-    </section>
-    <section class="panel panel--achievements" style="margin-top:12px">
-      <div class="panel-label">Olympus Achievements</div>
-      <div id="achievementsList"><div class="health-empty">No achievements yet.</div></div>
-    </section>
-  </div>
 </aside>
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
@@ -514,6 +439,41 @@
 
     </section>
 
+    <!-- Quick Actions -->
+    <section class="panel panel--quick-actions" style="margin-top:24px">
+      <div class="panel-label">Szybkie akcje</div>
+      <div class="quick-action-grid">
+        <button class="quick-action-btn" id="btnQuickWater" type="button">
+          <strong>Wypiłem wodę</strong>
+          <span>+250 ml i szybki wpis zdrowia</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMeal" type="button">
+          <strong>Zjadłem posiłek</strong>
+          <span>Dodaj log bez wchodzenia do zakładki Zdrowie</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMove" type="button">
+          <strong>Krótki ruch</strong>
+          <span>+5 min resetu dla ciała i głowy</span>
+        </button>
+      </div>
+      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
+    </section>
+
+    <!-- Ostatnie sesje -->
+    <section class="panel panel--log" style="margin-top:16px">
+      <div class="panel-label">Ostatnie sesje</div>
+      <div class="panel-header">
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Dziś</button>
+          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">Wszystkie</button>
+          <button class="btn-refresh" id="btnRefreshLog" title="Odśwież">↻</button>
+        </div>
+      </div>
+      <div class="log-list" id="recentLog">
+        <div class="log-empty">Brak sesji. Uruchom pierwszą sesję skupienia.</div>
+      </div>
+    </section>
+
     <!-- Localization + JS anchors (hidden, IDs needed by app.js) -->
     <div class="fc-loc-anchors" aria-hidden="true">
       <span class="focus-hero-kicker" id="focusHeroKicker"></span>
@@ -589,6 +549,36 @@
       <div id="dayPlanList"><div class="health-empty">Brak punktów planu na dziś</div></div>
     </section>
 
+    <!-- Codzienne rytuały -->
+    <section class="panel panel--routines" style="margin-top:16px">
+      <div class="panel-label">Codzienne rytuały</div>
+      <div class="meal-input-row">
+        <select class="form-input" id="routineType" style="width:140px">
+          <option value="morning">Poranek</option>
+          <option value="evening">Wieczór</option>
+        </select>
+        <input class="form-input" id="routineInput" type="text" placeholder="Dodaj krok rytuału..." />
+        <button class="btn-primary" id="btnAddRoutine" style="width:auto;padding:9px 14px">Dodaj</button>
+      </div>
+      <div class="routine-cols">
+        <div>
+          <div class="routine-title">Poranek</div>
+          <div id="routineMorningList"><div class="health-empty">Brak porannego rytuału.</div></div>
+        </div>
+        <div>
+          <div class="routine-title">Wieczór</div>
+          <div id="routineEveningList"><div class="health-empty">Brak wieczornego rytuału.</div></div>
+        </div>
+      </div>
+      <div id="routineProgress" class="routine-progress">0 / 0 wykonanych dzisiaj</div>
+    </section>
+
+    <!-- Misje dnia -->
+    <section class="panel panel--missions" style="margin-top:16px">
+      <div class="panel-label">Misje dnia</div>
+      <div id="missionList"><div class="health-empty">Wczytywanie misji...</div></div>
+    </section>
+
   </div><!-- /view--daily -->
 
 
@@ -648,6 +638,12 @@
       <ul class="insights-list" id="weeklyInsights">
         <li><span class="insight-icon">📊</span>Za mało danych — potrzeba min. 5 sesji.</li>
       </ul>
+    </section>
+
+    <!-- Zaawansowane statystyki -->
+    <section class="panel panel--advstats" style="margin-top:16px">
+      <div class="panel-label">Zaawansowane statystyki</div>
+      <div id="advancedStatsList"><div class="health-empty">Brak danych jeszcze.</div></div>
     </section>
 
   </div><!-- /view--weekly -->
@@ -993,6 +989,13 @@
         </section>
       </div>
     </section>
+
+    <!-- Osiągnięcia Olimpu -->
+    <section class="panel panel--achievements" style="margin-top:16px">
+      <div class="panel-label">⚡ Osiągnięcia Olimpu</div>
+      <div id="achievementsList"><div class="health-empty">Brak osiągnięć jeszcze.</div></div>
+    </section>
+
   </div><!-- /view--profile -->
 
 </main>
@@ -1315,6 +1318,16 @@
     }
     setInterval(refreshSidebarLocks, 2000);
     refreshSidebarLocks();
+
+    /* Header quick-nav: Settings + Profile */
+    var btnHdrSet = document.getElementById('btnHeaderSettings');
+    var btnHdrPro = document.getElementById('btnHeaderProfile');
+    if (btnHdrSet) btnHdrSet.addEventListener('click', function () {
+      if (typeof switchTab === 'function') switchTab('settings');
+    });
+    if (btnHdrPro) btnHdrPro.addEventListener('click', function () {
+      if (typeof switchTab === 'function') switchTab('profile');
+    });
   });
 })();
 </script>
