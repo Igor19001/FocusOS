@@ -5000,6 +5000,39 @@ const App = (() => {
   // MODAL BEHAVIORS — backdrop click & Escape
   // ─────────────────────────────────────────────────────────────────────────
 
+  function initQuickStartNav() {
+    const checklist = $('quickStartChecklist');
+    if (!checklist) return;
+
+    // Dismiss (×) button
+    $('btnDismissChecklist')?.addEventListener('click', e => {
+      e.stopPropagation();
+      checklist.style.transition = 'opacity 0.4s ease';
+      checklist.style.opacity = '0';
+      checklist.style.pointerEvents = 'none';
+      setTimeout(() => { checklist.style.display = 'none'; }, 420);
+    });
+
+    // Click on list item → navigate to relevant element
+    checklist.querySelectorAll('[data-nav]').forEach(item => {
+      item.addEventListener('click', () => {
+        const nav = item.dataset.nav;
+        let target = null;
+        if (nav === 'task')  target = $('taskName');
+        if (nav === 'start') target = $('btnStart');
+        if (nav === 'stop')  target = $('btnStop');
+        if (!target) return;
+        if (typeof switchTab === 'function') switchTab('tracker');
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.focus({ preventScroll: true });
+          target.classList.add('qs-highlight');
+          setTimeout(() => target.classList.remove('qs-highlight'), 1400);
+        }, 120);
+      });
+    });
+  }
+
   function initModalBehaviors() {
     ['toxicModal', 'welcomeModal', 'resetDataModal', 'backfillModal', 'notifModal', 'levelRewardModal'].forEach(id => {
       const el = $(id);
@@ -5109,6 +5142,7 @@ const App = (() => {
     initPwaInstall();
     initGoogleBackup();
     initModalBehaviors();
+    initQuickStartNav();
     $('levelRewardModal')?.addEventListener('click', e => {
       if (e.target === $('levelRewardModal')) $('levelRewardModal').classList.remove('open');
     });

@@ -406,6 +406,7 @@
 
       <!-- Onboarding checklist -->
       <div class="quick-start" id="quickStartChecklist">
+        <button class="qs-close" id="btnDismissChecklist" type="button" title="Ukryj">×</button>
         <div class="quick-start-head">
           <div>
             <div class="quick-start-title">Szybki start</div>
@@ -414,9 +415,9 @@
           <span class="quick-start-badge" id="quickStartBadge">Onboarding</span>
         </div>
         <ol class="quick-start-list">
-          <li id="checkAddTask">Dodaj zadanie</li>
-          <li id="checkStartTask">Uruchom sesję</li>
-          <li id="checkCompleteTask">Zamknij pierwszą sesję</li>
+          <li id="checkAddTask" data-nav="task" title="Przejdź do pola zadania">Dodaj zadanie</li>
+          <li id="checkStartTask" data-nav="start" title="Przejdź do przycisku startu">Uruchom sesję</li>
+          <li id="checkCompleteTask" data-nav="stop" title="Przejdź do przycisku zatrzymania">Zamknij pierwszą sesję</li>
         </ol>
       </div>
 
