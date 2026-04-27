@@ -5219,6 +5219,73 @@ select.form-input,
   background: rgba(244, 196, 106, 0.4);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Layout: Sticky top bar + Right overlay sidebar
+   (overrides the Calm UI Refresh left-sidebar layout)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.header {
+  position: sticky !important;
+  top: 0 !important;
+  left: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(244, 196, 106, 0.14) !important;
+  background: rgba(9, 13, 24, 0.96) !important;
+  backdrop-filter: blur(18px) !important;
+  z-index: 100 !important;
+}
+
+.header-inner {
+  height: auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 24px !important;
+  gap: 16px !important;
+}
+
+.header .tab-nav {
+  display: none !important;
+}
+
+.header-controls {
+  margin-top: 0 !important;
+  flex-direction: row !important;
+  border-top: none !important;
+  padding-top: 0 !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.btn-menu-open {
+  display: flex !important;
+}
+
+.main {
+  margin-left: 0 !important;
+  max-width: 1600px !important;
+  padding: 24px !important;
+  width: 100% !important;
+}
+
+@media (min-width: 1081px) {
+  .main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .header-inner {
+    padding: 10px 14px !important;
+  }
+  .main {
+    padding: 16px !important;
+  }
+}
+
 .app-sidebar .zeus-stage {
   min-height: 160px;
 }

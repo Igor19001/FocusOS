@@ -4855,7 +4855,7 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   function initModalBehaviors() {
-    ['toxicModal', 'welcomeModal', 'resetDataModal'].forEach(id => {
+    ['toxicModal', 'welcomeModal', 'resetDataModal', 'backfillModal', 'notifModal', 'levelRewardModal'].forEach(id => {
       const el = $(id);
       if (el) el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
     });
@@ -4875,6 +4875,13 @@ const App = (() => {
       if (e.key === 'Escape') {
         const openModal = document.querySelector('.modal.open');
         if (openModal) { openModal.classList.remove('open'); return; }
+        if ($('appSidebar')?.classList.contains('open')) {
+          $('appSidebar').classList.remove('open');
+          $('appSidebar').setAttribute('aria-hidden', 'true');
+          $('sidebarBackdrop')?.classList.remove('visible');
+          document.body.style.overflow = '';
+          return;
+        }
         if ($('tutorialOverlay')?.style.display === 'block') {
           $('tutorialOverlay').style.display = 'none';
           localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
