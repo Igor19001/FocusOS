@@ -672,61 +672,137 @@ const App = (() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const bolts = [];
+    // ── Theme particle configs ────────────────────────────────────────────
+    const RAIN = {
+      olympus: {
+        make(w, h, rY) {
+          const size = 16 + Math.random() * 22;
+          return { x: Math.random()*w, y: rY ? Math.random()*h : -(size*3+Math.random()*h*0.6),
+            speed: 1.4+Math.random()*3.2, size, alpha: 0.14+Math.random()*0.34,
+            glow: Math.random()>0.62, blue: Math.random()>0.78 };
+        },
+        draw(b) {
+          ctx.save(); ctx.globalAlpha = b.alpha; ctx.translate(b.x, b.y);
+          const w = b.size*0.5, h = b.size;
+          if (b.glow) { ctx.shadowColor = b.blue?'rgba(122,179,255,0.9)':'rgba(244,196,106,0.9)'; ctx.shadowBlur=16; }
+          ctx.beginPath();
+          ctx.moveTo(w*0.58,0); ctx.lineTo(0,h*0.46); ctx.lineTo(w*0.36,h*0.46);
+          ctx.lineTo(-w*0.22,h); ctx.lineTo(w*0.04,h*0.56); ctx.lineTo(-w*0.3,h*0.56);
+          ctx.lineTo(w*0.58,0); ctx.closePath();
+          ctx.fillStyle = b.blue?(b.glow?'#7ab3ff':'rgba(122,179,255,0.65)'):(b.glow?'#f4c46a':'rgba(244,196,106,0.65)');
+          ctx.fill(); ctx.restore();
+        },
+      },
+      marble: {
+        // Apollo / Athena — rotating laurel leaves
+        make(w, h, rY) {
+          const size = 14+Math.random()*20;
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
+            speed: 0.7+Math.random()*1.8, size, alpha: 0.16+Math.random()*0.36,
+            glow: Math.random()>0.68, rot: Math.random()*Math.PI*2,
+            rotSpeed: (Math.random()-0.5)*0.045, wobble: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.rot += b.rotSpeed; b.wobble += 0.022;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*1.4, b.y); ctx.rotate(b.rot);
+          if (b.glow) { ctx.shadowColor='rgba(201,168,76,0.75)'; ctx.shadowBlur=10; }
+          ctx.beginPath(); ctx.ellipse(0,0,b.size*0.21,b.size*0.52,0,0,Math.PI*2);
+          ctx.fillStyle = b.glow?'#c9a84c':'rgba(189,166,80,0.62)'; ctx.fill();
+          ctx.beginPath(); ctx.moveTo(0,-b.size*0.52); ctx.lineTo(0,b.size*0.52);
+          ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.stroke();
+          ctx.restore();
+        },
+      },
+      ember: {
+        // Helios / solar — fire embers with comet tails
+        make(w, h, rY) {
+          const size = 8+Math.random()*14;
+          const cols = ['#ff6b35','#f4a31a','#ffcc00','#ff4500','#ffd700'];
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*3+Math.random()*h*0.6),
+            speed: 2.2+Math.random()*4.2, size, alpha: 0.2+Math.random()*0.45,
+            glow: Math.random()>0.5, color: cols[Math.floor(Math.random()*cols.length)],
+            wobble: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.05;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*1.6, b.y);
+          if (b.glow) { ctx.shadowColor=b.color; ctx.shadowBlur=14; }
+          const grad = ctx.createLinearGradient(0,-b.size*2.8,0,0);
+          grad.addColorStop(0,'transparent'); grad.addColorStop(1,b.color);
+          ctx.beginPath();
+          ctx.moveTo(-b.size*0.11,-b.size*2.8); ctx.lineTo(b.size*0.11,-b.size*2.8);
+          ctx.lineTo(b.size*0.06,0); ctx.lineTo(-b.size*0.06,0); ctx.closePath();
+          ctx.fillStyle = grad; ctx.fill();
+          ctx.beginPath(); ctx.arc(0,0,b.size*0.32,0,Math.PI*2);
+          ctx.fillStyle = b.color; ctx.fill();
+          ctx.restore();
+        },
+      },
+      tide: {
+        // Poseidon — raindrops (82%) + tridents (18%)
+        make(w, h, rY) {
+          const size = 12+Math.random()*20;
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
+            speed: 1.4+Math.random()*2.6, size, alpha: 0.16+Math.random()*0.36,
+            glow: Math.random()>0.65, isTrident: Math.random()>0.82,
+            wobble: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.026;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*2, b.y);
+          const col = b.glow?'#5ef5ff':'rgba(94,245,255,0.58)';
+          if (b.glow) { ctx.shadowColor='rgba(94,245,255,0.85)'; ctx.shadowBlur=14; }
+          if (b.isTrident) {
+            ctx.strokeStyle=col; ctx.lineWidth=2; ctx.lineCap='round';
+            const s=b.size;
+            ctx.beginPath(); ctx.moveTo(0,s*0.3); ctx.lineTo(0,s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-s*0.38,0); ctx.lineTo(s*0.38,0); ctx.stroke();
+            [-s*0.38,0,s*0.38].forEach(px=>{
+              ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,-s*0.46); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.46); ctx.lineTo(px-s*0.1,-s*0.22); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.46); ctx.lineTo(px+s*0.1,-s*0.22); ctx.stroke();
+            });
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(0,-b.size*0.55);
+            ctx.bezierCurveTo(b.size*0.44,-b.size*0.1, b.size*0.44,b.size*0.32, 0,b.size*0.46);
+            ctx.bezierCurveTo(-b.size*0.44,b.size*0.32,-b.size*0.44,-b.size*0.1, 0,-b.size*0.55);
+            ctx.fillStyle=col; ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+    };
 
-    function makeBolt(w, h, randomY) {
-      const size = 16 + Math.random() * 22;
-      return {
-        x:     Math.random() * w,
-        y:     randomY ? Math.random() * h : -(size * 3 + Math.random() * h * 0.6),
-        speed: 1.4 + Math.random() * 3.2,
-        size,
-        alpha: 0.14 + Math.random() * 0.34,
-        glow:  Math.random() > 0.62,
-        blue:  Math.random() > 0.78,
-      };
-    }
+    const particles = [];
+    let prevTheme = null;
 
-    function drawBolt(b) {
-      ctx.save();
-      ctx.globalAlpha = b.alpha;
-      ctx.translate(b.x, b.y);
-      const w = b.size * 0.5;
-      const h = b.size;
-      if (b.glow) {
-        ctx.shadowColor = b.blue ? 'rgba(122,179,255,0.9)' : 'rgba(244,196,106,0.9)';
-        ctx.shadowBlur  = 16;
-      }
-      ctx.beginPath();
-      ctx.moveTo( w * 0.58, 0);
-      ctx.lineTo( 0,         h * 0.46);
-      ctx.lineTo( w * 0.36,  h * 0.46);
-      ctx.lineTo(-w * 0.22,  h);
-      ctx.lineTo( w * 0.04,  h * 0.56);
-      ctx.lineTo(-w * 0.3,   h * 0.56);
-      ctx.lineTo( w * 0.58,  0);
-      ctx.closePath();
-      ctx.fillStyle = b.blue
-        ? (b.glow ? '#7ab3ff' : 'rgba(122,179,255,0.65)')
-        : (b.glow ? '#f4c46a' : 'rgba(244,196,106,0.65)');
-      ctx.fill();
-      ctx.restore();
-    }
+    function cfg() { return RAIN[S.theme] || RAIN.olympus; }
+    function makeP(w, h, rY) { return cfg().make(w, h, rY); }
+
+    const rebuild = () => {
+      const count = Math.max(14, Math.floor(canvas.width / 72));
+      particles.length = 0;
+      for (let i=0; i<count; i++) particles.push(makeP(canvas.width, canvas.height, true));
+      prevTheme = S.theme;
+    };
 
     const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      bolts.length  = 0;
-      const count = Math.max(14, Math.floor(canvas.width / 72));
-      for (let i = 0; i < count; i++) bolts.push(makeBolt(canvas.width, canvas.height, true));
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      rebuild();
     };
 
     const draw = () => {
+      if (S.theme !== prevTheme) rebuild();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      bolts.forEach(b => {
-        drawBolt(b);
+      const c = cfg();
+      particles.forEach(b => {
+        c.draw(b);
         b.y += b.speed;
-        if (b.y > canvas.height + b.size * 2) Object.assign(b, makeBolt(canvas.width, canvas.height, false));
+        if (b.y > canvas.height + b.size*3) Object.assign(b, makeP(canvas.width, canvas.height, false));
       });
       requestAnimationFrame(draw);
     };
