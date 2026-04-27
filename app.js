@@ -499,8 +499,8 @@ const App = (() => {
     const has = key => unlocked.includes(key);
     if ($('goalWrap')) $('goalWrap').classList.toggle('hidden', !has('daily_goals'));
     document.querySelector('.panel--missions')?.classList.toggle('hidden', !has('missions'));
-    if ($('hardcoreModeToggle')) $('hardcoreModeToggle').disabled = !has('hardcore_mode');
-    if ($('zeusStyleSelect')) $('zeusStyleSelect').disabled = !has('zeus_style');
+    if ($('hardcoreModeToggle')) $('hardcoreModeToggle').disabled = false;
+    if ($('zeusStyleSelect')) $('zeusStyleSelect').disabled = false;
     document.querySelector('.panel--achievements')?.classList.toggle('hidden', !has('achievements'));
     if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = false;
     // Skill tree: locked until Level 3

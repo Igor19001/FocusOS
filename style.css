@@ -5286,6 +5286,59 @@ select.form-input,
   }
 }
 
+/* ── Zeus Settings Section ───────────────────────────────────────────────── */
+.zeus-cfg-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.zeus-cfg-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  padding: 18px 14px;
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 30%, rgba(244,196,106,0.14), rgba(9,13,24,0.0) 72%);
+  border: 1px solid rgba(244,196,106,0.22);
+  flex-shrink: 0;
+}
+
+.zeus-cfg-orb {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(244,196,106,0.7));
+  animation: zeusOrbPulse 3s ease-in-out infinite;
+}
+
+@keyframes zeusOrbPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(244,196,106,0.5)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(244,196,106,0.9)); }
+}
+
+.zeus-cfg-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #f4c46a;
+  letter-spacing: 0.12em;
+}
+
+.zeus-cfg-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.zeus-cfg-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* ── Tracker view: 2-column layout (stats left + focus core right) ─────── */
 .view--tracker {
   grid-template-columns: 260px minmax(0, 1fr) !important;
