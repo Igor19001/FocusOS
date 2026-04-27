@@ -5286,6 +5286,164 @@ select.form-input,
   }
 }
 
+/* ── Level-Up Overlay Animation ─────────────────────────────────────────── */
+.level-up-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.level-up-overlay.active {
+  animation: luFade 3.4s ease forwards;
+}
+
+@keyframes luFade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.level-up-burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.level-up-burst::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(244,196,106,0.20) 0%, transparent 62%);
+  animation: luBg 3.4s ease forwards;
+}
+
+@keyframes luBg {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.level-up-ring {
+  position: absolute;
+  border-radius: 50%;
+  animation: luRing 1.8s cubic-bezier(0.2,0,0.4,1) forwards;
+}
+
+.level-up-ring--1 { width: 100px; height: 100px; border: 2px solid rgba(244,196,106,0.7); animation-delay: 0.05s; }
+.level-up-ring--2 { width: 100px; height: 100px; border: 2px solid rgba(122,179,255,0.5); animation-delay: 0.35s; }
+.level-up-ring--3 { width: 100px; height: 100px; border: 2px solid rgba(244,196,106,0.35); animation-delay: 0.65s; }
+
+@keyframes luRing {
+  0%   { transform: scale(0.2); opacity: 1; }
+  100% { transform: scale(9);   opacity: 0; }
+}
+
+.level-up-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  animation: luContent 3.4s ease forwards;
+}
+
+@keyframes luContent {
+  0%   { transform: scale(0.4) translateY(24px); opacity: 0; }
+  18%  { transform: scale(1.06) translateY(-4px); opacity: 1; }
+  28%  { transform: scale(1) translateY(0);      opacity: 1; }
+  72%  { transform: scale(1) translateY(0);      opacity: 1; }
+  100% { transform: scale(0.92) translateY(-12px); opacity: 0; }
+}
+
+.level-up-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: rgba(244,196,106,0.14);
+  border: 1px solid rgba(244,196,106,0.45);
+  color: #f4c46a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.level-up-number {
+  font-size: clamp(72px, 16vw, 132px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #f4c46a;
+  text-shadow: 0 0 40px rgba(244,196,106,0.65), 0 0 90px rgba(244,196,106,0.28);
+}
+
+.level-up-title {
+  font-size: clamp(20px, 4vw, 34px);
+  font-weight: 700;
+  color: #eef2ff;
+  letter-spacing: 0.06em;
+}
+
+/* ── Skill Tree Lock ─────────────────────────────────────────────────────── */
+.skill-tree-lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 24px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.2);
+  border: 1px dashed rgba(255,255,255,0.1);
+  text-align: center;
+}
+
+.skill-tree-lock__icon {
+  font-size: 40px;
+  opacity: 0.55;
+}
+
+.skill-tree-lock__text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.skill-tree-lock__prog {
+  width: 100%;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.skill-tree-lock__prog .xp-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.skill-tree-lock__prog .xp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  transition: width 0.7s ease;
+}
+
 /* ── Header quick-nav buttons (Settings + Profile) ─────────────────────── */
 .header-quick-btn {
   background: none;

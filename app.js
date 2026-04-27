@@ -454,6 +454,21 @@ const App = (() => {
     return uniq;
   }
 
+  function showLevelUpAnimation(level, titleStr) {
+    const overlay = $('levelUpOverlay');
+    if (!overlay) return;
+    if ($('levelUpNumber')) $('levelUpNumber').textContent = `Lv.${level}`;
+    if ($('levelUpTitle')) $('levelUpTitle').textContent = titleStr || '';
+    overlay.classList.remove('active');
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+    }, 3400);
+  }
+
   async function showLevelRewardPopup(level, reward) {
     const modal = $('levelRewardModal');
     const text = $('levelRewardText');
@@ -488,6 +503,20 @@ const App = (() => {
     if ($('zeusStyleSelect')) $('zeusStyleSelect').disabled = !has('zeus_style');
     document.querySelector('.panel--achievements')?.classList.toggle('hidden', !has('achievements'));
     if ($('btnDeepWorkMode')) $('btnDeepWorkMode').disabled = false;
+    // Skill tree: locked until Level 3
+    const treeLock = $('skillTreeLock');
+    const treeUnlocked = $('skillTreeUnlocked');
+    const lvl = S.userLevel || 1;
+    if (treeLock && treeUnlocked) {
+      const locked = lvl < 3;
+      treeLock.style.display = locked ? '' : 'none';
+      treeUnlocked.style.display = locked ? 'none' : '';
+      if (locked) {
+        const pct = Math.min(100, Math.round((lvl - 1) / 2 * 100));
+        if ($('skillTreeLockFill')) $('skillTreeLockFill').style.width = pct + '%';
+        if ($('skillTreeLockLabel')) $('skillTreeLockLabel').textContent = `Lv.${lvl} / Lv.3`;
+      }
+    }
   }
 
   async function initLevelProgression() {
@@ -2703,6 +2732,7 @@ const App = (() => {
           if (nextLevel > prevLevel) {
             showToast(t('levelUpToast', { level: nextLevel, title: localizeTitle(getLevelInfo(newTotal).title) }), 'success', 6000);
             zeusSpeak(`You ascended to level ${nextLevel}. Olympus acknowledges your rise.`, 'Triumphant', 'high');
+            showLevelUpAnimation(nextLevel, localizeTitle(getLevelInfo(newTotal).title));
           } else {
             showToast(t('sessionCompletedToast', { name: stopped.name, xp: xp + bonusXP }), 'info');
             zeusSpeak('Another session completed. Olympus is watching.', 'Approving', 'high');
