@@ -171,18 +171,18 @@
               <svg class="zeus-portrait" viewBox="0 0 320 320">
                 <defs>
                   <radialGradient id="zeusDockBg" cx="50%" cy="32%" r="72%">
-                    <stop offset="0%" stop-color="#173769"></stop>
-                    <stop offset="52%" stop-color="#0c1730"></stop>
-                    <stop offset="100%" stop-color="#050a16"></stop>
+                    <stop offset="0%" stop-color="#1a2640"></stop>
+                    <stop offset="52%" stop-color="#0c1525"></stop>
+                    <stop offset="100%" stop-color="#060c18"></stop>
                   </radialGradient>
                   <radialGradient id="zeusDockAura" cx="50%" cy="34%" r="58%">
-                    <stop offset="0%" stop-color="rgba(94,245,255,0.92)"></stop>
-                    <stop offset="100%" stop-color="rgba(94,245,255,0)"></stop>
+                    <stop offset="0%" stop-color="rgba(244,196,106,0.55)"></stop>
+                    <stop offset="100%" stop-color="rgba(244,196,106,0)"></stop>
                   </radialGradient>
                   <linearGradient id="zeusDockFace" x1="26%" y1="8%" x2="74%" y2="100%">
-                    <stop offset="0%" stop-color="#ffe0c7"></stop>
-                    <stop offset="52%" stop-color="#f2b891"></stop>
-                    <stop offset="100%" stop-color="#b96d4f"></stop>
+                    <stop offset="0%" stop-color="#d4956a"></stop>
+                    <stop offset="52%" stop-color="#b87550"></stop>
+                    <stop offset="100%" stop-color="#8c5035"></stop>
                   </linearGradient>
                   <linearGradient id="zeusDockHair" x1="32%" y1="0%" x2="68%" y2="100%">
                     <stop offset="0%" stop-color="#ffffff"></stop>
@@ -194,38 +194,55 @@
                     <stop offset="100%" stop-color="#dae7ff"></stop>
                   </linearGradient>
                   <filter id="zeusEyeGlow" x="-100%" y="-100%" width="300%" height="300%">
-                    <feGaussianBlur stdDeviation="6" result="blur"></feGaussianBlur>
-                    <feMerge>
-                      <feMergeNode in="blur"></feMergeNode>
-                      <feMergeNode in="SourceGraphic"></feMergeNode>
-                    </feMerge>
+                    <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
+                    <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+                  </filter>
+                  <filter id="zeusBoltGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="7" result="blur"></feGaussianBlur>
+                    <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
                   </filter>
                 </defs>
-                <rect width="320" height="320" rx="54" fill="url(#zeusDockBg)"></rect>
+                <rect width="320" height="320" rx="24" fill="url(#zeusDockBg)"></rect>
                 <circle class="zeus-aura" cx="160" cy="132" r="108" fill="url(#zeusDockAura)"></circle>
-                <ellipse class="zeus-floor" cx="160" cy="266" rx="86" ry="18" fill="rgba(94,245,255,0.2)"></ellipse>
-                <g class="zeus-bolts">
-                  <path d="M230 74 L254 92 L240 116 L262 132 L246 156" fill="none" stroke="#f6d26d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+                <ellipse class="zeus-floor" cx="160" cy="294" rx="90" ry="14" fill="rgba(244,196,106,0.16)"></ellipse>
+                <g class="zeus-bolts" filter="url(#zeusBoltGlow)">
+                  <path d="M232 64 L256 88 L241 88 L263 130" fill="none" stroke="#f4c46a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M232 64 L256 88 L241 88 L263 130" fill="none" stroke="#fffbe6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"></path>
                 </g>
                 <g class="zeus-character">
                   <path d="M102 116 C102 72 128 42 160 42 C192 42 218 72 218 116 C228 108 232 84 220 64 C206 42 186 24 160 24 C134 24 114 42 100 64 C88 84 92 108 102 116 Z" fill="url(#zeusDockHair)"></path>
                   <path d="M92 142 C80 114 92 76 122 58 C112 90 114 122 124 154 Z" fill="url(#zeusDockHair)"></path>
                   <path d="M228 142 C240 114 228 76 198 58 C208 90 206 122 196 154 Z" fill="url(#zeusDockHair)"></path>
+                  <g fill="#c9a84c" opacity="0.9">
+                    <ellipse cx="116" cy="77" rx="9" ry="5" transform="rotate(-30 116 77)"></ellipse>
+                    <ellipse cx="130" cy="68" rx="9" ry="5" transform="rotate(-20 130 68)"></ellipse>
+                    <ellipse cx="146" cy="62" rx="9" ry="5" transform="rotate(-10 146 62)"></ellipse>
+                    <ellipse cx="160" cy="59" rx="9" ry="5"></ellipse>
+                    <ellipse cx="174" cy="62" rx="9" ry="5" transform="rotate(10 174 62)"></ellipse>
+                    <ellipse cx="190" cy="68" rx="9" ry="5" transform="rotate(20 190 68)"></ellipse>
+                    <ellipse cx="204" cy="77" rx="9" ry="5" transform="rotate(30 204 77)"></ellipse>
+                    <rect x="115" y="75" width="90" height="7" rx="3.5"></rect>
+                  </g>
                   <circle cx="160" cy="142" r="74" fill="url(#zeusDockFace)"></circle>
                   <ellipse id="zeusEyeLeftBg" cx="126" cy="138" rx="26" ry="22" fill="#10213a"></ellipse>
                   <ellipse id="zeusEyeRightBg" cx="194" cy="138" rx="26" ry="22" fill="#10213a"></ellipse>
-                  <ellipse id="zeusEyeLeft" cx="126" cy="138" rx="12" ry="13" fill="rgba(82,220,255,0.78)" filter="url(#zeusEyeGlow)"></ellipse>
-                  <ellipse id="zeusEyeRight" cx="194" cy="138" rx="12" ry="13" fill="rgba(82,220,255,0.78)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <ellipse id="zeusEyeLeft" cx="126" cy="138" rx="12" ry="13" fill="rgba(244,196,106,0.88)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <ellipse id="zeusEyeRight" cx="194" cy="138" rx="12" ry="13" fill="rgba(244,196,106,0.88)" filter="url(#zeusEyeGlow)"></ellipse>
+                  <ellipse cx="126" cy="138" rx="6" ry="7" fill="#7a4f00"></ellipse>
+                  <ellipse cx="194" cy="138" rx="6" ry="7" fill="#7a4f00"></ellipse>
                   <circle id="zeusEyeLeftSpark" cx="131" cy="133" r="4" fill="#ffffff" opacity="0.9"></circle>
                   <circle id="zeusEyeRightSpark" cx="199" cy="133" r="4" fill="#ffffff" opacity="0.9"></circle>
-                  <path id="zeusBrowLeft" d="M98 112 Q126 98 154 112" fill="none" stroke="#f8fbff" stroke-width="7" stroke-linecap="round"></path>
-                  <path id="zeusBrowRight" d="M166 112 Q194 98 222 112" fill="none" stroke="#f8fbff" stroke-width="7" stroke-linecap="round"></path>
-                  <circle cx="122" cy="154" r="6" fill="#ee8b78"></circle>
-                  <circle cx="198" cy="154" r="6" fill="#ee8b78"></circle>
-                  <path d="M160 148 C156 170 152 184 148 206 C154 210 166 210 172 206 C168 184 164 170 160 148 Z" fill="none" stroke="#8d553f" stroke-width="5" stroke-linecap="round"></path>
-                  <path id="zeusMouth" d="M128 190 Q160 208 192 190" fill="none" stroke="#6c3e2f" stroke-width="6" stroke-linecap="round"></path>
-                  <path d="M116 194 C124 226 142 244 160 250 C178 244 196 226 204 194" fill="none" stroke="#eef5ff" stroke-width="16" stroke-linecap="round"></path>
-                  <path d="M124 210 C130 236 144 266 160 278 C176 266 190 236 196 210 C180 218 142 218 124 210 Z" fill="url(#zeusDockRobe)"></path>
+                  <path id="zeusBrowLeft" d="M98 112 Q126 98 154 112" fill="none" stroke="url(#zeusDockHair)" stroke-width="7" stroke-linecap="round"></path>
+                  <path id="zeusBrowRight" d="M166 112 Q194 98 222 112" fill="none" stroke="url(#zeusDockHair)" stroke-width="7" stroke-linecap="round"></path>
+                  <circle cx="122" cy="154" r="6" fill="#c0604a" opacity="0.7"></circle>
+                  <circle cx="198" cy="154" r="6" fill="#c0604a" opacity="0.7"></circle>
+                  <path d="M160 148 C156 170 152 184 148 206 C154 210 166 210 172 206 C168 184 164 170 160 148 Z" fill="none" stroke="#7a3f28" stroke-width="4" stroke-linecap="round" opacity="0.5"></path>
+                  <path id="zeusMouth" d="M132 190 Q160 204 188 190" fill="none" stroke="#5a2e1a" stroke-width="5.5" stroke-linecap="round"></path>
+                  <path d="M126 192 Q160 200 194 192" fill="none" stroke="url(#zeusDockHair)" stroke-width="7" stroke-linecap="round"></path>
+                  <path d="M116 194 C124 226 142 244 160 250 C178 244 196 226 204 194" fill="none" stroke="url(#zeusDockHair)" stroke-width="16" stroke-linecap="round"></path>
+                  <path d="M124 210 C130 236 144 266 160 278 C176 266 190 236 196 210 C180 218 140 218 124 210 Z" fill="url(#zeusDockRobe)"></path>
+                  <path d="M138 216 C144 242 152 260 160 268" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5" stroke-linecap="round"></path>
+                  <path d="M182 216 C176 242 168 260 160 268" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="3.5" stroke-linecap="round"></path>
                 </g>
               </svg>
             </div>
@@ -247,6 +264,14 @@
           <button class="btn-secondary zeus-action" id="btnZeusFocus">Sprint</button>
           <button class="btn-secondary zeus-action" id="btnZeusStreak">Chroń streak</button>
           <button class="btn-secondary zeus-action" id="btnZeusRecover">Regeneracja</button>
+        </div>
+        <div class="zeus-chat" id="zeusChat">
+          <div class="zeus-chat-history" id="zeusChatHistory"></div>
+          <div class="zeus-chat-row">
+            <input type="text" id="zeusChatInput" class="form-input zeus-chat-input" placeholder="Zapytaj Zeusa…" autocomplete="off" maxlength="200" />
+            <button id="zeusChatSend" class="btn-secondary zeus-chat-btn" type="button" title="Wyślij">⚡</button>
+            <button id="zeusToggleTTS" class="btn-secondary zeus-chat-btn" type="button" title="Włącz mowę Zeusa">🔇</button>
+          </div>
         </div>
         <div id="zeusLightning" class="zeus-lightning" aria-hidden="true"></div>
       </div>

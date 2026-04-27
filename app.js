@@ -63,6 +63,7 @@ const App = (() => {
     zeusStyle: 'balanced',
     missionRewarded: new Set(),
     guidedEntryStarted: false,
+    zeusTTSEnabled: false,
     userProgress: null,
     welcomeGoalMode: 'zen',
     saveStatusTimer: null,
@@ -1183,7 +1184,7 @@ const App = (() => {
       if (!el) return;
       el.setAttribute('cy', String(cfg.eyeCy));
       el.setAttribute('ry', String(cfg.eyeRy));
-      el.setAttribute('fill', `rgba(82,220,255,${cfg.eyeOpacity})`);
+      el.setAttribute('fill', `rgba(244,196,106,${cfg.eyeOpacity})`);
     });
     ['zeusEyeLeftSpark', 'zeusEyeRightSpark'].forEach(id => {
       const el = $(id);
@@ -1219,6 +1220,121 @@ const App = (() => {
     const emojiMap = { 'Approving': '👍', 'Triumphant': '🏆', 'Demanding': '🔥', 'Judging': '⚠️', 'Warning': '⚡', 'Disappointed': '😞', 'Observing': '👁️', 'Neutral': '➖', 'Proud': '😊', 'Fired Up': '🔥', 'Tired': '😴' };
     const emoji = emojiMap[mood] || '⚡';
     window.dispatchEvent(new CustomEvent('zeusMessageUpdate', { detail: { message: payload.line, emoji, mood, intensity } }));
+    const moodSoundMap = { Triumphant: 'levelup', Demanding: 'start', Approving: 'complete', 'Fired Up': 'start', Judging: 'warn', Warning: 'warn', Disappointed: 'warn' };
+    if (intensity === 'high') { const snd = moodSoundMap[mood]; if (snd) zeusPlaySound(snd); }
+    zeusTTS(payload.line);
+  }
+
+  function zeusTTS(text) {
+    if (!S.zeusTTSEnabled || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85; u.pitch = 0.72; u.volume = 0.85;
+    u.lang = /[\u0105\u0107\u0119\u0142\u0144\u00f3\u015b\u017a\u017c]/i.test(text) ? 'pl-PL' : 'en-US';
+    const voices = window.speechSynthesis.getVoices();
+    const lang = u.lang.slice(0, 2);
+    const v = voices.find(v => v.lang.startsWith(lang) && /male|man/i.test(v.name))
+      || voices.find(v => v.lang.startsWith(lang)) || null;
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  }
+
+  function zeusPlaySound(type) {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const seqs = {
+        start:    [[523,0,0.12],[659,0.14,0.16],[784,0.3,0.22]],
+        complete: [[523,0,0.14],[659,0.1,0.14],[784,0.22,0.14],[1047,0.36,0.28]],
+        levelup:  [[523,0,0.1],[659,0.1,0.1],[784,0.2,0.1],[1047,0.3,0.1],[1319,0.42,0.32]],
+        warn:     [[220,0,0.16],[196,0.2,0.22]],
+      };
+      (seqs[type] || seqs.start).forEach(([freq, delay, dur]) => {
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'sine'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, ac.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.25, ac.currentTime + delay + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + dur);
+        osc.start(ac.currentTime + delay);
+        osc.stop(ac.currentTime + delay + dur + 0.02);
+      });
+    } catch (_) {}
+  }
+
+  const ZEUS_CHAT = [
+    { k: ['skupienie','focus','skupić','skupic'], r: 'Skupienie to miecz wojownika. Jedno zadanie, jeden cel, zero rozproszeń.' },
+    { k: ['motywacja','motivat','chce mi','nie chce','leniw'], r: 'Motywacja przychodzi po działaniu, nie przed nim. Zacznij — reszta przyjdzie sama.' },
+    { k: ['streak','seria','z rzędu'], r: 'Seria to dowód charakteru. Każdy dzień to wybór: olimpijczyk albo widz.' },
+    { k: ['xp','poziom','level','doświadczenie'], r: 'XP to skrystalizowane skupienie. Im więcej sesji, tym wyższy poziom olimpijskiej doskonałości.' },
+    { k: ['web3','monad','blockchain','portfel','wallet','token'], r: 'Monad Testnet to arena. Twoje postępy zapisane w niezmiennym rejestrze bogów.' },
+    { k: ['timer','pomodoro','czas','minuty','jak długo'], r: 'Klasyczny sprint: 25 minut czystej koncentracji. Potem 5 minut oddechu. Olympus akceptuje ten rytm.' },
+    { k: ['sen','sleep','zmęczen','spać','odpocząć'], r: 'Nawet bogowie Olympu potrzebują odnowy. Bez snu skupienie zanika jak ogień bez tlenu.' },
+    { k: ['zdrowie','health','woda','jedzenie','nawodnien'], r: 'Ciało jest świątynią umysłu. Nawodnij je, odżyw — a umysł odpłaci uwagą.' },
+    { k: ['misja','mission','cel','zadanie','priorytet'], r: 'Jeden priorytet na dziś. Jeden sprint. Jedno ukończone zadanie zmienia jutro.' },
+    { k: ['stres','stress','trudno','ciężko','przytłoczen'], r: 'Presja to uczucie, że coś ma znaczenie. Zamiast uciekać — użyj jej jako paliwa.' },
+    { k: ['deep focus','deep work','głęboki'], r: 'Deep Focus to sala treningowa bogów. Drzwi się zamykają, świat odpada. Liczy się tylko cel.' },
+    { k: ['przerwa','break','odpoczyn','regeneracja'], r: 'Regeneracja to część treningu, nie ucieczka od niego. Olympijczycy wiedzą, kiedy odpocząć.' },
+    { k: ['cześć','hej','siema','hello','hi','witaj'], r: 'Witaj, wojowniku skupienia. Olympus czeka na twoje dokonania. Co możesz teraz zrobić?' },
+    { k: ['dzięki','dziękuję','thx','thanks'], r: 'Podziękowania przyjęte. Teraz wróć do działania — Olympus obserwuje.' },
+    { k: ['kim','kto','jesteś','co to','who are'], r: 'Jestem Zeus — strażnik twojego skupienia. Olympus patrzy przez moje złote oczy.' },
+    { k: ['telefon','social media','rozprosz','distract','facebook','tiktok'], r: 'Odłóż telefon. Uruchom sesję. Zamknij portal. Olympus nie akceptuje wymówek.' },
+    { k: ['nie umiem','nie mogę','trudne','za trudno','nie dam'], r: 'Trudność sygnalizuje, że robisz coś wartościowego. Bogowie twardnieją na trudnych ścieżkach.' },
+    { k: ['plan','zaplanow','harmono'], r: 'Trzy priorytety. Jeden projekt, jeden krok, jeden sprint. To wystarczy na dziś.' },
+    { k: ['skill','umiejętno','drzewo'], r: 'Drzewo umiejętności to twoja olimpijska mapa. Każdy węzeł — nowa broń skupienia.' },
+    { k: ['pomocy','help','nie wiem','jak'], r: 'Kliknij ⚡ Sprint żeby zacząć. Kliknij ikonę Pomodoro żeby ustawić timer. Reszta sama się ułoży.' },
+  ];
+
+  function zeusGetChatResponse(q) {
+    const lq = q.toLowerCase();
+    for (const item of ZEUS_CHAT) {
+      if (item.k.some(k => lq.includes(k))) return item.r;
+    }
+    const fallback = [
+      'Olympus obserwuje każdy twój ruch. Działaj jak olimpijczyk.',
+      'Zamiast szukać odpowiedzi — zacznij sesję i ją znajdziesz.',
+      'Zeus milczy, gdy słowa są zbędne. Uruchom timer i zacznij.',
+      'Jedno skupione działanie warte jest tysiąca pytań.',
+    ];
+    return fallback[Math.floor(Math.random() * fallback.length)];
+  }
+
+  function initZeusChat() {
+    const input = $('zeusChatInput');
+    const sendBtn = $('zeusChatSend');
+    const ttsBtn = $('zeusToggleTTS');
+    const history = $('zeusChatHistory');
+
+    function addMsg(text, isUser) {
+      if (!history) return;
+      const d = document.createElement('div');
+      d.className = 'zeus-chat-msg ' + (isUser ? 'zeus-chat-msg--user' : 'zeus-chat-msg--zeus');
+      d.textContent = text;
+      history.appendChild(d);
+      history.scrollTop = history.scrollHeight;
+    }
+
+    function send() {
+      const q = input?.value?.trim();
+      if (!q) return;
+      addMsg(q, true);
+      input.value = '';
+      const r = zeusGetChatResponse(q);
+      setTimeout(() => { addMsg(r, false); zeusSpeak(r, 'Observing'); }, 380);
+    }
+
+    sendBtn?.addEventListener('click', send);
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+    ttsBtn?.addEventListener('click', () => {
+      S.zeusTTSEnabled = !S.zeusTTSEnabled;
+      if (ttsBtn) {
+        ttsBtn.textContent = S.zeusTTSEnabled ? '🔊' : '🔇';
+        ttsBtn.title = S.zeusTTSEnabled ? 'Wyłącz mowę Zeusa' : 'Włącz mowę Zeusa';
+      }
+      if (S.zeusTTSEnabled) zeusTTS('Zeus przemawia.');
+      else window.speechSynthesis?.cancel();
+    });
   }
 
   function localizeZeusBaseMessage(base) {
@@ -4952,6 +5068,7 @@ const App = (() => {
     initRoutines();
     initDeepWorkMode();
     initZeusActions();
+    initZeusChat();
     renderMissions();
     renderAchievements();
     await renderAdvancedStats();
