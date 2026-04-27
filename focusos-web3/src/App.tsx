@@ -8,6 +8,7 @@ import Home from "./components/Home";
 import NavigationDrawer, { NavSection } from "./components/NavigationDrawer";
 import Onboarding from "./components/Onboarding";
 import SecondaryPanel, { SecondarySection } from "./components/SecondaryPanel";
+import ZeusHologram from "./components/ZeusHologram/ZeusHologram";
 import { useWeb3 } from "./Web3Provider";
 import ZeusAvatar, { ZeusAvatarState, zeusAvatarStates } from "./ZeusAvatar";
 
@@ -52,6 +53,7 @@ export default function App() {
   const [selectedNavSection, setSelectedNavSection] = useState<NavSection | null>(null);
   const [selectedSecondaryPanel, setSelectedSecondaryPanel] = useState<SecondarySection | null>(null);
   const [isProMode, setIsProMode] = useState(false); // ← Progressive Disclosure
+  const [currentTab, setCurrentTab] = useState<NavSection | "focus">("focus"); // ← Zeus tracking
 
   // Health/Web3
   const [waterSlotsUsed, setWaterSlotsUsed] = useState(0);
@@ -249,6 +251,7 @@ export default function App() {
             onSelectSection={(section) => {
               setSelectedNavSection(section);
               setSelectedSecondaryPanel(section as SecondarySection);
+              setCurrentTab(section as NavSection); // ← Track for Zeus
             }}
             isMobile={false}
             isSessionRunning={sessionRunning}
@@ -310,6 +313,14 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ⭐ ZEUS HOLOGRAM - Persistent assistant */}
+        <ZeusHologram
+          currentTab={currentTab === "focus" ? "focus" : currentTab}
+          sessionActive={sessionRunning}
+          streakDays={12}
+          lastSessionDuration={sessionMinutes}
+        />
       </main>
     );
   }
@@ -361,6 +372,7 @@ export default function App() {
           onSelectSection={(section) => {
             setSelectedNavSection(section);
             setSelectedSecondaryPanel(section as SecondarySection);
+            setCurrentTab(section as NavSection); // ← Track for Zeus
           }}
           isMobile={true}
           isSessionRunning={sessionRunning}
@@ -409,6 +421,11 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
-  );
-}
+
+      {/* ⭐ ZEUS HOLOGRAM - Persistent assistant (Mobile) */}
+      <ZeusHologram
+        currentTab={currentTab === "focus" ? "focus" : currentTab}
+        sessionActive={sessionRunning}
+        streakDays={12}
+        lastSessionDuration={sessionMinutes}
+      />

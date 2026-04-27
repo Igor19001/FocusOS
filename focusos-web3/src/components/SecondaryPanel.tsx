@@ -74,6 +74,10 @@ export default function SecondaryPanel({
   const renderContent = () => {
     switch (section) {
       case "stats":
+        // Empty state for new users
+        const sessionsCompleted = totalSessions || 0;
+        const isNewUser = sessionsCompleted < 5;
+
         return (
           <motion.div
             variants={panelVariants}
@@ -83,45 +87,96 @@ export default function SecondaryPanel({
           >
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
               <BarChart3 size={24} className="text-cyan-400" />
-              Your Focus Statistics
+              Twoje Statystyki Skupienia
             </h3>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
-                <div className="text-2xl font-bold text-cyan-400">{totalSessions}</div>
-                <div className="text-xs text-slate-400 mt-1">Total Sessions</div>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
-                <div className="text-2xl font-bold text-blue-400">{Math.floor(totalMinutes / 60)}h</div>
-                <div className="text-xs text-slate-400 mt-1">Total Hours</div>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
-                <div className="text-2xl font-bold text-green-400">{bestStreak}</div>
-                <div className="text-xs text-slate-400 mt-1">Day Streak</div>
-              </div>
-            </div>
+            {isNewUser && sessionsCompleted === 0 ? (
+              // Complete empty state for brand new users
+              <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 text-center space-y-4">
+                <div className="text-5xl opacity-50">📊</div>
+                <p className="text-slate-300 font-semibold">
+                  {t("stats_empty_title")}
+                </p>
+                <p className="text-sm text-slate-500">
+                  Twoja pierwsza sesja uruchomi proces zbierania danych.
+                </p>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-              <h4 className="font-semibold text-slate-200 mb-3">Weekly Breakdown</h4>
-              <div className="space-y-2">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
-                  <div key={day} className="flex items-center gap-2">
-                    <span className="w-8 text-xs text-slate-400">{day}</span>
-                    <div className="flex-1 h-6 rounded bg-slate-800 relative overflow-hidden">
+                {/* Progress bar to first session */}
+                <div className="mt-6 space-y-2">
+                  <div className="text-xs text-slate-400 flex justify-between">
+                    <span>Sesji do odblokowania statystyk</span>
+                    <span>0/5</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Stats cards */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
+                    <div className="text-2xl font-bold text-cyan-400">{sessionsCompleted}</div>
+                    <div className="text-xs text-slate-400 mt-1">Sesji</div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-400">{Math.floor((totalMinutes || 0) / 60)}h</div>
+                    <div className="text-xs text-slate-400 mt-1">Godzin</div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-center">
+                    <div className="text-2xl font-bold text-green-400">{bestStreak || 0}</div>
+                    <div className="text-xs text-slate-400 mt-1">Streak</div>
+                  </div>
+                </div>
+
+                {/* Weekly breakdown */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+                  <h4 className="font-semibold text-slate-200 mb-3">Rozkład tygodnia</h4>
+                  <div className="space-y-2">
+                    {["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"].map((day) => (
+                      <div key={day} className="flex items-center gap-2">
+                        <span className="w-8 text-xs text-slate-400">{day}</span>
+                        <div className="flex-1 h-6 rounded bg-slate-800 relative overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded"
+                            style={{ width: `${Math.random() * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-slate-400 w-12 text-right">
+                          {Math.floor(Math.random() * 120)}m
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Progress to unlock more features */}
+                {isNewUser && sessionsCompleted > 0 && sessionsCompleted < 5 && (
+                  <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-4 space-y-2">
+                    <div className="text-sm font-semibold text-cyan-100">
+                      🔒 Rozblokowanie zaawansowanych statystyk
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {t("stats_progress", `${5 - sessionsCompleted} sesji do odblokowania`)}
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded"
-                        style={{ width: `${Math.random() * 100}%` }}
+                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
+                        style={{ width: `${(sessionsCompleted / 5) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs text-slate-400">{Math.floor(Math.random() * 120)}min</span>
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
 
-            <button className="w-full py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-cyan-500 hover:text-cyan-100 transition text-sm font-semibold">
-              View Detailed Analytics →
-            </button>
+                <button className="w-full py-2 rounded-lg border border-slate-700 text-slate-300 hover:border-cyan-500 hover:text-cyan-100 transition text-sm font-semibold">
+                  Szczegółowa analityka →
+                </button>
+              </>
+            )}
           </motion.div>
         );
 
