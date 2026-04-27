@@ -103,6 +103,7 @@
     </div>
   </div>
 
+<<<<<<< Updated upstream
   <!-- Navigation -->
   <div class="sidebar-section">
     <div class="sidebar-section-label">Nawigacja</div>
@@ -149,6 +150,164 @@
       <div class="leaderboard-strip">
         <div class="lb-title">You vs world average</div>
         <div id="lbRows"></div>
+=======
+    <section class="panel panel--web3 hidden" id="web3Panel">
+      <div class="panel-label">Panel Web3</div>
+      <div class="web3-grid">
+        <div><span class="web3-k">Portfel</span><span class="web3-v" id="walletAddressView">Niepołączono</span></div>
+        <div><span class="web3-k">Sieć</span><span class="web3-v">Monad Testnet (symulacja)</span></div>
+        <div><span class="web3-k">Stakowane</span><span class="web3-v" id="stakedAmountView">0 FCS</span></div>
+        <div><span class="web3-k">FCS Balance</span><span class="web3-v" id="fcsBalanceView">0 FCS</span></div>
+      </div>
+      <div class="web3-actions">
+        <button class="btn-secondary" id="btnStakeTokens">Stakuj tokeny</button>
+        <button class="btn-secondary" id="btnBurnTokens">Spal tokeny</button>
+        <button class="btn-secondary" id="btnSaveToChain">Zapisz postęp on-chain</button>
+        <button class="btn-secondary" id="btnClaimFCS">Claim 100 FCS</button>
+        <button class="btn-secondary" id="btnConnectWallet">Connect Wallet</button>
+      </div>
+    </section>
+
+    <section class="panel panel--tracker-main">
+      <div class="focus-flow-shell">
+        <div class="panel-label">Aktywna sesja</div>
+        <div class="focus-hero">
+          <div class="focus-hero-copy">
+            <span class="focus-hero-kicker" id="focusHeroKicker">Focus flow</span>
+            <h1 class="tracker-hero-title">Buduj prawdziwe tempo skupienia, jedna porządna sesja na raz.</h1>
+            <p class="tracker-hero-sub">Śledź pracę, chroń streak i utrzymuj cały system czytelny na każdym ekranie.</p>
+          </div>
+          <div class="focus-hero-status">
+            <div class="tracker-status">
+              <div class="status-dot idle" id="statusDot"></div>
+              <span id="statusLabel">Bezczynny</span>
+            </div>
+            <div class="streak-banner" id="streakBanner">
+              <span class="streak-flame">*</span>
+              <span id="streakText">Streak: 0 dni</span>
+              <span id="bestStreakText">Best: 0 dni</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-start" id="quickStartChecklist">
+          <div class="quick-start-head">
+            <div>
+              <div class="quick-start-title">Szybki start</div>
+              <p class="quick-start-copy" id="quickStartSummary">3 kroki do pierwszej czystej sesji.</p>
+            </div>
+            <span class="quick-start-badge" id="quickStartBadge">Onboarding</span>
+          </div>
+          <ol class="quick-start-list">
+            <li id="checkAddTask">Dodaj zadanie</li>
+            <li id="checkStartTask">Uruchom sesję</li>
+            <li id="checkCompleteTask">Zamknij pierwszą sesję</li>
+          </ol>
+        </div>
+
+        <div class="focus-flow-grid">
+          <section class="focus-stage-card focus-stage-card--task" data-flow-step="task">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">01</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusTaskTitle">Dodaj jedno konkretne zadanie</h2>
+                <p class="focus-stage-copy" id="focusTaskCopy">Nazwij najbliższy blok pracy tak, żeby od razu było jasne, co domykasz.</p>
+              </div>
+            </div>
+            <div class="input-group">
+              <input type="text" id="taskName" placeholder="Nad czym teraz pracujesz?" maxlength="80" autocomplete="off"/>
+              <select id="taskCategory">
+                <option value="work">Praca</option>
+                <option value="coding">Kodowanie</option>
+                <option value="learning">Nauka</option>
+                <option value="planning">Planowanie</option>
+                <option value="reading">Czytanie</option>
+                <option value="exercise">Sport</option>
+                <option value="break">Przerwa</option>
+                <option value="entertainment">Rozrywka</option>
+                <option value="social_media">Social Media</option>
+                <option value="distraction">Rozproszenie</option>
+                <option value="other">Inne</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="focus-stage-card focus-stage-card--start" data-flow-step="start">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">02</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusStartTitle">Uruchom jedną dominującą sesję</h2>
+                <p class="focus-stage-copy" id="focusStartCopy">Najpierw włącz sesję. Reszta interfejsu dopasuje się do bieżącej pracy.</p>
+              </div>
+            </div>
+            <div class="btn-row btn-row--hero">
+              <button class="btn-start" id="btnStart">Uruchom sesję skupienia</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroStart">Start cyklu</button>
+            </div>
+            <p class="focus-stage-hint" id="flowPrimaryHint">Dodaj zadanie, a potem od razu wciśnij główny przycisk startu.</p>
+            <div class="focus-cycle-card panel--focus-cycle">
+              <div class="focus-cycle-card__head">
+                <div>
+                  <div class="panel-label">Prowadzony cykl</div>
+                  <p class="panel-copy">Ustaw sprint i krótką regenerację, jeśli chcesz wejść od razu w gotowy rytm.</p>
+                </div>
+                <div id="pomodoroState" class="focus-cycle-state">Sprint skupienia - 25:00</div>
+              </div>
+              <div class="focus-cycle-grid">
+                <label class="focus-cycle-field">
+                  <span>Skupienie</span>
+                  <input class="form-input" id="pomodoroFocusMin" type="number" min="10" max="90" value="25" placeholder="Min. skupienia"/>
+                </label>
+                <label class="focus-cycle-field">
+                  <span>Regeneracja</span>
+                  <input class="form-input" id="pomodoroBreakMin" type="number" min="3" max="30" value="5" placeholder="Min. przerwy"/>
+                </label>
+                <button class="sound-toggle focus-cycle-btn" id="btnFocusSound" type="button" aria-pressed="true">
+                  <span class="sound-toggle__icon" id="focusSoundIcon">ON</span>
+                  <span class="sound-toggle__text" id="focusSoundLabel">Dźwięk włączony</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="focus-stage-card focus-stage-card--complete" data-flow-step="complete">
+            <div class="focus-stage-top">
+              <span class="focus-stage-index">03</span>
+              <div>
+                <h2 class="focus-stage-title" id="focusCompleteTitle">Zamknij sesję czysto</h2>
+                <p class="focus-stage-copy" id="focusCompleteCopy">Gdy praca jest zrobiona, zakończ sesję i zapisz postęp, streak oraz XP.</p>
+              </div>
+            </div>
+            <div class="active-task-card" id="activeCard" style="display:none">
+              <div class="atc-name" id="activeName">—</div>
+              <div class="atc-meta">
+                <span class="atc-cat" id="activeCat">—</span>
+                <span class="atc-timer" id="activeTimer">00:00:00</span>
+              </div>
+              <div class="fatigue-wrap" id="fatigueBarWrap">
+                <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
+                <div class="fatigue-meta">
+                  <span id="fatigueLabel"></span>
+                  <span id="fatigueHint">Zmęczenie rośnie</span>
+                </div>
+              </div>
+            </div>
+            <div class="focus-completion-actions">
+              <button class="btn-stop" id="btnStop" disabled>Zakończ sesję</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnPomodoroSkip">Następna faza</button>
+              <button class="btn-secondary focus-cycle-btn" id="btnDeepWorkMode">Głębokie skupienie</button>
+            </div>
+            <p class="focus-stage-hint focus-stage-hint--muted" id="flowCompletionHint">Krótsze niż 15 minut zatrzymanie liczy się jako zerwana próba.</p>
+          </section>
+        </div>
+
+        <p class="tracker-helper">Jedna ukończona sesja dziennie podtrzymuje streak. Narzędzia poniżej pomagają utrzymać rytm bez zgadywania.</p>
+
+        <div class="tracker-inline-actions">
+          <button class="btn-secondary" id="btnRefresh">Odśwież dane</button>
+          <button class="btn-secondary" id="btnDetailedReport">Szczegółowy raport</button>
+        </div>
+>>>>>>> Stashed changes
       </div>
     </section>
   </div>
@@ -1292,6 +1451,7 @@
 </script>
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 <script src="db.js"></script>
 <script src="math.js"></script>
 <script src="app.js"></script>

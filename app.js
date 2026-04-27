@@ -35,6 +35,7 @@ const App = (() => {
     googleAccessToken: null,
     googleRequestMode: 'connect',
     stakedFCS:         0,
+    fcsBalance:        0,
     resetConfirmStep:  0,
     alarm: {
       time: null,
@@ -4013,10 +4014,83 @@ const App = (() => {
     showToast(t('noWalletChainSave'), 'info');
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // WEB3 WALLET + FCS TOKEN (ported from Web3Provider.tsx)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      showToast('Nie znaleziono portfela. Zainstaluj MetaMask.', 'warn');
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const addr = accounts?.[0] ?? null;
+      if (!addr) { showToast('Anulowano połączenie z portfelem.', 'warn'); return; }
+      S.walletAddress = addr;
+      S.appMode = 'monad';
+      localStorage.setItem(LS_KEYS.wallet, addr);
+      updateModeIndicator();
+      refreshConnectionViews();
+      updateFcsBalanceView();
+      showToast(`Połączono: ${addr.slice(0, 6)}...${addr.slice(-4)}`, 'success');
+    } catch (e) {
+      showToast(`Błąd połączenia: ${e?.message || e}`, 'warn');
+    }
+  }
+
+  function disconnectWallet() {
+    S.walletAddress = null;
+    S.appMode = 'local';
+    localStorage.removeItem(LS_KEYS.wallet);
+    updateModeIndicator();
+    refreshConnectionViews();
+    updateFcsBalanceView();
+    showToast('Rozłączono portfel.', 'info');
+  }
+
+  async function claimTestFCS() {
+    S.fcsBalance += 100;
+    updateFcsBalanceView();
+    showToast('Otrzymano 100 FCS (testnet faucet).', 'success');
+  }
+
+  async function buyFCS(amount) {
+    if (!amount || amount <= 0) return;
+    const TREASURY_WALLET = '0x0000000000000000000000000000000000000000';
+    if (window.ethereum && S.walletAddress && typeof ethers !== 'undefined') {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const tx = await signer.sendTransaction({
+          to: TREASURY_WALLET,
+          value: ethers.parseEther((0.0001 * amount).toString()),
+        });
+        await tx.wait();
+      } catch (e) {
+        showToast(`Transakcja anulowana: ${e?.message || e}`, 'warn');
+        return;
+      }
+    }
+    S.fcsBalance += amount;
+    updateFcsBalanceView();
+    showToast(`Zakupiono ${amount} FCS.`, 'success');
+  }
+
+  function getFCSBalance() {
+    return S.fcsBalance;
+  }
+
+  function updateFcsBalanceView() {
+    if ($('fcsBalanceView')) $('fcsBalanceView').textContent = `${S.fcsBalance} FCS`;
+  }
+
   async function initModeSplash() {
     $('btnStakeTokens')?.addEventListener('click', stakeTokens);
     $('btnBurnTokens')?.addEventListener('click', burnTokens);
     $('btnSaveToChain')?.addEventListener('click', saveProgressToChain);
+    $('btnClaimFCS')?.addEventListener('click', claimTestFCS);
+    $('btnConnectWallet')?.addEventListener('click', connectWallet);
     $('btnModeLocal')?.addEventListener('click', async () => {
       await selectMode('local');
     });
