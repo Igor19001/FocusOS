@@ -5370,16 +5370,21 @@ select.form-input,
   justify-content: center;
 }
 
-/* ── Tracker view: 2-column layout (stats left + focus core right) ─────── */
+/* ── Tracker view: 2-column layout (stats left + right wrapper) ────────── */
 .view--tracker {
+  display: grid !important;
   grid-template-columns: 260px minmax(0, 1fr) !important;
+  grid-template-rows: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
   align-items: start;
   gap: 24px;
 }
 
 .panel--qs {
-  grid-column: 1;
-  grid-row: 1 / span 3;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
   position: sticky;
   top: 94px;
   align-self: start;
@@ -5390,14 +5395,13 @@ select.form-input,
   grid-template-columns: 1fr 1fr;
 }
 
-.focus-core {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.panel--quick-actions,
-.panel--log {
-  grid-column: 2;
+.tracker-right-col {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 @media (max-width: 860px) {
@@ -5409,10 +5413,9 @@ select.form-input,
     grid-row: auto !important;
     position: static;
   }
-  .focus-core,
-  .panel--quick-actions,
-  .panel--log {
+  .tracker-right-col {
     grid-column: 1 !important;
+    grid-row: auto !important;
   }
 }
 
