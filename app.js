@@ -889,6 +889,7 @@ const App = (() => {
     if (view === 'settings') loadSettingsView();
     if (view === 'profile') loadProfileView();
   }
+  window.switchTab = switchTab;
 
   function getLS(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
