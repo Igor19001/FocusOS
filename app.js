@@ -4103,13 +4103,14 @@ const App = (() => {
     refreshConnectionViews();
   }
 
-  function renderList(containerId, items, emptyText, onDelete) {
+  function renderList(containerId, items, emptyText, onDelete, onToggle) {
     const containerIds = Array.isArray(containerId) ? containerId : [containerId];
     const html = !items.length
       ? `<div class="health-empty">${emptyText}</div>`
       : items.map((it, idx) => `
       <div class="health-log-item">
-        <span style="${it.done ? 'text-decoration:line-through;opacity:.7' : ''}">${escH(it.text)}</span>
+        ${onToggle ? `<input type="checkbox" class="day-plan-check" data-chk="${idx}" ${it.done ? 'checked' : ''}>` : ''}
+        <span style="${it.done ? 'text-decoration:line-through;opacity:.5;' : ''}flex:1">${escH(it.text)}</span>
         <span class="log-time">${new Date(it.ts).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})}</span>
         <button class="log-del" data-del="${idx}">×</button>
       </div>
@@ -4119,6 +4120,7 @@ const App = (() => {
       if (!el) return;
       el.innerHTML = html;
       el.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', e => onDelete(Number(e.currentTarget.dataset.del))));
+      if (onToggle) el.querySelectorAll('[data-chk]').forEach(chk => chk.addEventListener('change', e => onToggle(Number(e.currentTarget.dataset.chk), e.currentTarget.checked)));
     });
   }
 
@@ -4127,6 +4129,10 @@ const App = (() => {
     const items = getLS(key, []);
     renderList(['dayPlanList', 'dayPlanListProfile'], items, t('dayPlanEmpty'), idx => {
       items.splice(idx, 1);
+      setLS(key, items);
+      loadDayPlan();
+    }, (idx, checked) => {
+      items[idx].done = checked;
       setLS(key, items);
       loadDayPlan();
     });
@@ -4394,17 +4400,29 @@ const App = (() => {
   }
 
   function initExtendedSections() {
-    const bindAddDayPlan = (btnId, inputId) => $(btnId)?.addEventListener('click', () => {
-      const input = $(inputId);
-      const text = input.value.trim();
-      if (!text) return;
-      const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
-      const items = getLS(key, []);
-      items.unshift({ text, ts: Date.now(), done: false });
-      setLS(key, items);
-      input.value = '';
-      loadDayPlan();
-    });
+    const bindAddDayPlan = (btnId, inputId) => {
+      const doAdd = () => {
+        const input = $(inputId);
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) {
+          input.classList.add('input-error');
+          const prev = input.placeholder;
+          input.placeholder = 'Wpisz treść, aby dodać punkt planu...';
+          setTimeout(() => { input.classList.remove('input-error'); input.placeholder = prev; }, 2000);
+          input.focus();
+          return;
+        }
+        const key = `${LS_KEYS.dayPlan}:${DB.toDateStr()}`;
+        const items = getLS(key, []);
+        items.unshift({ text, ts: Date.now(), done: false });
+        setLS(key, items);
+        input.value = '';
+        loadDayPlan();
+      };
+      $(btnId)?.addEventListener('click', doAdd);
+      $(inputId)?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
+    };
     bindAddDayPlan('btnAddDayPlan', 'dayPlanInput');
     bindAddDayPlan('btnAddDayPlanProfile', 'dayPlanInputProfile');
     const bindAddSleepNote = (btnId, inputId) => $(btnId)?.addEventListener('click', () => {
@@ -4829,18 +4847,44 @@ const App = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // MODAL BEHAVIORS — backdrop click & Escape
+  // ─────────────────────────────────────────────────────────────────────────
+
+  function initModalBehaviors() {
+    ['toxicModal', 'welcomeModal', 'resetDataModal'].forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+    });
+    const oo = $('onboardingOverlay');
+    if (oo) oo.addEventListener('click', e => { if (e.target === oo) oo.style.display = 'none'; });
+    const df = $('deepFocusOverlay');
+    if (df) df.addEventListener('click', e => { if (e.target === df) setDeepWorkMode(false); });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // KEYBOARD SHORTCUTS
   // ─────────────────────────────────────────────────────────────────────────
 
   function initKeyboard() {
     document.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-      if (e.key === 'Escape' && document.body.classList.contains('deep-work')) {
-        setDeepWorkMode(false);
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal.open');
+        if (openModal) { openModal.classList.remove('open'); return; }
+        if ($('tutorialOverlay')?.style.display === 'block') {
+          $('tutorialOverlay').style.display = 'none';
+          localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true');
+          return;
+        }
+        if ($('onboardingOverlay')?.style.display && $('onboardingOverlay').style.display !== 'none') {
+          $('onboardingOverlay').style.display = 'none';
+          return;
+        }
+        if (document.body.classList.contains('deep-work')) { setDeepWorkMode(false); return; }
+        if (!$('btnStop')?.disabled) handleStop();
         return;
       }
       if (e.key === 'Enter' && !$('btnStart').disabled) handleStart();
-      if (e.key === 'Escape' && !$('btnStop').disabled) handleStop();
       if (e.key === '1') switchTab('tracker');
       if (e.key === '2') switchTab('daily');
       if (e.key === '3') switchTab('weekly');
@@ -4904,6 +4948,7 @@ const App = (() => {
     initAlarmClock();
     initPwaInstall();
     initGoogleBackup();
+    initModalBehaviors();
     $('levelRewardModal')?.addEventListener('click', e => {
       if (e.target === $('levelRewardModal')) $('levelRewardModal').classList.remove('open');
     });
@@ -4968,7 +5013,6 @@ const App = (() => {
       if (S.currentView === 'tracker') await loadQuickStats();
     }, 30000);
 
-    console.log('%c⚡ FocusOS 2.0 PWA — no backend required', 'color:#63ffb4;font-family:monospace;font-size:14px;');
   }
 
   function disconnectGoogleFlow() {

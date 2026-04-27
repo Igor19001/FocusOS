@@ -4,7 +4,7 @@
  * - Network First: dokumenty i reszta żądań (z fallbackiem offline)
  */
 
-const SW_VERSION = 'focusos-v2';
+const SW_VERSION = 'focusos-v3';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const OFFLINE_URL = '/index.html';
@@ -48,6 +48,8 @@ function isCacheFirstAsset(request) {
   const url = new URL(request.url);
   const pathname = url.pathname.toLowerCase();
   return (
+    pathname.endsWith('.css') ||
+    pathname.endsWith('.js') ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||
     pathname.endsWith('.jpeg') ||
