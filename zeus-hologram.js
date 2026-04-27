@@ -652,39 +652,28 @@ const ZeusHologram = (() => {
     isExpanded ? collapse() : expand();
   }
 
-  // Expand: open right sidebar and scroll to Zeus section
+  // Expand: show hologram panel
   function expand() {
-    const sidebar = document.getElementById('appSidebar');
-    const backdrop = document.getElementById('sidebarBackdrop');
+    const panel = document.getElementById('zeusHologramPanel');
     const orb = document.getElementById('zeusHologramOrb');
-    if (sidebar) {
-      sidebar.classList.add('open');
-      sidebar.setAttribute('aria-hidden', 'false');
-      if (backdrop) backdrop.classList.add('visible');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => {
-        document.getElementById('zeusCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 340);
+    if (panel) {
+      panel.classList.add('expanded');
+      orb?.setAttribute('aria-expanded', 'true');
+      isExpanded = true;
+      localStorage.setItem(CONFIG.STORAGE_KEY, 'true');
     }
-    orb?.setAttribute('aria-expanded', 'true');
-    isExpanded = true;
-    localStorage.setItem(CONFIG.STORAGE_KEY, 'true');
   }
 
-  // Collapse: close right sidebar
+  // Collapse: hide hologram panel
   function collapse() {
-    const sidebar = document.getElementById('appSidebar');
-    const backdrop = document.getElementById('sidebarBackdrop');
+    const panel = document.getElementById('zeusHologramPanel');
     const orb = document.getElementById('zeusHologramOrb');
-    if (sidebar) {
-      sidebar.classList.remove('open');
-      sidebar.setAttribute('aria-hidden', 'true');
-      if (backdrop) backdrop.classList.remove('visible');
-      document.body.style.overflow = '';
+    if (panel) {
+      panel.classList.remove('expanded');
+      orb?.setAttribute('aria-expanded', 'false');
+      isExpanded = false;
+      localStorage.setItem(CONFIG.STORAGE_KEY, 'false');
     }
-    orb?.setAttribute('aria-expanded', 'false');
-    isExpanded = false;
-    localStorage.setItem(CONFIG.STORAGE_KEY, 'false');
   }
 
   // Observe tab changes
