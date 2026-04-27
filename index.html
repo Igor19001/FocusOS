@@ -118,40 +118,6 @@
     </nav>
   </div>
 
-  <!-- XP + Quick Stats -->
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Poziom i postęp</div>
-    <section class="panel panel--qs">
-      <div class="xp-bar-wrap" id="xpBarWrap">
-        <div class="xp-bar-header">
-          <span class="xp-level" id="xpLevel">Lv.1</span>
-          <span class="xp-label" id="xpLabel">0 / 1000 XP</span>
-          <span class="xp-title" id="xpTitle">Novice</span>
-        </div>
-        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
-      </div>
-      <div class="panel-label" style="margin-top:14px">Today at a glance</div>
-      <div class="qs-grid">
-        <div class="qs-card"><span class="qs-value" id="qsTodayTime">—</span><span class="qs-key">Focus time</span></div>
-        <div class="qs-card"><span class="qs-value" id="qsEfficiency">—</span><span class="qs-key">Efficiency</span></div>
-        <div class="qs-card"><span class="qs-value" id="qsTaskCount">—</span><span class="qs-key">Sessions</span></div>
-        <div class="qs-card"><span class="qs-value" id="qsStreak">0</span><span class="qs-key">Streak</span></div>
-        <div class="qs-card"><span id="qsEMA" class="qs-ema">—</span><span class="qs-key">Trend</span></div>
-      </div>
-      <div class="goal-wrap" id="goalWrap" style="margin-top:12px">
-        <div class="meal-input-row" style="margin-bottom:8px">
-          <input class="form-input" id="dailyGoalMin" type="number" min="30" max="960" step="15" placeholder="Daily goal (min)" style="width:170px"/>
-          <button class="btn-secondary" id="btnSaveGoal" style="width:auto;padding:10px 14px">Save Goal</button>
-        </div>
-        <div class="xp-track"><div class="xp-fill" id="goalFill" style="width:0%"></div></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="goalLabel">No goal set.</div>
-      </div>
-      <div class="leaderboard-strip">
-        <div class="lb-title">You vs world average</div>
-        <div id="lbRows"></div>
-      </div>
-    </section>
-  </div>
 
   <!-- Zeus lives in the bottom-left orb panel (zeus-hologram.js) -->
   <!-- Placeholder keeps IDs accessible to app.js without rendering in sidebar -->
@@ -311,7 +277,40 @@
        ───────────────────────────────────────────────────────────────────── -->
   <div class="view view--tracker" data-view="tracker">
 
-    <!-- ── FOCUS CORE: minimal hero ───────────────────────────────────────── -->
+    <!-- ── LEFT: XP + Stats ─────────────────────────────────────────── -->
+    <aside class="panel panel--qs">
+      <div class="sidebar-section-label">Poziom i postęp</div>
+      <div class="xp-bar-wrap" id="xpBarWrap">
+        <div class="xp-bar-header">
+          <span class="xp-level" id="xpLevel">Lv.1</span>
+          <span class="xp-label" id="xpLabel">0 / 1000 XP</span>
+          <span class="xp-title" id="xpTitle">Novice</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+      </div>
+      <div class="panel-label" style="margin-top:14px">Dziś</div>
+      <div class="qs-grid">
+        <div class="qs-card"><span class="qs-value" id="qsTodayTime">—</span><span class="qs-key">Czas skupienia</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsEfficiency">—</span><span class="qs-key">Efektywność</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsTaskCount">—</span><span class="qs-key">Sesje</span></div>
+        <div class="qs-card"><span class="qs-value" id="qsStreak">0</span><span class="qs-key">Streak</span></div>
+        <div class="qs-card"><span id="qsEMA" class="qs-ema">—</span><span class="qs-key">Trend</span></div>
+      </div>
+      <div class="goal-wrap" id="goalWrap" style="margin-top:12px">
+        <div class="meal-input-row" style="margin-bottom:8px">
+          <input class="form-input" id="dailyGoalMin" type="number" min="30" max="960" step="15" placeholder="Dzienny cel (min)" style="width:170px"/>
+          <button class="btn-secondary" id="btnSaveGoal" style="width:auto;padding:10px 14px">Zapisz cel</button>
+        </div>
+        <div class="xp-track"><div class="xp-fill" id="goalFill" style="width:0%"></div></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="goalLabel">Brak celu.</div>
+      </div>
+      <div class="leaderboard-strip">
+        <div class="lb-title">Ty vs średnich</div>
+        <div id="lbRows"></div>
+      </div>
+    </aside>
+
+    <!-- ── FOCUS CORE: minimal hero ──────────────────────────────────────────── -->
     <section class="focus-core" id="focusCore">
 
       <!-- Status + Streak row -->

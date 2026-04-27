@@ -5286,10 +5286,56 @@ select.form-input,
   }
 }
 
+/* ── Tracker view: 2-column layout (stats left + focus core right) ─────── */
+.view--tracker {
+  grid-template-columns: 260px minmax(0, 1fr) !important;
+  align-items: start;
+  gap: 24px;
+}
+
+.panel--qs {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  position: sticky;
+  top: 94px;
+  align-self: start;
+  margin: 0;
+}
+
+.panel--qs .qs-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.focus-core {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.panel--quick-actions,
+.panel--log {
+  grid-column: 2;
+}
+
+@media (max-width: 860px) {
+  .view--tracker {
+    grid-template-columns: 1fr !important;
+  }
+  .panel--qs {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    position: static;
+  }
+  .focus-core,
+  .panel--quick-actions,
+  .panel--log {
+    grid-column: 1 !important;
+  }
+}
+
 /* ── Quick-Start Checklist: floating side panel ─────────────────────────── */
 #quickStartChecklist {
   position: fixed;
-  left: 16px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 600;
