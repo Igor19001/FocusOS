@@ -672,34 +672,62 @@ const App = (() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const glyphs = '01アイウエオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const fontSize = 14;
-    let cols = 0;
-    let drops = [];
+    const bolts = [];
+
+    function makeBolt(w, h, randomY) {
+      const size = 16 + Math.random() * 22;
+      return {
+        x:     Math.random() * w,
+        y:     randomY ? Math.random() * h : -(size * 3 + Math.random() * h * 0.6),
+        speed: 1.4 + Math.random() * 3.2,
+        size,
+        alpha: 0.14 + Math.random() * 0.34,
+        glow:  Math.random() > 0.62,
+        blue:  Math.random() > 0.78,
+      };
+    }
+
+    function drawBolt(b) {
+      ctx.save();
+      ctx.globalAlpha = b.alpha;
+      ctx.translate(b.x, b.y);
+      const w = b.size * 0.5;
+      const h = b.size;
+      if (b.glow) {
+        ctx.shadowColor = b.blue ? 'rgba(122,179,255,0.9)' : 'rgba(244,196,106,0.9)';
+        ctx.shadowBlur  = 16;
+      }
+      ctx.beginPath();
+      ctx.moveTo( w * 0.58, 0);
+      ctx.lineTo( 0,         h * 0.46);
+      ctx.lineTo( w * 0.36,  h * 0.46);
+      ctx.lineTo(-w * 0.22,  h);
+      ctx.lineTo( w * 0.04,  h * 0.56);
+      ctx.lineTo(-w * 0.3,   h * 0.56);
+      ctx.lineTo( w * 0.58,  0);
+      ctx.closePath();
+      ctx.fillStyle = b.blue
+        ? (b.glow ? '#7ab3ff' : 'rgba(122,179,255,0.65)')
+        : (b.glow ? '#f4c46a' : 'rgba(244,196,106,0.65)');
+      ctx.fill();
+      ctx.restore();
+    }
 
     const resize = () => {
-      canvas.width = window.innerWidth;
+      canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
-      cols = Math.floor(canvas.width / fontSize);
-      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -80));
+      bolts.length  = 0;
+      const count = Math.max(14, Math.floor(canvas.width / 72));
+      for (let i = 0; i < count; i++) bolts.push(makeBolt(canvas.width, canvas.height, true));
     };
 
     const draw = () => {
-      ctx.fillStyle = 'rgba(9, 13, 24, 0.075)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.font = `${fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono')}`;
-      ctx.fillStyle = 'rgba(244, 196, 106, 0.42)';
-
-      for (let i = 0; i < drops.length; i++) {
-        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
-        ctx.fillText(char, x, y);
-        if (y > canvas.height && Math.random() > 0.985) drops[i] = 0;
-        drops[i] += 0.23; // slow vertical movement
-      }
-
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bolts.forEach(b => {
+        drawBolt(b);
+        b.y += b.speed;
+        if (b.y > canvas.height + b.size * 2) Object.assign(b, makeBolt(canvas.width, canvas.height, false));
+      });
       requestAnimationFrame(draw);
     };
 
