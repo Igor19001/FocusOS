@@ -462,21 +462,6 @@
       <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
     </section>
 
-    <!-- Ostatnie sesje -->
-    <section class="panel panel--log" style="margin-top:16px">
-      <div class="panel-label">Ostatnie sesje</div>
-      <div class="panel-header">
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Dziś</button>
-          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">Wszystkie</button>
-          <button class="btn-refresh" id="btnRefreshLog" title="Odśwież">↻</button>
-        </div>
-      </div>
-      <div class="log-list" id="recentLog">
-        <div class="log-empty">Brak sesji. Uruchom pierwszą sesję skupienia.</div>
-      </div>
-    </section>
-
     <!-- Localization + JS anchors (hidden, IDs needed by app.js) -->
     <div class="fc-loc-anchors" aria-hidden="true">
       <span class="focus-hero-kicker" id="focusHeroKicker"></span>
@@ -495,6 +480,22 @@
     </div>
 
     </div><!-- /tracker-right-col -->
+
+    <!-- Ostatnie sesje (prawa kolumna) -->
+    <section class="panel panel--log tracker-log-col">
+      <div class="panel-label">Ostatnie sesje</div>
+      <div class="panel-header">
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-secondary" id="btnFilterToday" style="width:auto;padding:6px 10px">Dziś</button>
+          <button class="btn-secondary" id="btnFilterAll" style="width:auto;padding:6px 10px">Wszystkie</button>
+          <button class="btn-refresh" id="btnRefreshLog" title="Odśwież">↻</button>
+        </div>
+      </div>
+      <div class="log-list" id="recentLog">
+        <div class="log-empty">Brak sesji. Uruchom pierwszą sesję skupienia.</div>
+      </div>
+    </section>
+
   </div><!-- /view--tracker -->
 
 
