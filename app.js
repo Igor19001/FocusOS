@@ -72,6 +72,8 @@ const App = (() => {
     dayPlan: 'focusos_day_plan',
     socials: 'focusos_socials',
     wallet: 'focusos_wallet_address',
+    fcsBalance: 'focusos_fcs_balance',
+    stakedFCS: 'focusos_staked_fcs',
     google: 'focusos_google_connected',
     routines: 'focusos_routines',
     streakMeta: 'focusos_streak_meta',
@@ -653,11 +655,11 @@ const App = (() => {
     };
 
     const draw = () => {
-      ctx.fillStyle = 'rgba(4, 7, 4, 0.075)';
+      ctx.fillStyle = 'rgba(9, 13, 24, 0.075)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.font = `${fontSize}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-mono')}`;
-      ctx.fillStyle = 'rgba(57, 255, 20, 0.55)';
+      ctx.fillStyle = 'rgba(244, 196, 106, 0.42)';
 
       for (let i = 0; i < drops.length; i++) {
         const char = glyphs[Math.floor(Math.random() * glyphs.length)];
@@ -3986,7 +3988,8 @@ const App = (() => {
   async function stakeTokens() {
     if (S.appMode !== 'monad') return showToast(t('monadOnlyStake'), 'warn');
     S.stakedFCS += 25;
-    $('stakedAmountView').textContent = `${S.stakedFCS} FCS`;
+    localStorage.setItem(LS_KEYS.stakedFCS, String(S.stakedFCS));
+    if ($('stakedAmountView')) $('stakedAmountView').textContent = `${S.stakedFCS} FCS`;
     showToast(t('stakeSuccess', { total: S.stakedFCS }), 'success');
   }
 
@@ -4082,6 +4085,7 @@ const App = (() => {
   }
 
   function updateFcsBalanceView() {
+    localStorage.setItem(LS_KEYS.fcsBalance, String(S.fcsBalance));
     if ($('fcsBalanceView')) $('fcsBalanceView').textContent = `${S.fcsBalance} FCS`;
   }
 
@@ -4919,6 +4923,8 @@ const App = (() => {
     await syncUserProgress();
     S.zeusStyle = getLS(LS_KEYS.zeusStyle, 'balanced');
     S.walletAddress = localStorage.getItem(LS_KEYS.wallet) || null;
+    S.fcsBalance = Number(localStorage.getItem(LS_KEYS.fcsBalance)) || 0;
+    S.stakedFCS = Number(localStorage.getItem(LS_KEYS.stakedFCS)) || 0;
     S.googleConnected = localStorage.getItem(LS_KEYS.google) === '1';
     await initModeSplash();
     initMatrixRain();

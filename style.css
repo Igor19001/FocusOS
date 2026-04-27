@@ -1006,10 +1006,17 @@ body {
   line-height: 1.5;
 }
 
-.noise,
-.scanline,
+.noise {
+  display: block;
+  opacity: 0.06;
+}
+.scanline {
+  display: block;
+  opacity: 0.04;
+}
 #matrixRain {
-  display: none !important;
+  display: block !important;
+  opacity: 0.08;
 }
 
 .header {
@@ -1018,10 +1025,10 @@ body {
   left: 0;
   width: 260px;
   height: 100vh;
-  background: #fcfcfb;
-  border-right: 1px solid var(--border);
+  background: rgba(9, 13, 24, 0.97);
+  border-right: 1px solid rgba(255, 215, 138, 0.14);
   border-bottom: none;
-  backdrop-filter: none;
+  backdrop-filter: blur(18px);
   z-index: 30;
 }
 
@@ -1040,13 +1047,13 @@ body {
 }
 
 .logo-icon {
-  filter: none;
+  filter: drop-shadow(0 0 8px var(--accent));
 }
 
 .logo-title {
-  color: var(--text);
+  color: var(--accent);
   font-size: 18px;
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
   text-transform: none;
 }
 
@@ -1080,12 +1087,12 @@ body {
 
 .tab-btn:hover {
   color: var(--text);
-  background: #f3f4f6;
+  background: rgba(255,255,255,0.05);
 }
 
 .tab-btn.active {
-  background: #eef2ff;
-  color: #3730a3;
+  background: rgba(244, 196, 106, 0.14);
+  color: var(--accent);
   box-shadow: none;
 }
 
@@ -1215,8 +1222,8 @@ body {
 .input-group input,
 .input-group select,
 .form-input {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: rgba(20, 27, 46, 0.88);
+  border: 1px solid rgba(122, 179, 255, 0.22);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -1232,8 +1239,9 @@ body {
 .input-group input:focus,
 .input-group select:focus,
 .form-input:focus {
-  border-color: #c7d2fe;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: rgba(244, 196, 106, 0.5);
+  box-shadow: 0 0 0 3px rgba(244, 196, 106, 0.1);
+  outline: none;
 }
 
 .btn-start,
@@ -1342,18 +1350,19 @@ body {
 }
 
 .lb-row-you {
-  background: #f5f7ff;
+  background: rgba(244, 196, 106, 0.06);
+  border-radius: var(--radius);
 }
 
 .lb-bar-wrap {
   height: 8px;
   width: 120px;
-  background: #eef2f7;
+  background: rgba(255,255,255,0.06);
   border-radius: 999px;
 }
 
 .lb-bar {
-  background: #818cf8 !important;
+  background: linear-gradient(90deg, #7ab3ff, #f4c46a) !important;
   border-radius: 999px;
 }
 
@@ -1363,17 +1372,17 @@ body {
 }
 
 .log-item {
-  border: 1px solid #eceff3;
+  border: 1px solid var(--border);
   border-left-width: 1px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg3);
   transition: background-color 180ms ease, transform 180ms ease, border-color 180ms ease;
 }
 
 .log-item:hover {
-  background: #fafafa;
+  background: var(--bg4);
   transform: translateY(-1px);
-  border-color: #e5e7eb;
+  border-color: rgba(255, 215, 138, 0.2);
 }
 
 .log-item-name {
@@ -1387,16 +1396,17 @@ body {
 }
 
 .modal-card {
-  border: 1px solid #e5e7eb;
-  box-shadow: none;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
   border-radius: 12px;
 }
 
 .toast {
-  border: 1px solid #dbe3ff;
-  background: #ffffff;
-  color: #1f2937;
-  box-shadow: none;
+  border: 1px solid var(--border-hi);
+  background: var(--bg3);
+  color: var(--text);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 .btn-hamburger {
@@ -1430,7 +1440,7 @@ body {
 
 /* Accessibility and motion polish */
 :focus-visible {
-  outline: 2px solid #818cf8;
+  outline: 2px solid rgba(244, 196, 106, 0.7);
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -1580,9 +1590,9 @@ body {
 }
 
 .btn-secondary.active {
-  background: #eef2ff;
-  border-color: #c7d2fe;
-  color: #3730a3;
+  background: rgba(244, 196, 106, 0.12);
+  border-color: rgba(244, 196, 106, 0.45);
+  color: var(--accent);
 }
 
 #pomodoroState {
@@ -5082,6 +5092,131 @@ body.session-active .fc-timer-digits { animation: zenTimerPulse 4s ease-in-out i
 .app-sidebar .zeus-card {
   grid-template-columns: 1fr;
   overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Digital Olympus — Final Polish
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Form elements placeholder + option dark */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.input-group select option,
+.form-input option {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+/* Web3 actions grid 2-column layout */
+.web3-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.web3-actions .btn-secondary:first-child {
+  grid-column: 1 / -1;
+}
+
+/* Web3 grid row styling */
+.web3-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.web3-grid > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.web3-k {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.web3-v {
+  font-size: 12px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Mode splash Olympus ambient */
+.mode-splash {
+  background:
+    radial-gradient(ellipse at 20% 40%, rgba(122, 179, 255, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 20%, rgba(244, 196, 106, 0.08) 0%, transparent 50%),
+    var(--bg);
+}
+
+/* Splash card glass */
+.splash-card {
+  background: rgba(15, 21, 36, 0.88);
+  border: 1px solid rgba(244, 196, 106, 0.18);
+  backdrop-filter: blur(20px);
+}
+
+.splash-title {
+  color: var(--accent);
+}
+
+/* Select dropdown arrow in dark theme */
+select.form-input,
+.input-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a3aecb' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* Sidebar active nav btn gold (override green neon) */
+.sidebar-nav-btn.active {
+  background: rgba(244, 196, 106, 0.08);
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+/* XP fill golden gradient */
+.xp-fill,
+.goalFill,
+#goalFill {
+  background: linear-gradient(90deg, #7ab3ff, #f4c46a);
+}
+
+/* Scrollbar Olympus style */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 196, 106, 0.2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 196, 106, 0.22);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 196, 106, 0.4);
 }
 
 .app-sidebar .zeus-stage {

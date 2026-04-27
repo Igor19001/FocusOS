@@ -120,11 +120,11 @@ const ZeusHologram = (() => {
         bottom: 24px;
         right: 24px;
         z-index: 8000;
-        font-family: var(--font-base, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto);
-        --zeus-primary: #63ffb4;
-        --zeus-secondary: #52dcff;
-        --zeus-glow: rgba(99, 255, 180, 0.3);
-        --zeus-dark: rgba(20, 20, 30, 0.95);
+        font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+        --zeus-primary: #f4c46a;
+        --zeus-secondary: #7ab3ff;
+        --zeus-glow: rgba(244, 196, 106, 0.32);
+        --zeus-dark: rgba(9, 13, 24, 0.97);
       }
 
       /* Orb Styles */
@@ -133,13 +133,13 @@ const ZeusHologram = (() => {
         width: 64px;
         height: 64px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, rgba(99, 255, 180, 0.8), rgba(82, 220, 255, 0.4));
+        background: radial-gradient(circle at 32% 28%, rgba(244, 196, 106, 0.78), rgba(122, 179, 255, 0.36));
         border: 2px solid var(--zeus-primary);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 20px var(--zeus-glow), inset 0 0 10px rgba(99, 255, 180, 0.2);
+        box-shadow: 0 0 22px var(--zeus-glow), inset 0 0 10px rgba(244, 196, 106, 0.18);
         transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         animation: zeus-pulse 3s ease-in-out infinite;
         outline: none;
@@ -147,7 +147,7 @@ const ZeusHologram = (() => {
 
       .zeus-hologram-orb:hover {
         transform: scale(1.1);
-        box-shadow: 0 0 30px var(--zeus-glow), inset 0 0 15px rgba(99, 255, 180, 0.3);
+        box-shadow: 0 0 30px var(--zeus-glow), inset 0 0 15px rgba(244, 196, 106, 0.3);
       }
 
       .zeus-hologram-orb:active {
@@ -228,7 +228,7 @@ const ZeusHologram = (() => {
         justify-content: space-between;
         align-items: flex-start;
         padding: 16px;
-        border-bottom: 1px solid rgba(99, 255, 180, 0.2);
+        border-bottom: 1px solid rgba(244, 196, 106, 0.2);
         gap: 12px;
       }
 
@@ -246,7 +246,7 @@ const ZeusHologram = (() => {
         justify-content: center;
         width: 32px;
         height: 32px;
-        background: rgba(99, 255, 180, 0.1);
+        background: rgba(244, 196, 106, 0.12);
         border-radius: 8px;
         animation: zeus-icon-float 3s ease-in-out infinite;
       }
@@ -283,7 +283,7 @@ const ZeusHologram = (() => {
       }
 
       .panel-close:hover {
-        background: rgba(99, 255, 180, 0.1);
+        background: rgba(244, 196, 106, 0.12);
         color: var(--zeus-primary);
       }
 
@@ -304,8 +304,8 @@ const ZeusHologram = (() => {
 
       /* Message Box */
       .message-box {
-        background: rgba(99, 255, 180, 0.05);
-        border: 1px solid rgba(99, 255, 180, 0.2);
+        background: rgba(244, 196, 106, 0.06);
+        border: 1px solid rgba(244, 196, 106, 0.22);
         border-radius: 8px;
         padding: 12px;
         display: flex;
@@ -332,7 +332,7 @@ const ZeusHologram = (() => {
         align-items: center;
         gap: 8px;
         padding: 8px 12px;
-        background: rgba(82, 220, 255, 0.05);
+        background: rgba(122, 179, 255, 0.07);
         border-radius: 6px;
         font-size: 11px;
       }
@@ -360,8 +360,8 @@ const ZeusHologram = (() => {
         align-items: center;
         font-size: 11px;
         padding: 8px 0;
-        border-top: 1px solid rgba(99, 255, 180, 0.1);
-        border-bottom: 1px solid rgba(99, 255, 180, 0.1);
+        border-top: 1px solid rgba(244, 196, 106, 0.12);
+        border-bottom: 1px solid rgba(244, 196, 106, 0.12);
       }
 
       .tab-label {
@@ -375,11 +375,11 @@ const ZeusHologram = (() => {
 
       /* Tip Box */
       .tip-box {
-        background: rgba(99, 255, 180, 0.02);
+        background: rgba(244, 196, 106, 0.04);
         border-left: 3px solid var(--zeus-primary);
         padding: 10px;
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(238, 242, 255, 0.8);
         line-height: 1.4;
         display: flex;
         gap: 8px;
@@ -404,7 +404,7 @@ const ZeusHologram = (() => {
       }
 
       .action-btn {
-        background: linear-gradient(135deg, rgba(99, 255, 180, 0.2), rgba(82, 220, 255, 0.1));
+        background: linear-gradient(135deg, rgba(244, 196, 106, 0.18), rgba(122, 179, 255, 0.1));
         border: 1px solid var(--zeus-primary);
         color: var(--zeus-primary);
         border-radius: 6px;
@@ -423,9 +423,9 @@ const ZeusHologram = (() => {
       }
 
       .action-btn:hover {
-        background: linear-gradient(135deg, rgba(99, 255, 180, 0.3), rgba(82, 220, 255, 0.2));
+        background: linear-gradient(135deg, rgba(244, 196, 106, 0.28), rgba(122, 179, 255, 0.18));
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(99, 255, 180, 0.3);
+        box-shadow: 0 4px 16px rgba(244, 196, 106, 0.3);
       }
 
       .action-btn:active {
@@ -446,7 +446,7 @@ const ZeusHologram = (() => {
       .action-btn--secondary:hover {
         border-color: var(--zeus-primary);
         color: var(--zeus-primary);
-        background: rgba(99, 255, 180, 0.1);
+        background: rgba(244, 196, 106, 0.1);
       }
 
       .action-icon {
@@ -456,7 +456,7 @@ const ZeusHologram = (() => {
       /* Panel Footer */
       .panel-footer {
         padding: 12px 16px;
-        border-top: 1px solid rgba(99, 255, 180, 0.1);
+        border-top: 1px solid rgba(244, 196, 106, 0.12);
         display: flex;
         justify-content: center;
         gap: 16px;
@@ -578,7 +578,7 @@ const ZeusHologram = (() => {
       /* Dark theme adjustments */
       @media (prefers-color-scheme: dark) {
         .zeus-hologram-container {
-          --zeus-dark: rgba(10, 10, 20, 0.98);
+          --zeus-dark: rgba(7, 10, 18, 0.99);
         }
       }
     `;
