@@ -5009,3 +5009,49 @@ body.session-active .fc-timer-digits { animation: zenTimerPulse 4s ease-in-out i
   .panel--zeus,
   body[data-ux-mode="zen"] .panel--zeus { min-width: unset; max-width: unset; }
 }
+/* Zeus panel final layout override */
+.panel--zeus .zeus-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 14px;
+}
+
+.panel--zeus .zeus-shell {
+  width: 100%;
+  align-items: start;
+}
+
+.panel--zeus .zeus-copy {
+  min-width: 0;
+  align-content: start;
+}
+
+.panel--zeus .zeus-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.panel--zeus .zeus-mood {
+  justify-self: start;
+  min-width: 0;
+}
+
+.panel--zeus .zeus-message,
+.panel--zeus .zeus-tip,
+.panel--zeus .zeus-nudge {
+  max-width: none;
+}
+
+@media (min-width: 981px) {
+  .panel--zeus .zeus-name {
+    font-size: 18px;
+    letter-spacing: 0.08em;
+  }
+
+  .panel--zeus .zeus-message {
+    font-size: clamp(22px, 1.8vw, 28px);
+    line-height: 1.2;
+  }
+}

@@ -1212,6 +1212,10 @@ const App = (() => {
       void flash?.offsetWidth;
       flash?.classList.add('active');
     }
+    // Notify floating hologram of message change
+    const emojiMap = { 'Approving': '👍', 'Triumphant': '🏆', 'Demanding': '🔥', 'Judging': '⚠️', 'Warning': '⚡', 'Disappointed': '😞', 'Observing': '👁️', 'Neutral': '➖', 'Proud': '😊', 'Fired Up': '🔥', 'Tired': '😴' };
+    const emoji = emojiMap[mood] || '⚡';
+    window.dispatchEvent(new CustomEvent('zeusMessageUpdate', { detail: { message: payload.line, emoji, mood, intensity } }));
   }
 
   function localizeZeusBaseMessage(base) {
