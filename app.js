@@ -3868,7 +3868,8 @@ const App = (() => {
     // Tiny local beep sequence generated with Web Audio API.
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    let ctx;
+    try { ctx = new AudioCtx(); } catch { return; }
     const now = ctx.currentTime;
     [0, 0.22, 0.44].forEach(offset => {
       const osc = ctx.createOscillator();
@@ -4494,11 +4495,6 @@ const App = (() => {
     const saved = await DB.getSetting('notif_settings');
     if (saved) Object.assign(S.notif, saved);
 
-    if ('Notification' in window && Notification.permission === 'default') {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') showToast(`🔔 ${t('notificationsEnabled')}`, 'success');
-    }
-
     $('btnOpenNotif').addEventListener('click', () => {
       $('notifWater').checked  = S.notif.waterEnabled;
       $('notifWaterH').value   = S.notif.waterIntervalH;
@@ -4621,6 +4617,12 @@ const App = (() => {
     }
     updateModeIndicator();
     refreshConnectionViews();
+    // Request notification permission after explicit user interaction
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') showToast(`🔔 ${t('notificationsEnabled')}`, 'success');
+      });
+    }
     document.body.classList.remove('app-locked');
     $('modeSplash')?.classList.add('hidden');
     switchTab('tracker');

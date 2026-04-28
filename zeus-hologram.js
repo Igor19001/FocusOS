@@ -825,8 +825,8 @@ const ZeusHologram = (() => {
     const statusEl = document.getElementById('zeusHologramStatus');
     const statusDotEl = document.getElementById('zeusHologramStatusDot');
 
-    // Determine state
-    const isActive = !!window.App && S?.activeTask;
+    // Determine state via DOM class maintained by app.js MutationObserver
+    const isActive = document.body.classList.contains('session-active');
     const messages = {
       tracker: {
         idle: {
