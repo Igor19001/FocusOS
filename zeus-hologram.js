@@ -1052,10 +1052,9 @@ const ZeusHologram = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   // Update mode indicator
-  function updateModeIndicator() {
+  function updateModeIndicator(mode) {
     const modeEl = document.getElementById('zeusHologramMode');
     if (modeEl) {
-      const mode = S?.appMode || 'lokalny';
       const modeLabel = mode === 'monad' ? 'Web3' : mode === 'google' ? 'Google' : 'Lokalny';
       modeEl.textContent = modeLabel;
     }

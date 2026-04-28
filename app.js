@@ -2768,8 +2768,8 @@ const App = (() => {
     zeusSpeak('You fled the trial. Olympus marks this as failure.', 'Judging', 'high');
   }
 
-  const GAUGE_LEN = 131.95;
   function _updateFatigueGauge(efficiencyPct, shouldBreak) {
+    const GAUGE_LEN = 131.95;
     const fill  = $('fatigueGaugeFill');
     const label = $('fatigueGaugeLabel');
     if (!fill) return;
