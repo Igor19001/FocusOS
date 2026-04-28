@@ -5371,7 +5371,7 @@ select.form-input,
 }
 
 /* ── Tracker view: 3-column layout (stats | timer | log) ───────────────── */
-.view--tracker {
+.view--tracker:not(.hidden) {
   display: grid !important;
   grid-template-columns: 210px minmax(0, 1fr) 280px !important;
   grid-template-rows: auto !important;
