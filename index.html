@@ -1320,11 +1320,13 @@
       if (e.key === 'Escape') closeSidebar();
     });
 
-    /* Sidebar nav buttons: close sidebar then open view in new tab */
+    /* Sidebar nav buttons: close sidebar then switch view */
     document.querySelectorAll('#appSidebar [data-tab]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         closeSidebar();
-        window.open(location.pathname + '#' + btn.dataset.tab, '_blank');
+        setTimeout(function () {
+          if (typeof switchTab === 'function') switchTab(btn.dataset.tab);
+        }, 60);
       });
     });
 
@@ -1362,14 +1364,14 @@
     setInterval(refreshSidebarLocks, 2000);
     refreshSidebarLocks();
 
-    /* Header quick-nav: Settings + Profile — open in new tab */
+    /* Header quick-nav: Settings + Profile */
     var btnHdrSet = document.getElementById('btnHeaderSettings');
     var btnHdrPro = document.getElementById('btnHeaderProfile');
     if (btnHdrSet) btnHdrSet.addEventListener('click', function () {
-      window.open(location.pathname + '#settings', '_blank');
+      if (typeof switchTab === 'function') switchTab('settings');
     });
     if (btnHdrPro) btnHdrPro.addEventListener('click', function () {
-      window.open(location.pathname + '#profile', '_blank');
+      if (typeof switchTab === 'function') switchTab('profile');
     });
   });
 })();

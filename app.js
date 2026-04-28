@@ -834,7 +834,7 @@ const App = (() => {
   function initTabs() {
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
-        window.open(location.pathname + '#' + btn.dataset.tab, '_blank');
+        switchTab(btn.dataset.tab);
         closeResponsiveHeader();
       });
     });
