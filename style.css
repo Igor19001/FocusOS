@@ -5812,3 +5812,541 @@ select.form-input,
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 6 — INDUSTRIAL TACTILE UX + ZEN OLED + TERMINAL LOG + 3-COL GRID
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 2. Industrial Tactile: neumorphic dark press effect ────────────────── */
+.btn-primary,
+.btn-start {
+  position: relative;
+  box-shadow:
+    0 4px 10px rgba(0,0,0,0.55),
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 -1px 0 rgba(0,0,0,0.4) inset;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
+}
+.btn-primary:active:not(:disabled),
+.btn-start:active:not(:disabled) {
+  transform: translateY(3px) scale(0.98);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.7),
+    0 2px 6px rgba(0,0,0,0.5) inset;
+}
+.btn-secondary:active,
+.btn-stop:active:not(:disabled) {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5) inset;
+}
+/* Active/running state badge */
+.btn--active {
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 14px rgba(57,255,20,0.25) !important;
+}
+/* Micro-tap ripple (JS adds .btn--tap then removes after 200ms) */
+@keyframes btn-tap {
+  0%   { box-shadow: 0 0 0 0 rgba(99,255,180,0.45); }
+  60%  { box-shadow: 0 0 0 10px rgba(99,255,180,0); }
+  100% { box-shadow: 0 0 0 0 rgba(99,255,180,0); }
+}
+.btn--tap { animation: btn-tap 0.22s ease forwards; }
+
+/* ── 5. Zen Mode — True OLED black + stripped UI ────────────────────────── */
+body[data-ux-mode="zen"] {
+  --bg:  #000000;
+  --bg2: #070707;
+  --bg3: #0a0a0a;
+  --bg4: #0f0f0f;
+}
+/* In Zen, hide everything on the tracker except the timer panel and Zeus orb */
+body[data-ux-mode="zen"] .panel--qs,
+body[data-ux-mode="zen"] .panel--backup,
+body[data-ux-mode="zen"] .panel--web3,
+body[data-ux-mode="zen"] .panel--quick-actions {
+  display: none !important;
+}
+/* Timer digits extra large in Zen for OLED */
+body[data-ux-mode="zen"] .fc-timer-digits {
+  font-size: clamp(42px, 8vw, 72px);
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(255,255,255,0.15);
+}
+/* Engineer mode: tight mono density */
+body[data-ux-mode="pro"] .panel {
+  padding: 12px 14px;
+}
+body[data-ux-mode="pro"] .qs-value {
+  font-size: 16px;
+}
+
+/* ── 6. Task Log Terminal Statuses ──────────────────────────────────────── */
+.term-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid currentColor;
+}
+.term-badge--exec {
+  color: #39ff14;
+  background: rgba(57,255,20,0.08);
+}
+.term-badge--done {
+  color: #7ab3ff;
+  background: rgba(122,179,255,0.08);
+}
+.term-badge--abbr {
+  color: #ff6b6b;
+  background: rgba(255,107,107,0.08);
+}
+.term-badge--retro {
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── 3. System Readiness widget ─────────────────────────────────────────── */
+.sys-readiness {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  font-family: var(--font-mono);
+}
+.sys-readiness__label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sys-readiness__bar-wrap {
+  flex: 1;
+  height: 4px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sys-readiness__bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.8s ease, background 0.6s ease;
+}
+.sys-readiness__score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: right;
+  transition: color 0.6s;
+}
+/* Warn state applied by JS when score < 45 */
+body.sys-low .sys-readiness__bar { background: #ff9514; }
+body.sys-low .sys-readiness__score { color: #ff9514; }
+body.sys-low .panel--tracker-main { border-color: rgba(255,149,20,0.35); }
+
+/* ── 7. 3-column desktop layout at ≥1600px ──────────────────────────────── */
+@media (min-width: 1640px) {
+  .app-main {
+    max-width: 1820px;
+  }
+
+  /* Tracker: left health strip | centre timer | right log */
+  .view--tracker {
+    grid-template-columns: 240px minmax(0,1fr) 320px !important;
+    grid-template-rows: auto auto;
+    gap: 18px;
+  }
+  .panel--tracker-main   { grid-column: 2; grid-row: 1 / 3; }
+  .panel--zeus           { grid-column: 3; grid-row: 1; }
+  .panel--qs             { grid-column: 2; grid-row: 1; align-self: end; }
+  .panel--log            { grid-column: 3; grid-row: 2; }
+  .panel--health-strip   { grid-column: 1; grid-row: 1 / 3; }
+
+  /* Ensure sticky Zeus stays in its lane */
+  body[data-ux-mode="zen"] .view--tracker {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Health strip panel (left column in 3-col layout) */
+.panel--health-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (max-width: 1639px) {
+  .panel--health-strip { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE 7 — BLADE LAYOUT / FOCUS MODE / TYPOGRAPHY / TACTICS / CMD PALETTE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Glassmorphism "Blade" panels ────────────────────────────────────── */
+.panel {
+  background: rgba(8, 16, 8, 0.82) !important;
+  border: 1px solid var(--border-hi) !important;
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  transition:
+    opacity 0.45s cubic-bezier(0.2,0.8,0.2,1),
+    transform 0.45s cubic-bezier(0.2,0.8,0.2,1),
+    box-shadow 0.3s cubic-bezier(0.2,0.8,0.2,1),
+    border-color 0.3s ease !important;
+}
+
+/* ── 2. Focus Mode — ACTIVE state ───────────────────────────────────────── */
+/* Vignette overlay (pseudo on body) */
+body.session-active::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 50%,
+    rgba(0,0,0,0.55) 100%
+  );
+}
+/* Side panels dim heavily */
+body.session-active .panel--qs,
+body.session-active .panel--log,
+body.session-active .panel--health-strip {
+  opacity: 0.18;
+  transform: scale(0.985);
+  pointer-events: none;
+}
+body.session-active .panel--qs:hover,
+body.session-active .panel--log:hover,
+body.session-active .panel--health-strip:hover {
+  opacity: 0.75;
+  transform: scale(1);
+  pointer-events: auto;
+}
+/* Timer block scales up */
+body.session-active .fc-timer-digits {
+  transform: scale(1.15);
+  transform-origin: center;
+}
+/* Core timer panel gets accent border glow */
+body.session-active .panel--tracker-main {
+  border-color: rgba(57,255,20,0.28) !important;
+  box-shadow: 0 0 40px rgba(57,255,20,0.06), var(--glow-sm);
+}
+
+/* ── 3. Typography Hierarchy ────────────────────────────────────────────── */
+/* All numeric displays: tabular, no jump */
+.qs-value,
+.fc-timer-digits,
+.xp-label,
+#waterCount,
+#qsTodayTime, #qsEfficiency, #qsTaskCount, #qsStreak,
+#hsWater, #hsSleep, #hsStreak, #hsEff,
+#sysReadinessScore,
+.stat-value,
+.ds-value,
+.badge-val {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+/* Secondary data labels */
+.data-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+/* Status dot with text — always show dot, not text */
+.status-text-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.status-text-live::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+}
+.status-text-live.running::before {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* ── 5. Scanline hover on panels + flash confirmation ───────────────────── */
+/* Scanline sweep on hover */
+.panel {
+  position: relative;
+  overflow: hidden;
+}
+.panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(57,255,20,0.04) 50%,
+    transparent 100%
+  );
+  transform: translateY(-105%);
+  transition: none;
+  pointer-events: none;
+  z-index: 0;
+}
+.panel:hover::after {
+  animation: panel-scanline 0.55s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+@keyframes panel-scanline {
+  0%   { transform: translateY(-105%); }
+  100% { transform: translateY(105%); }
+}
+/* Flash confirmation (JS adds .panel--flash) */
+@keyframes panel-flash {
+  0%   { box-shadow: 0 0 0 0 var(--accent); }
+  25%  { box-shadow: 0 0 0 4px rgba(57,255,20,0.55); background: rgba(57,255,20,0.06) !important; }
+  100% { box-shadow: 0 0 0 0 rgba(57,255,20,0); }
+}
+.panel--flash {
+  animation: panel-flash 0.55s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+
+/* ── 4. Sparklines ──────────────────────────────────────────────────────── */
+.sparkline-wrap {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.sparkline-wrap svg {
+  display: block;
+}
+/* Fatigue gauge (semicircle) */
+.fatigue-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0;
+}
+.fatigue-gauge-wrap svg { overflow: visible; }
+.fatigue-gauge-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 5; }
+.fatigue-gauge-fill  {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.2,0.8,0.2,1), stroke 0.6s ease;
+}
+.fatigue-gauge-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+/* SVG text inside the gauge */
+#fatigueGaugeLabel {
+  fill: var(--text-muted);
+  font-size: 9px;
+  font-family: var(--font-mono);
+}
+/* Hide gauge when idle */
+#fatigueGaugeWrap {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+body.session-active #fatigueGaugeWrap {
+  opacity: 1;
+}
+
+/* ── 6. Command Palette (Industrial Bolt) ───────────────────────────────── */
+/* Floating bolt button */
+#cmdPaletteBtn {
+  position: fixed;
+  bottom: 88px;
+  right: 24px;
+  z-index: 7900;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+  transition: all 0.22s cubic-bezier(0.2,0.8,0.2,1);
+  line-height: 1;
+}
+#cmdPaletteBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: rotate(45deg) scale(1.08);
+  box-shadow: 0 0 18px rgba(57,255,20,0.28);
+}
+body.cmd-palette-open #cmdPaletteBtn {
+  transform: rotate(90deg);
+  border-color: var(--accent3);
+  color: var(--accent3);
+}
+/* Command palette drawer */
+#cmdPalette {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 300px;
+  max-width: 90vw;
+  background: rgba(8,14,8,0.97);
+  border-left: 1px solid var(--border-hi);
+  backdrop-filter: blur(16px);
+  z-index: 7800;
+  transform: translateX(105%);
+  transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 24px;
+  gap: 8px;
+  overflow-y: auto;
+}
+/* ── Drag & Drop task log ───────────────────────────────────────────────── */
+.log-item[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+}
+.log-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+.log-item.drag-source {
+  opacity: 0.35;
+  transform: scale(0.97);
+}
+.log-item.drag-over {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(57,255,20,0.18);
+  transform: scale(1.01);
+}
+/* Bounce "weight" on drop */
+@keyframes log-drop-bounce {
+  0%   { transform: scale(1.04) translateY(-4px); }
+  40%  { transform: scale(0.97) translateY(2px); }
+  70%  { transform: scale(1.01) translateY(-1px); }
+  100% { transform: scale(1)    translateY(0); }
+}
+.log-item.drop-bounce {
+  animation: log-drop-bounce 0.38s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+
+/* ── Inspect toggle buttons ─────────────────────────────────────────────── */
+.inspect-toggle {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.inspect-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.inspect-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.inspect-body {
+  margin-top: 12px;
+  animation: inspectReveal 0.28s cubic-bezier(0.2,0.8,0.2,1);
+}
+@keyframes inspectReveal {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+body.cmd-palette-open #cmdPalette {
+  transform: translateX(0);
+}
+/* Nudge main content left when palette opens */
+body.cmd-palette-open .app-main {
+  transition: padding-right 0.35s cubic-bezier(0.2,0.8,0.2,1);
+  padding-right: 308px;
+}
+.cmd-palette-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+}
+.cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.15s ease;
+}
+.cmd-item:hover {
+  border-color: var(--border-hi);
+  background: rgba(57,255,20,0.04);
+  color: var(--accent);
+}
+.cmd-item__icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.cmd-section {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 10px;
+  margin-bottom: 2px;
+  padding-left: 4px;
+}
+@media (max-width: 700px) {
+  body.cmd-palette-open .app-main { padding-right: 0; }
+  #cmdPalette { width: 100%; border-left: none; border-top: 1px solid var(--border-hi); top: auto; bottom: 0; height: 65vh; transform: translateY(105%); }
+  body.cmd-palette-open #cmdPalette { transform: translateY(0); }
+}

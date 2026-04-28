@@ -293,6 +293,14 @@
         <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
       </div>
       <div class="panel-label" style="margin-top:14px">Dziś</div>
+      <!-- System Readiness composite indicator -->
+      <div class="sys-readiness" title="System Readiness = sen 35% + nawodnienie 30% + skupienie 35%">
+        <span class="sys-readiness__label">System</span>
+        <div class="sys-readiness__bar-wrap">
+          <div class="sys-readiness__bar" id="sysReadinessBar" style="width:50%"></div>
+        </div>
+        <span class="sys-readiness__score" id="sysReadinessScore">—</span>
+      </div>
       <div class="qs-grid">
         <div class="qs-card"><span class="qs-value" id="qsTodayTime">—</span><span class="qs-key">Czas skupienia</span></div>
         <div class="qs-card"><span class="qs-value" id="qsEfficiency">—</span><span class="qs-key">Efektywność</span></div>
@@ -344,6 +352,18 @@
             <span id="fatigueLabel"></span>
             <span id="fatigueHint">Zmęczenie rośnie</span>
           </div>
+        </div>
+        <!-- Fatigue Gauge: semicircular arc — stroke animates as fatigue builds -->
+        <div class="fatigue-gauge-wrap" id="fatigueGaugeWrap" aria-hidden="true">
+          <svg viewBox="0 0 100 56" width="110" height="56" xmlns="http://www.w3.org/2000/svg">
+            <path class="fatigue-gauge-track" d="M 8 52 A 42 42 0 0 1 92 52"/>
+            <path class="fatigue-gauge-fill"  d="M 8 52 A 42 42 0 0 1 92 52"
+              id="fatigueGaugeFill"
+              stroke-dasharray="131.95"
+              stroke-dashoffset="131.95"/>
+            <text x="50" y="54" text-anchor="middle"
+              class="fatigue-gauge-label" id="fatigueGaugeLabel">EFF</text>
+          </svg>
         </div>
       </div>
 
@@ -496,6 +516,24 @@
       </div>
     </section>
 
+    <!-- Health strip sidebar (visible only at ≥1640px via CSS) -->
+    <aside class="panel panel--health-strip" aria-label="Health Overview">
+      <div class="panel-label">System Health</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:10px">Widoczne na szerokich ekranach (&ge;1640px)</div>
+      <div class="qs-grid" style="grid-template-columns:1fr 1fr;gap:10px">
+        <div class="qs-card"><span class="qs-value" id="hsWater">—</span><span class="qs-key">Woda</span></div>
+        <div class="qs-card"><span class="qs-value" id="hsSleep">—</span><span class="qs-key">Sen</span></div>
+        <div class="qs-card"><span class="qs-value" id="hsStreak">—</span><span class="qs-key">Streak</span></div>
+        <div class="qs-card"><span class="qs-value" id="hsEff">—</span><span class="qs-key">Wydajność</span></div>
+      </div>
+      <div class="sys-readiness" style="margin-top:14px">
+        <span class="sys-readiness__label">Gotowość</span>
+        <div class="sys-readiness__bar-wrap">
+          <div class="sys-readiness__bar" id="sysReadinessBarStrip" style="width:50%"></div>
+        </div>
+      </div>
+    </aside>
+
   </div><!-- /view--tracker -->
 
 
@@ -622,26 +660,36 @@
     </section>
 
     <!-- Markov — locked until Level 3 -->
-    <section class="panel panel--markov">
-      <div class="panel-label">Sekwencje aktywności — Markov Chain</div>
-      <table class="markov-table">
-        <tbody id="markovTable">
-          <tr><td colspan="4" class="empty-row">Za mało danych — potrzeba min. 5 sesji.</td></tr>
-        </tbody>
-      </table>
+    <section class="panel panel--markov" id="panelMarkov">
+      <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Sekwencje aktywności — Markov Chain</span>
+        <button class="inspect-toggle" data-inspect="markovBody" aria-expanded="false" title="Inspect">INSPECT ▼</button>
+      </div>
+      <div id="markovBody" class="inspect-body" hidden>
+        <table class="markov-table">
+          <tbody id="markovTable">
+            <tr><td colspan="4" class="empty-row">Za mało danych — potrzeba min. 5 sesji.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Bayesian — locked until Level 3 -->
-    <section class="panel panel--bayes">
-      <div class="panel-label">Bayesian — estymacje czasu per kategoria</div>
-      <table class="stats-table">
-        <thead>
-          <tr><th>Kategoria</th><th>Śr. Bayes</th><th>Odch. std</th><th>Próbki</th></tr>
-        </thead>
-        <tbody id="bayesTable">
-          <tr><td colspan="4" class="empty-row">Za mało danych — potrzeba min. 5 sesji.</td></tr>
-        </tbody>
-      </table>
+    <section class="panel panel--bayes" id="panelBayes">
+      <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Bayesian — estymacje czasu per kategoria</span>
+        <button class="inspect-toggle" data-inspect="bayesBody" aria-expanded="false" title="Inspect">INSPECT ▼</button>
+      </div>
+      <div id="bayesBody" class="inspect-body" hidden>
+        <table class="stats-table">
+          <thead>
+            <tr><th>Kategoria</th><th>Śr. Bayes</th><th>Odch. std</th><th>Próbki</th><th>Trend</th></tr>
+          </thead>
+          <tbody id="bayesTable">
+            <tr><td colspan="5" class="empty-row">Za mało danych — potrzeba min. 5 sesji.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="panel panel--week-insights">
@@ -793,6 +841,28 @@
         <button class="btn-secondary" id="btnCancelAlarm" style="width:auto;padding:10px 14px;margin-top:20px;align-self:flex-end">Anuluj</button>
       </div>
       <div id="alarmStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--accent4)">Budzik nieaktywny.</div>
+    </section>
+
+    <section class="panel panel--ambient" style="grid-column:1/-1">
+      <div class="panel-label">🎧 Ambient — Generator Skupienia</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+        Szum brązowy = głęboka praca / sen. Biały = lekkie skupienie. Generowany lokalnie, zero plików audio.
+      </p>
+      <div class="sleep-calc-row" style="gap:10px;flex-wrap:wrap;align-items:center">
+        <select class="form-input" id="ambientType" style="width:160px">
+          <option value="brown">🌊 Brązowy szum</option>
+          <option value="white">⚡ Biały szum</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:160px">
+          <label style="font-size:11px;color:var(--text-muted);white-space:nowrap;font-family:var(--font-mono)">Głośność:</label>
+          <input type="range" id="ambientVolume" min="1" max="12" value="4" style="flex:1;accent-color:var(--accent4)"/>
+          <span id="ambientVolumeLabel" style="font-size:11px;color:var(--accent4);font-family:var(--font-mono);width:20px;text-align:right">4</span>
+        </div>
+        <button class="btn-primary" id="btnAmbientToggle" type="button" style="width:auto;white-space:nowrap;min-width:90px">▶ Start</button>
+      </div>
+      <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
+        ⚡ Wymaga pierwszego kliknięcia użytkownika (AudioContext). Działa offline i w PWA.
+      </p>
     </section>
 
     <section class="panel panel--sleep-notes" style="grid-column:1/-1">
@@ -1410,6 +1480,65 @@
   });
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     COMMAND PALETTE (Industrial Bolt)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<button id="cmdPaletteBtn" aria-label="Command Palette" title="Paleta Komend [⌘K]">⚙</button>
+
+<aside id="cmdPalette" role="complementary" aria-label="Paleta Komend">
+  <div class="cmd-palette-title">⚙ Command Palette</div>
+
+  <div class="cmd-section">Sesja</div>
+  <button class="cmd-item" data-cmd="start-session">
+    <span class="cmd-item__icon">▶</span>Start sesji skupienia
+  </button>
+  <button class="cmd-item" data-cmd="stop-session">
+    <span class="cmd-item__icon">⏹</span>Zatrzymaj sesję
+  </button>
+  <button class="cmd-item" data-cmd="deep-work">
+    <span class="cmd-item__icon">🎯</span>Tryb Deep Work
+  </button>
+
+  <div class="cmd-section">Nawigacja</div>
+  <button class="cmd-item" data-cmd="nav-tracker">
+    <span class="cmd-item__icon">⏱</span>Tracker
+  </button>
+  <button class="cmd-item" data-cmd="nav-daily">
+    <span class="cmd-item__icon">📊</span>Statystyki dzienne
+  </button>
+  <button class="cmd-item" data-cmd="nav-weekly">
+    <span class="cmd-item__icon">📈</span>Raport tygodniowy
+  </button>
+  <button class="cmd-item" data-cmd="nav-health">
+    <span class="cmd-item__icon">💧</span>Zdrowie
+  </button>
+  <button class="cmd-item" data-cmd="nav-settings">
+    <span class="cmd-item__icon">🔧</span>Ustawienia
+  </button>
+
+  <div class="cmd-section">Widok</div>
+  <button class="cmd-item" data-cmd="mode-zen">
+    <span class="cmd-item__icon">🌑</span>Tryb Zen (OLED)
+  </button>
+  <button class="cmd-item" data-cmd="mode-pro">
+    <span class="cmd-item__icon">🛠</span>Tryb Engineer
+  </button>
+
+  <div class="cmd-section">Zaawansowane</div>
+  <button class="cmd-item" data-cmd="show-bayesian">
+    <span class="cmd-item__icon">🧮</span>Bayesian MAB — statystyki
+  </button>
+  <button class="cmd-item" data-cmd="show-markov">
+    <span class="cmd-item__icon">🔗</span>Łańcuch Markowa
+  </button>
+  <button class="cmd-item" data-cmd="export-proof">
+    <span class="cmd-item__icon">🏆</span>Eksport Proof of Productivity
+  </button>
+  <button class="cmd-item" data-cmd="mab-reset">
+    <span class="cmd-item__icon">🔄</span>Reset MAB (przerwy)
+  </button>
+</aside>
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>

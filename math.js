@@ -493,6 +493,91 @@ const MATH = (() => {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // 6. BAYESIAN MULTI-ARMED BANDIT — Break Duration Optimizer
+  //
+  //    Thompson Sampling over Beta-Bernoulli arms.
+  //    Each arm = a break duration option (minutes).
+  //    A post-break session is a "success" if efficiency ≥ BREAK_SUCCESS_THR.
+  //
+  //    recommend()              → sample Beta(α,β) per arm; return best arm.
+  //    update(breakMin, effPct) → update nearest arm's distribution.
+  //
+  //    After ~20 sessions the MAB converges to the individually optimal duration.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const BREAK_OPTIONS     = [5, 10, 15, 20, 30];
+  const BREAK_SUCCESS_THR = 65;
+  const BREAK_MAB_KEY     = 'focusos_break_mab';
+
+  function _sampleGamma(shape) {
+    if (shape < 1) return _sampleGamma(1 + shape) * Math.pow(Math.random(), 1 / shape);
+    const d = shape - 1 / 3;
+    const c = 1 / Math.sqrt(9 * d);
+    for (;;) {
+      let x, v;
+      do {
+        const u1 = Math.random(), u2 = Math.random();
+        x = Math.sqrt(-2 * Math.log(u1 + 1e-12)) * Math.cos(2 * Math.PI * u2);
+        v = 1 + c * x;
+      } while (v <= 0);
+      v = v * v * v;
+      const u = Math.random();
+      if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+      if (Math.log(u + 1e-12) < 0.5 * x * x + d * (1 - v + Math.log(v + 1e-12))) return d * v;
+    }
+  }
+
+  function _sampleBeta(alpha, beta) {
+    const x = _sampleGamma(alpha), y = _sampleGamma(beta);
+    return x / (x + y);
+  }
+
+  function createBreakOptimizer() {
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem(BREAK_MAB_KEY) || '{}'); } catch (_) {}
+    for (const b of BREAK_OPTIONS) { if (!p[b]) p[b] = { a: 1, b: 1 }; }
+
+    const _save = () => {
+      try { localStorage.setItem(BREAK_MAB_KEY, JSON.stringify(p)); } catch (_) {}
+    };
+
+    return {
+      recommend() {
+        let best = BREAK_OPTIONS[0], top = -Infinity;
+        for (const d of BREAK_OPTIONS) {
+          const s = _sampleBeta(p[d].a, p[d].b);
+          if (s > top) { top = s; best = d; }
+        }
+        return best;
+      },
+
+      update(breakMin, efficiencyPct) {
+        const arm = BREAK_OPTIONS.reduce((prev, cur) =>
+          Math.abs(cur - breakMin) < Math.abs(prev - breakMin) ? cur : prev
+        );
+        if (!p[arm]) return;
+        efficiencyPct >= BREAK_SUCCESS_THR ? p[arm].a++ : p[arm].b++;
+        _save();
+      },
+
+      getStats() {
+        return BREAK_OPTIONS.map(d => ({
+          breakMin: d,
+          alpha:    p[d].a,
+          beta:     p[d].b,
+          mean:     Math.round(p[d].a / (p[d].a + p[d].b) * 100),
+          trials:   p[d].a + p[d].b - 2,
+        }));
+      },
+
+      reset() {
+        for (const b of BREAK_OPTIONS) p[b] = { a: 1, b: 1 };
+        _save();
+      },
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // PUBLIC
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -503,6 +588,8 @@ const MATH = (() => {
     ema, emaProductivityTrend,
     fatigueCurve, fatigueChartData, FATIGUE_LAMBDA, BREAK_THRESHOLD,
     kMeansGoldenHours,
+    // Break MAB
+    createBreakOptimizer, BREAK_OPTIONS, BREAK_SUCCESS_THR,
     // Composite
     analyzeAll, analyzeDay, generateInsights,
   };

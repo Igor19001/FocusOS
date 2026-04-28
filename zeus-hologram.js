@@ -26,7 +26,13 @@ const ZeusHologram = (() => {
     return `
       <div id="zeusHologramContainer" class="zeus-hologram-container">
         <!-- Orb (always visible) -->
-        <div id="zeusHologramOrb" class="zeus-hologram-orb" role="button" tabindex="0" aria-label="Zeus Hologram">
+        <div id="zeusHologramOrb" class="zeus-hologram-orb" data-state="idle" role="button" tabindex="0" aria-label="Zeus Hologram">
+          <!-- Efficiency ring (SVG arc around orb) -->
+          <svg class="orb-efficiency-ring" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle class="orb-ring-track" cx="40" cy="40" r="36"/>
+            <circle class="orb-ring-fill" id="zeusEfficiencyArc" cx="40" cy="40" r="36"
+              stroke-dasharray="226.19" stroke-dashoffset="226.19"/>
+          </svg>
           <div class="orb-glow"></div>
           <div class="orb-core">
             <svg viewBox="0 0 24 24" class="orb-icon" xmlns="http://www.w3.org/2000/svg">
@@ -44,6 +50,7 @@ const ZeusHologram = (() => {
             </svg>
           </div>
           <div class="orb-pulse"></div>
+          <span class="orb-eff-label" id="zeusEffLabel"></span>
         </div>
 
         <!-- Expanded Panel (hidden by default) -->
@@ -127,11 +134,91 @@ const ZeusHologram = (() => {
         --zeus-dark: rgba(9, 13, 24, 0.97);
       }
 
+      /* ── Efficiency ring ────────────────────────────── */
+      .orb-efficiency-ring {
+        position: absolute;
+        inset: -8px;
+        width: calc(100% + 16px);
+        height: calc(100% + 16px);
+        pointer-events: none;
+        z-index: 3;
+        transform: rotate(-90deg);
+      }
+      .orb-ring-track {
+        fill: none;
+        stroke: rgba(255,255,255,0.06);
+        stroke-width: 3;
+      }
+      .orb-ring-fill {
+        fill: none;
+        stroke: var(--zeus-ring, #39ff14);
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1.2s ease, stroke 0.6s ease;
+        filter: drop-shadow(0 0 3px var(--zeus-ring, #39ff14));
+      }
+      .orb-eff-label {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 9px;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--zeus-ring, #39ff14);
+        opacity: 0;
+        white-space: nowrap;
+        transition: opacity 0.4s;
+        pointer-events: none;
+      }
+      .zeus-hologram-orb:hover .orb-eff-label { opacity: 1; }
+
+      /* ── State-based pulse colors ────────────────────── */
+      /* idle (default): golden, slow */
+      .zeus-hologram-orb[data-state="idle"] {
+        --zeus-ring: rgba(244,196,106,0.7);
+        animation: zeus-pulse 3s ease-in-out infinite;
+      }
+      /* focus: green, calm */
+      .zeus-hologram-orb[data-state="focus"] {
+        --zeus-glow: rgba(57,255,20,0.45);
+        --zeus-ring: #39ff14;
+        animation: zeus-pulse-focus 4s ease-in-out infinite;
+      }
+      /* alert: red, fast */
+      .zeus-hologram-orb[data-state="alert"] {
+        --zeus-glow: rgba(255,80,80,0.55);
+        --zeus-ring: #ff4f4f;
+        animation: zeus-pulse-alert 0.9s ease-in-out infinite;
+      }
+
+      @keyframes zeus-pulse-focus {
+        0%,100% { transform: scale(1);    box-shadow: 0 0 18px rgba(57,255,20,0.35); }
+        50%      { transform: scale(1.04); box-shadow: 0 0 32px rgba(57,255,20,0.65); }
+      }
+      @keyframes zeus-pulse-alert {
+        0%,100% { transform: scale(1);    box-shadow: 0 0 20px rgba(255,80,80,0.55); }
+        50%      { transform: scale(1.06); box-shadow: 0 0 36px rgba(255,80,80,0.85); }
+      }
+
+      /* ── Glitch transition effect ────────────────────── */
+      .zeus-hologram-orb.zeus-glitch {
+        animation: zeus-glitch-anim 0.35s steps(2) forwards !important;
+      }
+      @keyframes zeus-glitch-anim {
+        0%   { clip-path: inset(0 0 80% 0); transform: translateX(-3px); filter: hue-rotate(90deg); }
+        20%  { clip-path: inset(30% 0 40% 0); transform: translateX(3px);  filter: hue-rotate(-90deg); }
+        40%  { clip-path: inset(60% 0 10% 0); transform: translateX(-2px); }
+        60%  { clip-path: inset(10% 0 60% 0); transform: translateX(2px);  }
+        80%  { clip-path: inset(40% 0 30% 0); transform: translateX(0); filter: hue-rotate(0); }
+        100% { clip-path: none;               transform: none; }
+      }
+
       /* Orb Styles */
       .zeus-hologram-orb {
         position: relative;
         width: 64px;
         height: 64px;
+        overflow: visible;
         border-radius: 50%;
         background: radial-gradient(circle at 32% 28%, rgba(244, 196, 106, 0.78), rgba(122, 179, 255, 0.36));
         border: 2px solid var(--zeus-primary);
@@ -645,6 +732,9 @@ const ZeusHologram = (() => {
 
     // Update mode indicator
     updateModeIndicator();
+
+    // Start proactive background checks every 5 minutes
+    startProactiveChecks();
   }
 
   // Toggle expanded state
@@ -869,6 +959,98 @@ const ZeusHologram = (() => {
     }
   }
 
+  // ── Zeus Orb State Control ───────────────────────────────────────────────
+  const CIRCUMFERENCE = 226.19;
+
+  function triggerGlitch() {
+    const orb = document.getElementById('zeusHologramOrb');
+    if (!orb) return;
+    orb.classList.add('zeus-glitch');
+    setTimeout(() => orb.classList.remove('zeus-glitch'), 400);
+  }
+
+  /**
+   * Set the orb visual state.
+   * @param {'idle'|'focus'|'alert'} state
+   */
+  function setOrbState(state) {
+    const orb = document.getElementById('zeusHologramOrb');
+    if (!orb || orb.dataset.state === state) return;
+    triggerGlitch();
+    setTimeout(() => { orb.dataset.state = state; }, 200);
+  }
+
+  /**
+   * Update the efficiency ring arc.
+   * @param {number} efficiencyPct  0–100
+   */
+  function updateEfficiencyRing(efficiencyPct) {
+    const arc   = document.getElementById('zeusEfficiencyArc');
+    const label = document.getElementById('zeusEffLabel');
+    if (!arc) return;
+    const pct    = Math.max(0, Math.min(100, efficiencyPct));
+    const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
+    arc.style.strokeDashoffset = offset.toFixed(2);
+    if (label) label.textContent = `${pct}%`;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Proactive Advice (Markov Chain + Fatigue Curve) ──────────────────────
+  // Queries MATH + DB (both available as globals) to generate contextual hints.
+  async function getProactiveAdvice() {
+    try {
+      const [tasks, active] = await Promise.all([
+        DB.getTasksLast30Days(),
+        DB.getActiveTask(),
+      ]);
+      const matrix          = MATH.buildMarkovChain(tasks);
+      const currentCategory = active?.category;
+
+      // 1. Fatigue check — highest priority
+      if (active?.start_time) {
+        const sessionMin = (Date.now() - new Date(active.start_time).getTime()) / 60000;
+        const fatigue    = MATH.fatigueCurve(Math.floor(sessionMin));
+        if (fatigue.shouldBreak) {
+          const rec = MATH.createBreakOptimizer().recommend();
+          return {
+            emoji:   '😓',
+            message: `Wydajność ${fatigue.currentEfficiency}% — czas na przerwę!`,
+            tip:     `MAB sugeruje ${rec}-minutową przerwę dla Ciebie.`,
+          };
+        }
+      }
+
+      // 2. Markov next-activity prediction
+      if (currentCategory && matrix[currentCategory]) {
+        const nextCat   = MATH.mostLikelyNext(matrix, currentCategory);
+        if (nextCat) {
+          const prob      = Math.round((matrix[currentCategory][nextCat] || 0) * 100);
+          const curLabel  = DB.CAT_LABELS?.[currentCategory] || currentCategory;
+          const nextLabel = DB.CAT_LABELS?.[nextCat]         || nextCat;
+          return {
+            emoji:   '🔮',
+            message: `Po "${curLabel}" zwykle przechodzisz do "${nextLabel}" (${prob}%).`,
+            tip:     'Zaplanuj to świadomie.',
+          };
+        }
+      }
+
+      return null;
+    } catch (_) { return null; }
+  }
+
+  let _proactiveInterval = null;
+
+  function startProactiveChecks() {
+    if (_proactiveInterval) clearInterval(_proactiveInterval);
+    _proactiveInterval = setInterval(async () => {
+      if (!isExpanded) return;
+      const advice = await getProactiveAdvice();
+      if (advice) updateHologramMessage(advice.message, advice.emoji);
+    }, 5 * 60 * 1000);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Update mode indicator
   function updateModeIndicator() {
     const modeEl = document.getElementById('zeusHologramMode');
@@ -887,6 +1069,10 @@ const ZeusHologram = (() => {
     toggleExpand,
     updateMessage: updateHologramMessage,
     updateMode: updateModeIndicator,
+    getProactiveAdvice,
+    setOrbState,
+    updateEfficiencyRing,
+    triggerGlitch,
   };
 })();
 

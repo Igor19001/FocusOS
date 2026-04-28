@@ -5,6 +5,12 @@
               Water cap, Calories, JSON export/import, Leaderboard.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+import {
+  playClick, playSessionStart, playSessionComplete,
+  vibrateSuccess, vibrateClick,
+  startAmbient, stopAmbient, setAmbientVolume,
+} from './js/audio.js';
+
 const App = (() => {
 
   // ── State ─────────────────────────────────────────────────────────────────
@@ -2717,6 +2723,7 @@ const App = (() => {
     $('activeTimer').textContent  = '00:00:00';
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
+    _updateFatigueGauge(100, false);
     $('btnStart').disabled = false;
     $('btnStop').disabled  = true;
     if (document.body.classList.contains('deep-work')) setDeepWorkMode(false);
@@ -2761,6 +2768,37 @@ const App = (() => {
     zeusSpeak('You fled the trial. Olympus marks this as failure.', 'Judging', 'high');
   }
 
+  const GAUGE_LEN = 131.95;
+  function _updateFatigueGauge(efficiencyPct, shouldBreak) {
+    const fill  = $('fatigueGaugeFill');
+    const label = $('fatigueGaugeLabel');
+    if (!fill) return;
+    const eff    = Math.max(0, Math.min(100, efficiencyPct));
+    const offset = GAUGE_LEN - (eff / 100) * GAUGE_LEN;
+    fill.style.strokeDashoffset = offset.toFixed(2);
+    const hue = shouldBreak ? 25 : Math.round(105 * (eff / 100));
+    fill.style.stroke = `hsl(${hue}, 90%, 55%)`;
+    if (label) label.textContent = `${eff}%`;
+  }
+
+  function _applyFatigueAccent(efficiencyPct) {
+    const root = document.documentElement;
+    if (efficiencyPct >= 95) {
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent2');
+      return;
+    }
+    const t = Math.max(0, Math.min(1, (efficiencyPct - 30) / 65));
+    const sat = Math.round(55 + t * 100);
+    if (efficiencyPct < 50) {
+      root.style.setProperty('--accent',  `hsl(25,${sat}%,55%)`);
+      root.style.setProperty('--accent2', `hsl(30,${sat}%,60%)`);
+    } else {
+      root.style.setProperty('--accent',  `hsl(105,${sat}%,52%)`);
+      root.style.setProperty('--accent2', `hsl(110,${sat}%,56%)`);
+    }
+  }
+
   function startLocalTimer(startISO) {
     const startTs = new Date(startISO).getTime();
     clearInterval(S.timerInterval);
@@ -2774,6 +2812,15 @@ const App = (() => {
       $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
       $('fatigueLabel').textContent = `Wydajność: ${fatigue.currentEfficiency}%`;
       $('fatigueBarWrap').classList.toggle('fatigue--warn', fatigue.shouldBreak);
+      // Zeus orb: efficiency ring + state-based pulse
+      if (typeof ZeusHologram !== 'undefined') {
+        ZeusHologram.updateEfficiencyRing(fatigue.currentEfficiency);
+        ZeusHologram.setOrbState(fatigue.shouldBreak ? 'alert' : 'focus');
+      }
+      // Semicircular fatigue gauge
+      _updateFatigueGauge(fatigue.currentEfficiency, fatigue.shouldBreak);
+      // Fatigue accent desaturation
+      _applyFatigueAccent(fatigue.currentEfficiency);
       updateStopButtonLabel();
       updateDeepFocusUI();
     }, 1000);
@@ -2791,6 +2838,8 @@ const App = (() => {
       markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
+      playSessionStart(); vibrateClick();
+      if (typeof ZeusHologram !== 'undefined') ZeusHologram.setOrbState('focus');
       showToast(`▶ ${t('taskStartToast', { name })}`, 'success');
       zeusSpeak('Discipline initiated. Olympus expects consistency.', 'Demanding', 'high');
       await loadRecentLog(); await loadQuickStats();
@@ -2814,11 +2863,15 @@ const App = (() => {
         updatePomodoroUI();
       }
       clearActiveUI();
+      triggerPanelFlash('.panel--tracker-main');
+      if (typeof ZeusHologram !== 'undefined') { ZeusHologram.setOrbState('idle'); ZeusHologram.triggerGlitch(); ZeusHologram.updateEfficiencyRing(0); }
+      _applyFatigueAccent(100);
       if (stopped) {
         const stoppedMin = Math.round((stopped.duration || 0) / 60);
         const interrupted = stoppedMin < 15;
         const xp = await calcTaskXP(stopped, { interrupted, hardcoreFail: false });
         if (xp > 0) {
+          playSessionComplete(); vibrateSuccess();
           const prevLevel = getLevelInfo(S.totalXP).level;
           let bonusXP = 0;
           const todayTasks = await DB.getTasksForDay(DB.toDateStr());
@@ -2864,16 +2917,47 @@ const App = (() => {
   }
 
 
+  function _calcSystemReadiness(analysis, waterCount, sleepHours) {
+    const sleepScore  = sleepHours >= 8 ? 100 : sleepHours >= 6 ? 75 : sleepHours >= 5 ? 50 : 20;
+    const waterScore  = Math.min(100, waterCount * 14);
+    const focusScore  = Math.min(100, analysis.efficiencyPct ?? 75);
+    return Math.round(sleepScore * 0.35 + waterScore * 0.30 + focusScore * 0.35);
+  }
+
+  function _renderSystemReadiness(score, { waterCount = 0, sleepHours = 0, effPct = 0 } = {}) {
+    const el = $('sysReadinessBar');
+    const sc = $('sysReadinessScore');
+    if (el) el.style.width = `${score}%`;
+    if (sc) sc.textContent = `${score}%`;
+    // Mirror strip
+    const strip = $('sysReadinessBarStrip');
+    if (strip) strip.style.width = `${score}%`;
+    // Health strip values
+    const hw = $('hsWater'),  hs = $('hsSleep'), he = $('hsEff'), hst = $('hsStreak');
+    if (hw)  hw.textContent  = waterCount;
+    if (hs)  hs.textContent  = sleepHours >= 1 ? `${sleepHours.toFixed(1)}h` : '—';
+    if (he)  he.textContent  = effPct + '%';
+    document.body.classList.toggle('sys-low', score < 45);
+  }
+
   async function loadQuickStats() {
     const todayTasks = await DB.getTasksForDay(DB.toDateStr());
     const analysis   = MATH.analyzeDay(todayTasks);
-    const [all, latestSleep] = await Promise.all([
+    const [all, latestSleep, waterCount] = await Promise.all([
       DB.getAllCompletedTasks(),
       DB.getSleepLogs(1),
+      DB.getTodayWaterCount(),
     ]);
     $('qsTodayTime').textContent  = fmtSec(analysis.totalSec);
     $('qsEfficiency').textContent = analysis.efficiencyPct + '%';
     $('qsTaskCount').textContent  = analysis.taskCount;
+    const sleepHours = (latestSleep?.[0]?.durationMin || 0) / 60;
+    const score = _calcSystemReadiness(analysis, waterCount, sleepHours);
+    _renderSystemReadiness(score, {
+      waterCount,
+      sleepHours,
+      effPct: analysis.efficiencyPct ?? 0,
+    });
 
     // Streak
     const { streak, bestStreak } = computeStreakFromTasks(all);
@@ -2980,11 +3064,21 @@ const App = (() => {
     }
     container.innerHTML = tasks.map(t => {
       const dur          = t.duration ? fmtSec(t.duration) : (t.is_active ? '⏳' : '—');
-      const backfillBadge = t.is_backfill ? '<span class="badge-backfill">RETRO</span>' : '';
+      const stMin = Math.round((t.duration || 0) / 60);
+      let termBadge;
+      if (t.is_active) {
+        termBadge = '<span class="term-badge term-badge--exec">[EXEC]</span>';
+      } else if (t.is_backfill) {
+        termBadge = '<span class="term-badge term-badge--retro">[RETRO]</span>';
+      } else if (stMin >= 15) {
+        termBadge = '<span class="term-badge term-badge--done">[DONE]</span>';
+      } else {
+        termBadge = '<span class="term-badge term-badge--abbr">[ABBR]</span>';
+      }
       return `
-        <div class="log-item cat-border--${t.category}">
+        <div class="log-item cat-border--${t.category}" draggable="${t.is_active ? 'false' : 'true'}" data-log-id="${t.id}">
           <div class="log-item-header">
-            <span class="log-item-name">${escH(t.name)}${backfillBadge}</span>
+            <span class="log-item-name">${termBadge}${escH(t.name)}</span>
             <span class="log-item-dur">${dur}</span>
           </div>
           <div class="log-item-footer">
@@ -3001,6 +3095,55 @@ const App = (() => {
         await loadRecentLog(); await loadQuickStats();
       })
     );
+    initLogDragDrop(container);
+  }
+
+  function initLogDragDrop(container) {
+    let dragSrc = null;
+
+    container.querySelectorAll('.log-item[draggable="true"]').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        dragSrc = item;
+        item.classList.add('drag-source');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.dataset.logId || '');
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('drag-source');
+        container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        dragSrc = null;
+      });
+
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (item !== dragSrc) item.classList.add('drag-over');
+      });
+
+      item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+
+      item.addEventListener('drop', e => {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        if (!dragSrc || dragSrc === item) return;
+        // Reorder DOM only (visual reordering — no DB write needed)
+        const allItems = [...container.querySelectorAll('.log-item')];
+        const srcIdx   = allItems.indexOf(dragSrc);
+        const tgtIdx   = allItems.indexOf(item);
+        if (srcIdx < tgtIdx) {
+          item.after(dragSrc);
+        } else {
+          item.before(dragSrc);
+        }
+        // Bounce animation on dropped item
+        dragSrc.classList.remove('drop-bounce');
+        void dragSrc.offsetWidth;
+        dragSrc.classList.add('drop-bounce');
+        setTimeout(() => dragSrc?.classList.remove('drop-bounce'), 420);
+        navigator.vibrate?.(12);
+      });
+    });
   }
 
   function initHistoryFilters() {
@@ -3134,10 +3277,11 @@ const App = (() => {
     const analysis = MATH.analyzeAll(tasks);
     const emaData  = MATH.emaProductivityTrend(allTasks, 14);
 
+    renderStreamgraph(allTasks);
     renderWeeklyBars(analysis.timeByDay, S.weekStart);
     renderEMAChart(emaData);
     renderMarkovTable(analysis.markov);
-    renderBayesianTable(analysis.bayesian);
+    renderBayesianTable(analysis.bayesian, emaData);
     renderWeeklyInsights(analysis.insights);
 
     const trendEl  = $('weekTrendBadge');
@@ -3147,6 +3291,98 @@ const App = (() => {
     renderZeusGuidance({ ...analysis, emaData });
     applyLevelLocks();
     applyProgressiveDisclosure();
+    applyInspectModeDefaults();
+  }
+
+  function renderStreamgraph(tasks) {
+    const wrap = $('weeklyStreamgraph');
+    if (!wrap) return;
+
+    const DAY_COUNT = 28;
+    const today = new Date();
+    const labels = [], dateKeys = [];
+    for (let i = DAY_COUNT - 1; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      dateKeys.push(DB.toDateStr(d));
+      labels.push(d.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short' }));
+    }
+
+    const dayMap = {}, catSet = new Set();
+    for (const t of tasks) {
+      if (!t.duration || t.duration <= 0) continue;
+      const dk = t.start_time.slice(0, 10);
+      if (!dayMap[dk]) dayMap[dk] = {};
+      dayMap[dk][t.category] = (dayMap[dk][t.category] || 0) + t.duration;
+      catSet.add(t.category);
+    }
+
+    const categories = [...catSet].sort();
+    if (!categories.length) {
+      wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:36px 0">Brak danych — uruchom pierwsze sesje.</p>';
+      return;
+    }
+
+    const STREAM_COLORS = [
+      'rgba(99,255,180,0.72)','rgba(122,179,255,0.72)','rgba(244,196,106,0.72)',
+      'rgba(255,99,160,0.72)','rgba(178,122,255,0.72)','rgba(99,220,255,0.72)',
+      'rgba(255,160,80,0.72)','rgba(180,255,99,0.72)',
+    ];
+
+    const datasets = categories.map((cat, i) => ({
+      label: DB.CAT_LABELS?.[cat] || cat,
+      data: dateKeys.map(dk => +( ((dayMap[dk]?.[cat] || 0) / 60).toFixed(1) )),
+      backgroundColor: STREAM_COLORS[i % STREAM_COLORS.length],
+      borderColor:     STREAM_COLORS[i % STREAM_COLORS.length].replace('0.72', '0.95'),
+      borderWidth: 1,
+      fill: true,
+      tension: 0.38,
+      pointRadius: 0,
+    }));
+
+    if (!wrap.querySelector('canvas')) {
+      wrap.innerHTML = '';
+      wrap.appendChild(document.createElement('canvas'));
+    }
+    destroyChart('weeklyStreamgraph');
+    S.charts['weeklyStreamgraph'] = new Chart(wrap.querySelector('canvas'), {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 500 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: 'rgba(238,242,255,0.65)',
+              font: { size: 10, family: "'JetBrains Mono', monospace" },
+              boxWidth: 10, padding: 8,
+            },
+          },
+          tooltip: {
+            callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}h` },
+          },
+        },
+        scales: {
+          x: {
+            stacked: true,
+            ticks: { color: 'rgba(238,242,255,0.45)', font: { size: 9 }, maxTicksLimit: 8 },
+            grid:  { color: 'rgba(255,255,255,0.04)' },
+          },
+          y: {
+            stacked: true,
+            ticks: {
+              color: 'rgba(238,242,255,0.45)',
+              font: { size: 9 },
+              callback: v => `${v}h`,
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+          },
+        },
+      },
+    });
   }
 
   function renderWeeklyBars(timeByDay, weekStart) {
@@ -3225,21 +3461,40 @@ const App = (() => {
       </tr>`).join('');
   }
 
-  function renderBayesianTable(bayesian) {
+  function renderBayesianTable(bayesian, emaData) {
     const el = $('bayesTable');
     if (!el) return;
     const rows = Object.entries(bayesian).sort((a,b) => b[1].totalSeconds - a[1].totalSeconds);
     if (!rows.length) {
-      el.innerHTML = `<tr><td colspan="4" class="empty-row">${S.language === 'en' ? 'Not enough data' : 'Za mało danych'}</td></tr>`;
+      el.innerHTML = `<tr><td colspan="5" class="empty-row">${S.language === 'en' ? 'Not enough data' : 'Za mało danych'}</td></tr>`;
       return;
     }
-    el.innerHTML = rows.map(([cat, s]) => `
+    // Build per-category daily trend from emaData if available
+    const catValues = {};
+    if (emaData?.daily) {
+      for (const day of emaData.daily) {
+        if (day.byCat) {
+          for (const [cat, mins] of Object.entries(day.byCat)) {
+            if (!catValues[cat]) catValues[cat] = [];
+            catValues[cat].push(mins);
+          }
+        }
+      }
+    }
+    el.innerHTML = rows.map(([cat, s]) => {
+      const sparkVals = catValues[cat] && catValues[cat].length >= 4 ? catValues[cat].slice(-10) : null;
+      const spark = sparkVals
+        ? buildSparklineSVG(sparkVals, { w: 52, h: 18, color: 'var(--accent2)', fill: true })
+        : '';
+      return `
       <tr>
         <td><span class="log-cat cat-${cat}">${catLabel(cat)}</span></td>
         <td class="mono">${fmtSec(s.bayesMean)}</td>
         <td class="mono text-muted">±${fmtSec(s.bayesStd)}</td>
         <td class="mono">${s.sampleCount}×</td>
-      </tr>`).join('');
+        <td>${spark}</td>
+      </tr>`;
+    }).join('');
   }
 
   function renderWeeklyInsights(insights) {
@@ -3296,6 +3551,7 @@ const App = (() => {
         await DB.logHealth({ type:'water', value:1, unit:'glass', note:'250ml' });
         S.lastWaterLog = new Date();
         await DB.addXP(20);
+        triggerPanelFlash('.panel--water');
         await refreshXPBar();
         await loadHealthView();
         showToast(S.language === 'en' ? '+20 XP for hydration' : '+20 XP za nawodnienie', 'success');
@@ -3916,6 +4172,173 @@ const App = (() => {
     $('btnCancelAlarm')?.addEventListener('click', () => {
       cancelAlarm();
       showToast(t('alarmCancelled'), 'info');
+    });
+  }
+
+  // ── Inspect Toggles ─────────────────────────────────────────────────────
+  function initInspectToggles() {
+    document.querySelectorAll('.inspect-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.inspect;
+        const body     = document.getElementById(targetId);
+        if (!body) return;
+        const open = body.hasAttribute('hidden');
+        if (open) {
+          body.removeAttribute('hidden');
+          btn.setAttribute('aria-expanded', 'true');
+          btn.textContent = 'INSPECT ▲';
+        } else {
+          body.setAttribute('hidden', '');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.textContent = 'INSPECT ▼';
+        }
+      });
+    });
+  }
+
+  // In Engineer mode, auto-expand inspect bodies
+  function applyInspectModeDefaults() {
+    if (S.uxMode !== 'pro') return;
+    document.querySelectorAll('.inspect-toggle').forEach(btn => {
+      const bodyEl = document.getElementById(btn.dataset.inspect);
+      if (bodyEl && bodyEl.hasAttribute('hidden')) btn.click();
+    });
+  }
+
+  // ── Command Palette ──────────────────────────────────────────────────────
+  function initCommandPalette() {
+    const btn   = $('cmdPaletteBtn');
+    const panel = $('cmdPalette');
+    if (!btn || !panel) return;
+
+    const toggle = () => document.body.classList.toggle('cmd-palette-open');
+    const close  = () => document.body.classList.remove('cmd-palette-open');
+
+    btn.addEventListener('click', toggle);
+
+    // Close on Escape or click-outside
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') close();
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault(); toggle();
+      }
+    });
+    document.addEventListener('click', e => {
+      if (document.body.classList.contains('cmd-palette-open') &&
+          !panel.contains(e.target) && e.target !== btn) close();
+    });
+
+    // Wire command items
+    panel.querySelectorAll('[data-cmd]').forEach(item => {
+      item.addEventListener('click', async () => {
+        close();
+        const cmd = item.dataset.cmd;
+        switch (cmd) {
+          case 'start-session':   switchTab('tracker'); $('taskName')?.focus(); break;
+          case 'stop-session':    if (!$('btnStop')?.disabled) await handleStop(); break;
+          case 'deep-work':       $('btnDeepWorkMode')?.click(); break;
+          case 'nav-tracker':     switchTab('tracker');  break;
+          case 'nav-daily':       switchTab('daily');    break;
+          case 'nav-weekly':      switchTab('weekly');   break;
+          case 'nav-health':      switchTab('health');   break;
+          case 'nav-settings':    switchTab('settings'); break;
+          case 'mode-zen':        setUxMode('zen');      break;
+          case 'mode-pro':        setUxMode('pro');      break;
+          case 'show-bayesian':   setUxMode('pro'); switchTab('weekly'); break;
+          case 'show-markov':     setUxMode('pro'); switchTab('weekly'); break;
+          case 'export-proof': {
+            const { oneClickProof } = await import('./js/attestation.js').catch(() => ({}));
+            if (oneClickProof) {
+              const tasks = await DB.getAllCompletedTasks();
+              await oneClickProof({ tasks, walletAddress: S.walletAddress });
+              showToast('🏆 Proof eksportowany!', 'success');
+            } else { showToast('attestation.js nie załadowany', 'warn'); }
+            break;
+          }
+          case 'mab-reset':
+            MATH.createBreakOptimizer().reset();
+            showToast('🔄 MAB zresetowany', 'info');
+            break;
+        }
+      });
+    });
+  }
+
+  // ── Panel Flash Confirmation ─────────────────────────────────────────────
+  function triggerPanelFlash(panelSelector) {
+    const el = typeof panelSelector === 'string'
+      ? document.querySelector(panelSelector)
+      : panelSelector;
+    if (!el) return;
+    el.classList.remove('panel--flash');
+    void el.offsetWidth;
+    el.classList.add('panel--flash');
+    setTimeout(() => el.classList.remove('panel--flash'), 600);
+  }
+
+  // ── Sparkline SVG Generator ──────────────────────────────────────────────
+  function buildSparklineSVG(values, { w = 60, h = 22, color = 'var(--accent)', fill = true } = {}) {
+    if (!values || values.length < 2) return '';
+    const min  = Math.min(...values);
+    const max  = Math.max(...values);
+    const range = max - min || 1;
+    const step  = w / (values.length - 1);
+    const pts   = values.map((v, i) => {
+      const x = Math.round(i * step);
+      const y = Math.round(h - ((v - min) / range) * (h - 2) - 1);
+      return `${x},${y}`;
+    });
+    const polyline = pts.join(' ');
+    const fillPath = fill
+      ? `<polygon points="${polyline} ${w},${h} 0,${h}"
+           fill="${color}" opacity="0.15"/>`
+      : '';
+    return `<svg class="sparkline-wrap" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"
+        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      ${fillPath}
+      <polyline points="${polyline}"
+        fill="none" stroke="${color}" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  function initAmbientControls() {
+    const toggleBtn  = $('btnAmbientToggle');
+    const typeSelect = $('ambientType');
+    const volSlider  = $('ambientVolume');
+    const volLabel   = $('ambientVolumeLabel');
+    if (!toggleBtn) return;
+
+    let running = false;
+
+    toggleBtn.addEventListener('click', () => {
+      if (running) {
+        stopAmbient();
+        running = false;
+        toggleBtn.textContent = '\u25b6 Start';
+        toggleBtn.classList.remove('btn--active');
+      } else {
+        const type = typeSelect?.value || 'brown';
+        const vol  = (parseInt(volSlider?.value ?? 3)) / 100;
+        startAmbient(type, vol);
+        running = true;
+        toggleBtn.textContent = '\u23f9 Stop';
+        toggleBtn.classList.add('btn--active');
+      }
+    });
+
+    volSlider?.addEventListener('input', () => {
+      const v = parseInt(volSlider.value);
+      if (volLabel) volLabel.textContent = v;
+      if (running) setAmbientVolume(v / 100);
+    });
+
+    typeSelect?.addEventListener('change', () => {
+      if (running) {
+        stopAmbient();
+        const vol = (parseInt(volSlider?.value ?? 3)) / 100;
+        startAmbient(typeSelect.value, vol);
+      }
     });
   }
 
@@ -4971,11 +5394,13 @@ const App = (() => {
       const slotState = await DB.consumeWaterSlot();
       if (!slotState.ok) {
         showToast(S.language === 'en' ? 'Water limit reached for today.' : 'Dzisiejszy limit wody jest już wykorzystany.', 'warn');
+        triggerPanelFlash('.panel--water');
         return;
       }
       await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: '250ml' });
       await DB.addXP(20);
       S.lastWaterLog = new Date();
+      triggerPanelFlash('.panel--water');
       if (S.currentView === 'health') await loadHealthView();
       await loadQuickStats();
       showToast(S.language === 'en' ? 'Water logged (+250ml).' : 'Woda zapisana (+250 ml).', 'success');
@@ -5258,6 +5683,9 @@ const App = (() => {
     await initDailyGoal();
     initHistoryFilters();
     initAlarmClock();
+    initAmbientControls();
+    initCommandPalette();
+    initInspectToggles();
     initPwaInstall();
     initGoogleBackup();
     initModalBehaviors();
@@ -5286,6 +5714,17 @@ const App = (() => {
     ['click','keydown','touchstart'].forEach(ev =>
       document.addEventListener(ev, () => { S.lastActivity = Date.now(); }, { passive:true })
     );
+
+    // Global button micro-tap ripple + haptic
+    document.addEventListener('pointerdown', e => {
+      const btn = e.target.closest('button:not(:disabled)');
+      if (!btn) return;
+      btn.classList.remove('btn--tap');
+      void btn.offsetWidth;
+      btn.classList.add('btn--tap');
+      setTimeout(() => btn.classList.remove('btn--tap'), 230);
+      navigator.vibrate?.(8);
+    }, { passive: true });
 
     // Toxic Productivity modal wiring (Phase 4)
     $('btnToxicSnooze').addEventListener('click', () => {

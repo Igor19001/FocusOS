@@ -4,7 +4,7 @@
  * - Network First: dokumenty i reszta żądań (z fallbackiem offline)
  */
 
-const SW_VERSION = 'focusos-v3';
+const SW_VERSION = 'focusos-v4';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const OFFLINE_URL = '/index.html';
@@ -71,6 +71,35 @@ async function cacheFirst(request) {
   return response;
 }
 
+async function staleWhileRevalidate(request) {
+  const cache  = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+
+  // Always revalidate in background to keep cache fresh
+  const networkFetch = fetch(request)
+    .then((res) => {
+      if (res && res.ok) cache.put(request, res.clone());
+      return res;
+    })
+    .catch(() => null);
+
+  // Return stale copy instantly — browser gets fresh version on the next visit
+  if (cached) return cached;
+
+  // No stale copy: must wait for network
+  const fresh = await networkFetch;
+  if (fresh) return fresh;
+
+  // Network also failed: serve offline fallback
+  return (
+    (await caches.match(OFFLINE_URL)) ||
+    new Response('Offline', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    })
+  );
+}
+
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
@@ -99,6 +128,12 @@ self.addEventListener('fetch', (event) => {
 
   if (isCacheFirstAsset(request)) {
     event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // Navigation requests: stale-while-revalidate → instant load, silent refresh
+  if (request.mode === 'navigate') {
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
