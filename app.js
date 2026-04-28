@@ -834,7 +834,7 @@ const App = (() => {
   function initTabs() {
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
-        switchTab(btn.dataset.tab);
+        window.open(location.pathname + '#' + btn.dataset.tab, '_blank');
         closeResponsiveHeader();
       });
     });
@@ -5325,6 +5325,11 @@ const App = (() => {
     setInterval(async () => {
       if (S.currentView === 'tracker') await loadQuickStats();
     }, 30000);
+
+    // Navigate to view specified in URL hash (e.g. index.html#settings)
+    const _hashView = location.hash.slice(1);
+    const _validTabs = ['tracker','daily','weekly','health','sleep','settings','about','profile'];
+    if (_validTabs.includes(_hashView)) switchTab(_hashView);
 
   }
 

@@ -1320,14 +1320,11 @@
       if (e.key === 'Escape') closeSidebar();
     });
 
-    /* Sidebar nav buttons: close sidebar then delegate to switchTab */
+    /* Sidebar nav buttons: close sidebar then open view in new tab */
     document.querySelectorAll('#appSidebar [data-tab]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         closeSidebar();
-        /* switchTab is defined in app.js — call after sidebar closes */
-        setTimeout(function () {
-          if (typeof switchTab === 'function') switchTab(btn.dataset.tab);
-        }, 60);
+        window.open(location.pathname + '#' + btn.dataset.tab, '_blank');
       });
     });
 
@@ -1365,14 +1362,14 @@
     setInterval(refreshSidebarLocks, 2000);
     refreshSidebarLocks();
 
-    /* Header quick-nav: Settings + Profile */
+    /* Header quick-nav: Settings + Profile — open in new tab */
     var btnHdrSet = document.getElementById('btnHeaderSettings');
     var btnHdrPro = document.getElementById('btnHeaderProfile');
     if (btnHdrSet) btnHdrSet.addEventListener('click', function () {
-      if (typeof switchTab === 'function') switchTab('settings');
+      window.open(location.pathname + '#settings', '_blank');
     });
     if (btnHdrPro) btnHdrPro.addEventListener('click', function () {
-      if (typeof switchTab === 'function') switchTab('profile');
+      window.open(location.pathname + '#profile', '_blank');
     });
   });
 })();
