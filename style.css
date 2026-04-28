@@ -2493,14 +2493,80 @@ body.olympus-champion .zeus-card {
   --panel-shadow: 0 28px 80px rgba(1, 10, 11, 0.45);
 }
 
+/* ── Posejdon theme ──────────────────────────────────────────────────────── */
+:root[data-theme="poseidon"] {
+  --bg:          #050d1a;
+  --bg2:         #09162b;
+  --bg3:         #0e1f3c;
+  --bg4:         #142a52;
+  --border:      rgba(0, 210, 255, 0.18);
+  --border-hi:   rgba(0, 240, 220, 0.36);
+  --border-warn: rgba(110, 220, 255, 0.30);
+  --border-err:  rgba(255, 130, 100, 0.28);
+  --accent:      #00d4ff;
+  --accent2:     #45e8d0;
+  --accent3:     #ff7a7a;
+  --accent4:     #7fe8ff;
+  --accent5:     #cef6ff;
+  --text:        #e8f6ff;
+  --text-muted:  #8ab8d5;
+  --text-dim:    #4a7a9b;
+  --button-text: #03111e;
+  --panel-shadow: 0 28px 80px rgba(0, 5, 20, 0.55);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Hefajstos theme ──────────────────────────────────────────────────────── */
+:root[data-theme="hephaestus"] {
+  --bg:          #110800;
+  --bg2:         #1d1005;
+  --bg3:         #29180a;
+  --bg4:         #38230e;
+  --border:      rgba(255, 130, 30, 0.18);
+  --border-hi:   rgba(255, 180, 60, 0.36);
+  --border-warn: rgba(255, 210, 80, 0.30);
+  --border-err:  rgba(255, 80, 60, 0.30);
+  --accent:      #ff7830;
+  --accent2:     #ffb040;
+  --accent3:     #ff4444;
+  --accent4:     #ffd070;
+  --accent5:     #fff0d0;
+  --text:        #fff0d8;
+  --text-muted:  #c49060;
+  --text-dim:    #8a5830;
+  --button-text: #1a0800;
+  --panel-shadow: 0 28px 80px rgba(15, 4, 0, 0.55);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 html[data-theme="olympus"],
 html[data-theme="ember"],
-html[data-theme="tide"] {
+html[data-theme="tide"],
+html[data-theme="poseidon"],
+html[data-theme="hephaestus"] {
   color-scheme: dark;
 }
 
 html[data-theme="marble"] {
   color-scheme: light;
+}
+
+body[data-theme="poseidon"],
+html[data-theme="poseidon"] body {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0, 200, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 85% 90%, rgba(70, 230, 210, 0.09), transparent 30%),
+    var(--bg);
+}
+
+body[data-theme="hephaestus"],
+html[data-theme="hephaestus"] body {
+  background:
+    radial-gradient(circle at 10% 80%, rgba(255, 100, 20, 0.14), transparent 38%),
+    radial-gradient(circle at 90% 10%, rgba(255, 160, 40, 0.09), transparent 30%),
+    var(--bg);
 }
 
 body {

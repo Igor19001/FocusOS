@@ -122,7 +122,7 @@ const App = (() => {
     light: 'marble',
     retro: 'ember',
   };
-  const THEME_IDS = ['olympus', 'marble', 'ember', 'tide'];
+  const THEME_IDS = ['olympus', 'marble', 'ember', 'tide', 'poseidon', 'hephaestus'];
   const MODULE_UNLOCK_RULES = {
     health: { sessions: 1, views: ['health'], panels: ['.panel--quick-actions'] },
     sleep: { sessions: 3, views: ['sleep'], panels: [] },
@@ -747,7 +747,7 @@ const App = (() => {
         },
       },
       tide: {
-        // Poseidon — raindrops (82%) + tridents (18%)
+        // Calm tide — raindrops (82%) + tridents (18%)
         make(w, h, rY) {
           const size = 12+Math.random()*20;
           return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
@@ -777,6 +777,79 @@ const App = (() => {
             ctx.bezierCurveTo(b.size*0.44,-b.size*0.1, b.size*0.44,b.size*0.32, 0,b.size*0.46);
             ctx.bezierCurveTo(-b.size*0.44,b.size*0.32,-b.size*0.44,-b.size*0.1, 0,-b.size*0.55);
             ctx.fillStyle=col; ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+      poseidon: {
+        // Posejdon — large glowing tridents + bioluminescent bubbles
+        make(w, h, rY) {
+          const size = 18+Math.random()*28;
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
+            speed: 0.9+Math.random()*2.0, size, alpha: 0.18+Math.random()*0.42,
+            glow: Math.random()>0.45, isTrident: Math.random()>0.55,
+            wobble: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.018;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*3, b.y);
+          const col = b.glow?'#00d4ff':'rgba(0,200,255,0.55)';
+          if (b.glow) { ctx.shadowColor='rgba(0,212,255,0.9)'; ctx.shadowBlur=18; }
+          if (b.isTrident) {
+            ctx.strokeStyle=col; ctx.lineWidth=2.5; ctx.lineCap='round';
+            const s=b.size;
+            ctx.beginPath(); ctx.moveTo(0,s*0.35); ctx.lineTo(0,s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-s*0.42,0); ctx.lineTo(s*0.42,0); ctx.stroke();
+            [-s*0.42,0,s*0.42].forEach(px=>{
+              ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,-s*0.52); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.52); ctx.lineTo(px-s*0.12,-s*0.28); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.52); ctx.lineTo(px+s*0.12,-s*0.28); ctx.stroke();
+            });
+          } else {
+            ctx.beginPath(); ctx.arc(0,0,b.size*0.28,0,Math.PI*2);
+            ctx.fillStyle=col; ctx.fill();
+            const inner = ctx.createRadialGradient(0,0,0,0,0,b.size*0.28);
+            inner.addColorStop(0,'rgba(180,255,255,0.6)'); inner.addColorStop(1,'transparent');
+            ctx.fillStyle=inner; ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+      hephaestus: {
+        // Hefajstos — falling molten sparks + small hammer shapes
+        make(w, h, rY) {
+          const size = 6+Math.random()*16;
+          const cols = ['#ff7830','#ffb040','#ffd070','#ff4422','#ffcc60'];
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*3+Math.random()*h*0.6),
+            speed: 2.8+Math.random()*5.0, size, alpha: 0.22+Math.random()*0.50,
+            glow: Math.random()>0.48, color: cols[Math.floor(Math.random()*cols.length)],
+            isHammer: Math.random()>0.76, wobble: Math.random()*Math.PI*2, rot: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.06; b.rot += 0.04;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*1.8, b.y);
+          if (b.glow) { ctx.shadowColor=b.color; ctx.shadowBlur=16; }
+          if (b.isHammer) {
+            ctx.strokeStyle=b.color; ctx.lineWidth=2; ctx.lineCap='round';
+            ctx.rotate(b.rot);
+            const s=b.size;
+            ctx.beginPath(); ctx.moveTo(0,-s*0.6); ctx.lineTo(0,s*0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-s*0.4,-s*0.6); ctx.lineTo(s*0.4,-s*0.6); ctx.stroke();
+            ctx.beginPath(); ctx.rect(-s*0.4,-s*0.9,s*0.8,s*0.36);
+            ctx.fillStyle=b.color; ctx.fill();
+          } else {
+            const grad = ctx.createRadialGradient(0,0,0,0,b.size*0.36,b.size*0.36);
+            grad.addColorStop(0,'rgba(255,255,200,0.9)'); grad.addColorStop(0.5,b.color); grad.addColorStop(1,'transparent');
+            ctx.beginPath(); ctx.arc(0,0,b.size*0.36,0,Math.PI*2);
+            ctx.fillStyle=grad; ctx.fill();
+            const trail = ctx.createLinearGradient(0,-b.size*2.4,0,0);
+            trail.addColorStop(0,'transparent'); trail.addColorStop(1,b.color);
+            ctx.beginPath();
+            ctx.moveTo(-b.size*0.09,-b.size*2.4); ctx.lineTo(b.size*0.09,-b.size*2.4);
+            ctx.lineTo(b.size*0.05,0); ctx.lineTo(-b.size*0.05,0); ctx.closePath();
+            ctx.fillStyle=trail; ctx.fill();
           }
           ctx.restore();
         },
@@ -1723,10 +1796,22 @@ const App = (() => {
     closeResponsiveHeader();
   }
 
+  const GOD_AVATARS = {
+    poseidon:   { icon: '🔱', name: 'POSEJDON', tag: 'Władca mórz' },
+    hephaestus: { icon: '🔨', name: 'HEFAJSTOS', tag: 'Kowal bogów' },
+  };
+
   function applyTheme(themeName) {
     const resolvedTheme = resolveThemeId(themeName);
     S.theme = resolvedTheme;
     document.documentElement.setAttribute('data-theme', resolvedTheme);
+    const god = GOD_AVATARS[resolvedTheme];
+    const orbEl  = document.getElementById('zeusGodOrb');
+    const nameEl = document.getElementById('zeusGodName');
+    const tagEl  = document.getElementById('zeusGodTag');
+    if (orbEl)  orbEl.textContent  = god ? god.icon : '⚡';
+    if (nameEl) nameEl.textContent = god ? god.name : 'ZEUS';
+    if (tagEl)  tagEl.textContent  = god ? god.tag  : 'Stróż skupienia';
   }
 
   const I18N = {
@@ -2007,6 +2092,8 @@ const App = (() => {
         marble: 'Jasny poranek',
         ember: 'Ciepły zmierzch',
         tide: 'Spokojny przypływ',
+        poseidon: 'Głębia Posejdona',
+        hephaestus: 'Kuźnia Hefajstosa',
       },
       zeusVoices: {
         strict: 'Dowódca',
@@ -2301,6 +2388,8 @@ const App = (() => {
         marble: 'Bright morning',
         ember: 'Warm dusk',
         tide: 'Calm tide',
+        poseidon: 'Poseidon\'s Deep',
+        hephaestus: 'Forge of Hephaestus',
       },
       zeusVoices: {
         strict: 'Commander',
