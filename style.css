@@ -704,7 +704,7 @@ body.app-locked .main {
 .mode-splash {
   position: fixed;
   inset: 0;
-  z-index: 900;
+  z-index: 9100;
   background: radial-gradient(circle at 20% 20%, rgba(99,255,180,0.12), transparent 40%),
               radial-gradient(circle at 80% 80%, rgba(124,111,255,0.14), transparent 42%),
               var(--bg);
@@ -6098,7 +6098,7 @@ body.session-active .panel--tracker-main {
 /* Scanline sweep on hover */
 .panel {
   position: relative;
-  overflow: hidden;
+  overflow: clip;  /* clip pseudo-elements without blocking child scrollable content */
 }
 .panel::after {
   content: '';
@@ -6187,6 +6187,12 @@ body.session-active #fatigueGaugeWrap {
   bottom: 88px;
   right: 24px;
   z-index: 7900;
+}
+body.app-locked #cmdPaletteBtn,
+body.app-locked #cmdPalette {
+  display: none !important;
+}
+#cmdPaletteBtn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -6296,7 +6302,7 @@ body.cmd-palette-open #cmdPalette {
   transform: translateX(0);
 }
 /* Nudge main content left when palette opens */
-body.cmd-palette-open .app-main {
+body.cmd-palette-open .main {
   transition: padding-right 0.35s cubic-bezier(0.2,0.8,0.2,1);
   padding-right: 308px;
 }
