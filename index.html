@@ -329,6 +329,7 @@
 
       <!-- HERO: Active task card (JS-controlled display) -->
       <div class="active-task-card fc-hero-display" id="activeCard" style="display:none">
+        <canvas id="zenBreathRing" aria-hidden="true"></canvas>
         <span class="fc-timer-digits" id="activeTimer">00:00:00</span>
         <span class="fc-active-name" id="activeName">Gotowy do skupienia</span>
         <div class="fc-active-cat-row">
@@ -1476,6 +1477,7 @@
 
 <aside id="cmdPalette" role="complementary" aria-label="Paleta Komend">
   <div class="cmd-palette-title">⚙ Command Palette</div>
+  <input id="cmdInput" type="text" placeholder="/woda 250 · /start 25 zadanie · /stop · /zen" autocomplete="off" spellcheck="false"/>
 
   <div class="cmd-section">Sesja</div>
   <button class="cmd-item" data-cmd="start-session">

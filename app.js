@@ -879,21 +879,28 @@ const App = (() => {
     if (view !== 'tracker' && document.body.classList.contains('deep-work')) {
       setDeepWorkMode(false);
     }
-    S.currentView = view;
-    document.body.dataset.currentView = view;
-    document.querySelectorAll('[data-tab]').forEach(b =>
-      b.classList.toggle('active', b.dataset.tab === view)
-    );
-    document.querySelectorAll('[data-view]').forEach(v =>
-      v.classList.toggle('hidden', v.dataset.view !== view)
-    );
-    if (view === 'daily')   loadDailyView();
-    if (view === 'weekly')  loadWeeklyView();
-    if (view === 'health')  loadHealthView();
-    if (view === 'tracker') loadTrackerView();
-    if (view === 'sleep')   { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
-    if (view === 'settings') loadSettingsView();
-    if (view === 'profile') loadProfileView();
+    const doSwitch = () => {
+      S.currentView = view;
+      document.body.dataset.currentView = view;
+      document.querySelectorAll('[data-tab]').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === view)
+      );
+      document.querySelectorAll('[data-view]').forEach(v =>
+        v.classList.toggle('hidden', v.dataset.view !== view)
+      );
+      if (view === 'daily')    loadDailyView();
+      if (view === 'weekly')   loadWeeklyView();
+      if (view === 'health')   loadHealthView();
+      if (view === 'tracker')  loadTrackerView();
+      if (view === 'sleep')    { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
+      if (view === 'settings') loadSettingsView();
+      if (view === 'profile')  loadProfileView();
+    };
+    if (typeof document.startViewTransition === 'function') {
+      document.startViewTransition(doSwitch);
+    } else {
+      doSwitch();
+    }
   }
   window.switchTab = switchTab;
 
@@ -2720,12 +2727,14 @@ const App = (() => {
     $('activeCard').classList.remove('timer-emphasis');
     $('activeName').textContent   = S.language === 'en' ? 'Ready to focus' : 'Gotowy do skupienia';
     $('activeCat').textContent    = t('focusCycleFocus');
-    $('activeTimer').textContent  = '00:00:00';
+    const timerEl = $('activeTimer');
+    if (timerEl) { timerEl._fdSpans = null; timerEl._fdPrev = null; timerEl.textContent = '00:00:00'; }
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
     _updateFatigueGauge(100, false);
     $('btnStart').disabled = false;
     $('btnStop').disabled  = true;
+    clearZenOledMode();
     if (document.body.classList.contains('deep-work')) setDeepWorkMode(false);
     updateFocusFlowState();
     updateDeepFocusUI();
@@ -2799,14 +2808,127 @@ const App = (() => {
     }
   }
 
+  // ── Rolling digit timer display ───────────────────────────────────────────
+  function updateTimerDisplay(timeStr) {
+    const el = $('activeTimer');
+    if (!el) return;
+    if (!el._fdSpans) {
+      el.innerHTML = '';
+      el._fdSpans  = [];
+      el._fdPrev   = '';
+      for (const ch of timeStr) {
+        const span = document.createElement('span');
+        span.className = ch === ':' ? 'fd-sep' : 'fd-digit';
+        span.textContent = ch;
+        el.appendChild(span);
+        el._fdSpans.push(span);
+      }
+      el._fdPrev = timeStr;
+      return;
+    }
+    for (let i = 0; i < timeStr.length; i++) {
+      if (timeStr[i] !== (el._fdPrev || '')[i] && el._fdSpans[i]?.className === 'fd-digit') {
+        const span = el._fdSpans[i];
+        span.textContent = timeStr[i];
+        span.classList.remove('fd-roll');
+        void span.offsetWidth;
+        span.classList.add('fd-roll');
+      }
+    }
+    el._fdPrev = timeStr;
+  }
+
+  // ── OLED Zen Auto-Hide ────────────────────────────────────────────────────
+  function initZenOledMode() {
+    if (S.uxMode !== 'zen') return;
+    document.body.classList.add('zen-oled');
+    let hideTimer = null;
+    const wake = () => {
+      document.body.classList.add('zen-awake');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => document.body.classList.remove('zen-awake'), 3000);
+    };
+    document._zenWake = wake;
+    document.addEventListener('mousemove', wake);
+    document.addEventListener('touchstart', wake, { passive: true });
+    wake();
+  }
+
+  function clearZenOledMode() {
+    document.body.classList.remove('zen-oled', 'zen-awake');
+    if (document._zenWake) {
+      document.removeEventListener('mousemove', document._zenWake);
+      document.removeEventListener('touchstart', document._zenWake);
+      document._zenWake = null;
+    }
+  }
+
+  // ── Breathing ring (canvas, 4-7-8 rhythm) ────────────────────────────────
+  function initBreathRing() {
+    const canvas = $('zenBreathRing');
+    if (!canvas || canvas._rfRunning) return;
+    canvas._rfRunning = true;
+    const IN = 4000, HOLD = 7000, OUT = 8000, TOTAL = IN + HOLD + OUT;
+    let rafId;
+    function draw(ts) {
+      const W = canvas.offsetWidth, H = canvas.offsetHeight;
+      if (!canvas._rfRunning) return;
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, W, H);
+      if (W > 0 && H > 0) {
+        const phase = ts % TOTAL;
+        let r, a;
+        if (phase < IN) {
+          const t = phase / IN;
+          r = Math.min(W, H) * (0.18 + 0.18 * t);
+          a = 0.03 + 0.10 * t;
+        } else if (phase < IN + HOLD) {
+          r = Math.min(W, H) * 0.36; a = 0.13;
+        } else {
+          const t = (phase - IN - HOLD) / OUT;
+          r = Math.min(W, H) * (0.36 - 0.18 * t);
+          a = 0.13 - 0.10 * t;
+        }
+        const cx = W / 2, cy = H / 2;
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, `hsla(180,100%,60%,${(a * 1.5).toFixed(3)})`);
+        g.addColorStop(0.6, `hsla(195,100%,55%,${a.toFixed(3)})`);
+        g.addColorStop(1, `hsla(195,100%,55%,0)`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+      }
+      rafId = requestAnimationFrame(draw);
+    }
+    rafId = requestAnimationFrame(draw);
+    canvas._stopRing = () => {
+      canvas._rfRunning = false;
+      cancelAnimationFrame(rafId);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }
+
+  // ── Water particle burst ──────────────────────────────────────────────────
+  function spawnWaterParticle(x, y, label) {
+    const p = document.createElement('div');
+    p.className = 'water-particle';
+    p.textContent = label || '+250ml 💧';
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+  }
+
   function startLocalTimer(startISO) {
     const startTs = new Date(startISO).getTime();
     clearInterval(S.timerInterval);
     S.timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTs) / 1000);
       const h = Math.floor(elapsed / 3600), m = Math.floor((elapsed % 3600) / 60), s = elapsed % 60;
-      $('activeTimer').textContent =
-        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      updateTimerDisplay(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
       const fatigue = MATH.fatigueCurve(Math.floor(elapsed / 60));
       const pct     = Math.round(100 - fatigue.currentEfficiency);
       $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
@@ -2838,6 +2960,8 @@ const App = (() => {
       markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
+      initZenOledMode();
+      initBreathRing();
       playSessionStart(); vibrateClick();
       if (typeof ZeusHologram !== 'undefined') ZeusHologram.setOrbState('focus');
       showToast(`▶ ${t('taskStartToast', { name })}`, 'success');
@@ -4212,10 +4336,56 @@ const App = (() => {
     const panel = $('cmdPalette');
     if (!btn || !panel) return;
 
-    const toggle = () => document.body.classList.toggle('cmd-palette-open');
+    const toggle = () => {
+      document.body.classList.toggle('cmd-palette-open');
+      if (document.body.classList.contains('cmd-palette-open'))
+        setTimeout(() => $('cmdInput')?.focus(), 60);
+    };
     const close  = () => document.body.classList.remove('cmd-palette-open');
 
     btn.addEventListener('click', toggle);
+
+    // Slash-command text input parser
+    const cmdInput = $('cmdInput');
+    if (cmdInput) {
+      cmdInput.addEventListener('keydown', async e => {
+        if (e.key !== 'Enter') return;
+        const raw = cmdInput.value.trim();
+        cmdInput.value = '';
+        close();
+        const [cmd, ...rest] = raw.replace(/^\//,'').split(/\s+/);
+        switch (cmd.toLowerCase()) {
+          case 'woda': {
+            const ml = parseInt(rest[0]) || 250;
+            const slotState = await DB.consumeWaterSlot();
+            if (slotState.ok) {
+              await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: `${ml}ml` });
+              await DB.addXP(20);
+              await loadQuickStats();
+              showToast(`💧 Woda zapisana (+${ml} ml).`, 'success');
+            } else showToast('Dzienny limit wody osiągnięty.', 'warn');
+            break;
+          }
+          case 'start': {
+            const min  = parseInt(rest[0]) || 25;
+            const name = rest.slice(1).join(' ') || 'Sesja skupienia';
+            $('taskName').value    = name;
+            $('taskCategory').value = 'work';
+            switchTab('tracker');
+            await handleStart();
+            break;
+          }
+          case 'stop':
+            if (!$('btnStop')?.disabled) await handleStop();
+            break;
+          case 'zen':  setUxMode('zen');  break;
+          case 'pro':  setUxMode('pro');  break;
+          case 'tab':  if (rest[0]) switchTab(rest[0]); break;
+          default:
+            showToast(`Nieznana komenda: /${cmd}`, 'warn');
+        }
+      });
+    }
 
     // Close on Escape or click-outside
     document.addEventListener('keydown', e => {
@@ -5392,7 +5562,7 @@ const App = (() => {
       });
     }
 
-    $('btnQuickWater')?.addEventListener('click', async () => {
+    $('btnQuickWater')?.addEventListener('click', async e => {
       const slotState = await DB.consumeWaterSlot();
       if (!slotState.ok) {
         showToast(S.language === 'en' ? 'Water limit reached for today.' : 'Dzisiejszy limit wody jest już wykorzystany.', 'warn');
@@ -5402,6 +5572,7 @@ const App = (() => {
       await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: '250ml' });
       await DB.addXP(20);
       S.lastWaterLog = new Date();
+      spawnWaterParticle(e.clientX, e.clientY);
       triggerPanelFlash('.panel--water');
       if (S.currentView === 'health') await loadHealthView();
       await loadQuickStats();

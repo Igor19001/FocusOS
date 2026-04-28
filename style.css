@@ -6356,3 +6356,129 @@ body.cmd-palette-open .main {
   #cmdPalette { width: 100%; border-left: none; border-top: 1px solid var(--border-hi); top: auto; bottom: 0; height: 65vh; transform: translateY(105%); }
   body.cmd-palette-open #cmdPalette { transform: translateY(0); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ZEN OLED AUTO-HIDE
+   ═══════════════════════════════════════════════════════════ */
+body.zen-oled { background: #000 !important; transition: background 1.5s ease; }
+
+body.zen-oled .header,
+body.zen-oled .tab-nav,
+body.zen-oled .mobile-nav,
+body.zen-oled #fcInputWrap,
+body.zen-oled #fcBtnRow,
+body.zen-oled .qs-grid,
+body.zen-oled .panel--quick-actions,
+body.zen-oled .fc-active-name,
+body.zen-oled .fc-active-cat-row,
+body.zen-oled .fatigue-wrap,
+body.zen-oled .fatigue-gauge-wrap,
+body.zen-oled #zenBreathRing {
+  transition: opacity 2s ease 1.2s !important;
+}
+body.zen-oled:not(.zen-awake) .header,
+body.zen-oled:not(.zen-awake) .tab-nav,
+body.zen-oled:not(.zen-awake) .mobile-nav,
+body.zen-oled:not(.zen-awake) #fcInputWrap,
+body.zen-oled:not(.zen-awake) #fcBtnRow,
+body.zen-oled:not(.zen-awake) .qs-grid,
+body.zen-oled:not(.zen-awake) .panel--quick-actions,
+body.zen-oled:not(.zen-awake) .fc-active-name,
+body.zen-oled:not(.zen-awake) .fc-active-cat-row,
+body.zen-oled:not(.zen-awake) .fatigue-wrap,
+body.zen-oled:not(.zen-awake) .fatigue-gauge-wrap {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-oled .fc-timer-digits {
+  font-size: clamp(3.5rem, 13vw, 7rem) !important;
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ROLLING TIMER DIGITS
+   ═══════════════════════════════════════════════════════════ */
+.fc-timer-digits { display: inline-flex; align-items: center; }
+.fd-digit {
+  display: inline-block;
+  overflow: hidden;
+  position: relative;
+  height: 1.15em;
+  line-height: 1.15;
+  vertical-align: bottom;
+}
+.fd-sep { display: inline-block; line-height: 1.15; vertical-align: bottom; }
+@keyframes digitRoll {
+  from { transform: translateY(1.15em); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+.fd-digit.fd-roll { animation: digitRoll 0.22s cubic-bezier(0.4,0,0.2,1); }
+
+/* ═══════════════════════════════════════════════════════════
+   BREATHING RING CANVAS
+   ═══════════════════════════════════════════════════════════ */
+#zenBreathRing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  z-index: 0;
+}
+body.session-active #zenBreathRing { opacity: 1; }
+.active-task-card { position: relative; overflow: clip; }
+.fc-timer-digits  { position: relative; z-index: 1; }
+
+/* ═══════════════════════════════════════════════════════════
+   WATER PARTICLES
+   ═══════════════════════════════════════════════════════════ */
+.water-particle {
+  position: fixed;
+  pointer-events: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: waterFloat 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+@keyframes waterFloat {
+  0%   { transform: translate(-50%, 0)    scale(1);   opacity: 1; }
+  100% { transform: translate(-50%,-90px) scale(1.3); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMMAND PALETTE — TEXT INPUT
+   ═══════════════════════════════════════════════════════════ */
+#cmdInput {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-hi);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  padding: 10px 16px;
+  outline: none;
+  margin-bottom: 10px;
+}
+#cmdInput::placeholder { color: var(--text-muted); font-size: 0.78rem; }
+#cmdInput:focus { border-bottom-color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW TRANSITIONS
+   ═══════════════════════════════════════════════════════════ */
+::view-transition-old(root) {
+  animation: vtFadeOut 0.18s ease forwards;
+}
+::view-transition-new(root) {
+  animation: vtFadeIn 0.18s ease forwards;
+}
+@keyframes vtFadeOut { to   { opacity: 0; transform: translateY(-4px); } }
+@keyframes vtFadeIn  { from { opacity: 0; transform: translateY(4px);  } }
