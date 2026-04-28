@@ -602,6 +602,12 @@
       </div>
     </section>
 
+    <!-- Item 8: Streamgraph 28-day category flow -->
+    <section class="panel panel--streamgraph">
+      <div class="panel-label">Przepływ kategorii — 28 dni</div>
+      <div id="weeklyStreamgraph" style="width:100%;height:180px"></div>
+    </section>
+
     <section class="panel panel--week-bars">
       <div class="panel-label">Czas dzienny (h)</div>
       <div class="chart-wrap chart-wrap--lg"><canvas id="weeklyBarsChart"></canvas></div>
@@ -919,6 +925,34 @@
       </div>
       <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
         Przycisk instalacji pojawia się automatycznie, gdy przeglądarka zgłosi obsługę PWA.
+      </div>
+    </section>
+
+    <!-- Item 7: Proof of Productivity -->
+    <section class="panel panel--eas" id="easPanel">
+      <div class="panel-label">Proof of Productivity (Web3)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Kryptograficzny dowód Twoich godzin skupienia. Podpisz portfelem i udostępnij — bez ujawniania szczegółów zadań.</p>
+      <div id="easResult" style="display:none;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;font-family:var(--font-mono);color:var(--accent5);word-break:break-all"></div>
+      <div class="form-actions">
+        <button class="btn-secondary" id="btnGenerateProof" style="width:auto;padding:10px 14px">⚡ Generuj dowód</button>
+        <button class="btn-secondary" id="btnDownloadProof" style="display:none;width:auto;padding:10px 14px">⬇ Pobierz .md</button>
+      </div>
+    </section>
+
+    <!-- Item 3: P2P Sync -->
+    <section class="panel panel--sync">
+      <div class="panel-label">Synchronizacja P2P (Local-First)</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Opcjonalne. Dane synchronizują się bezpośrednio między urządzeniami — bez serwera.</p>
+      <div class="settings-row">
+        <label class="settings-label" for="syncToggle">Synchronizacja P2P</label>
+        <label class="toggle-switch"><input type="checkbox" id="syncToggle"><span class="toggle-slider"></span></label>
+      </div>
+      <div id="syncPairRow" style="display:none;margin-top:12px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Kod parowania:</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <code id="syncPairCode" style="font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:6px 10px;border-radius:6px;color:var(--accent)"></code>
+          <button class="btn-secondary" id="btnCopySyncCode" style="padding:6px 10px;font-size:11px">Kopiuj</button>
+        </div>
       </div>
     </section>
   </div><!-- /view--settings -->
@@ -1381,7 +1415,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 <script src="db.js"></script>
 <script src="math.js"></script>
-<script src="app.js"></script>
-<script src="zeus-hologram.js"></script>
+<script type="module" src="app.js"></script>
+<script src="zeus-hologram.js" defer></script>
 </body>
 </html>
