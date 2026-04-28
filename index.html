@@ -66,6 +66,7 @@
       </select>
       <button class="header-quick-btn" id="btnHeaderSettings" type="button" title="Ustawienia" aria-label="Ustawienia">⚙️</button>
       <button class="header-quick-btn" id="btnHeaderProfile" type="button" title="Profil" aria-label="Profil">👤</button>
+      <button class="btn-pro-toggle" id="btnProToggle" type="button" title="Włącz / Wyłącz tryb Pro">Pro</button>
     </div>
     <!-- Legacy: kept for JS compatibility, not displayed -->
     <div class="header-legacy-hidden">
@@ -447,26 +448,6 @@
 
     </section>
 
-    <!-- Quick Actions -->
-    <section class="panel panel--quick-actions" style="margin-top:24px">
-      <div class="panel-label">Szybkie akcje</div>
-      <div class="quick-action-grid">
-        <button class="quick-action-btn" id="btnQuickWater" type="button">
-          <strong>Wypiłem wodę</strong>
-          <span>+250 ml i szybki wpis zdrowia</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMeal" type="button">
-          <strong>Zjadłem posiłek</strong>
-          <span>Dodaj log bez wchodzenia do zakładki Zdrowie</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMove" type="button">
-          <strong>Krótki ruch</strong>
-          <span>+5 min resetu dla ciała i głowy</span>
-        </button>
-      </div>
-      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
-    </section>
-
     <!-- Localization + JS anchors (hidden, IDs needed by app.js) -->
     <div class="fc-loc-anchors" aria-hidden="true">
       <span class="focus-hero-kicker" id="focusHeroKicker"></span>
@@ -499,6 +480,26 @@
       <div class="log-list" id="recentLog">
         <div class="log-empty">Brak sesji. Uruchom pierwszą sesję skupienia.</div>
       </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="panel panel--quick-actions" style="margin-top:24px">
+      <div class="panel-label">Szybkie akcje</div>
+      <div class="quick-action-grid">
+        <button class="quick-action-btn" id="btnQuickWater" type="button">
+          <strong>Wypiłem wodę</strong>
+          <span>+250 ml i szybki wpis zdrowia</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMeal" type="button">
+          <strong>Zjadłem posiłek</strong>
+          <span>Dodaj log bez wchodzenia do zakładki Zdrowie</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMove" type="button">
+          <strong>Krótki ruch</strong>
+          <span>+5 min resetu dla ciała i głowy</span>
+        </button>
+      </div>
+      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
     </section>
 
     <!-- Health strip sidebar (visible only at ≥1640px via CSS) -->
@@ -1462,6 +1463,23 @@
     if (btnHdrPro) btnHdrPro.addEventListener('click', function () {
       if (typeof switchTab === 'function') switchTab('profile');
     });
+
+    /* Pro mode toggle */
+    var btnProToggle = document.getElementById('btnProToggle');
+    function syncProToggle() {
+      if (!btnProToggle) return;
+      var isPro = document.body.dataset.uxMode === 'pro';
+      btnProToggle.classList.toggle('is-active', isPro);
+    }
+    if (btnProToggle) {
+      btnProToggle.addEventListener('click', function () {
+        var isPro = document.body.dataset.uxMode === 'pro';
+        if (typeof setUxMode === 'function') setUxMode(isPro ? 'zen' : 'pro');
+        syncProToggle();
+      });
+      new MutationObserver(syncProToggle).observe(document.body, { attributeFilter: ['data-ux-mode'] });
+      syncProToggle();
+    }
   });
 })();
 </script>
