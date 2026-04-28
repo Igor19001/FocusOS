@@ -4,7 +4,7 @@
  * - Network First: dokumenty i reszta żądań (z fallbackiem offline)
  */
 
-const SW_VERSION = 'focusos-v4';
+const SW_VERSION = 'focusos-v5';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const OFFLINE_URL = '/index.html';
