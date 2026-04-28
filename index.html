@@ -85,6 +85,8 @@
     </div>
   </div>
 </header>
+<div id="headerPeekZone"></div>
+<div id="headerPeek" title="Pokaż pasek">▼</div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      APP SIDEBAR — Navigation, Tools, Progressive Disclosure
@@ -1464,12 +1466,48 @@
       if (typeof switchTab === 'function') switchTab('profile');
     });
 
-    /* Pro mode toggle */
+    /* Header auto-hide */
+    (function () {
+      var hdr      = document.querySelector('.header');
+      var peek     = document.getElementById('headerPeek');
+      var peekZone = document.getElementById('headerPeekZone');
+      var mainEl   = document.querySelector('.main');
+      if (!hdr || !peek || !peekZone) return;
+
+      function hideHeader() {
+        var h = hdr.offsetHeight;
+        hdr.classList.add('header--hidden');
+        if (mainEl) mainEl.style.marginTop = '-' + h + 'px';
+        peekZone.classList.add('active');
+      }
+
+      function showHeader() {
+        hdr.classList.remove('header--hidden');
+        if (mainEl) mainEl.style.marginTop = '';
+        peek.classList.remove('show');
+        peekZone.classList.remove('active');
+      }
+
+      hdr.addEventListener('click', function (e) {
+        if (e.target.closest('button, a, select, input, label')) return;
+        hideHeader();
+      });
+
+      peekZone.addEventListener('mouseenter', function () { peek.classList.add('show'); });
+      peekZone.addEventListener('mouseleave', function () {
+        setTimeout(function () { if (!peek.matches(':hover')) peek.classList.remove('show'); }, 80);
+      });
+      peek.addEventListener('mouseleave', function () { peek.classList.remove('show'); });
+      peek.addEventListener('click', showHeader);
+    })();
+
+    /* Pro / Lite mode toggle */
     var btnProToggle = document.getElementById('btnProToggle');
     function syncProToggle() {
       if (!btnProToggle) return;
       var isPro = document.body.dataset.uxMode === 'pro';
       btnProToggle.classList.toggle('is-active', isPro);
+      btnProToggle.textContent = isPro ? 'Pro' : 'Lite';
     }
     if (btnProToggle) {
       btnProToggle.addEventListener('click', function () {
@@ -1491,17 +1529,6 @@
 
 <aside id="cmdPalette" role="complementary" aria-label="Paleta Komend">
   <div class="cmd-palette-title">⚙ Command Palette</div>
-  <div class="cmd-section">Sesja</div>
-  <button class="cmd-item" data-cmd="start-session">
-    <span class="cmd-item__icon">▶</span>Start sesji skupienia
-  </button>
-  <button class="cmd-item" data-cmd="stop-session">
-    <span class="cmd-item__icon">⏹</span>Zatrzymaj sesję
-  </button>
-  <button class="cmd-item" data-cmd="deep-work">
-    <span class="cmd-item__icon">🎯</span>Tryb Deep Work
-  </button>
-
   <div class="cmd-section">Nawigacja</div>
   <button class="cmd-item" data-cmd="nav-tracker">
     <span class="cmd-item__icon">⏱</span>Tracker
