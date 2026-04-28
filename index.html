@@ -66,13 +66,9 @@
       </select>
       <button class="header-quick-btn" id="btnHeaderSettings" type="button" title="Ustawienia" aria-label="Ustawienia">⚙️</button>
       <button class="header-quick-btn" id="btnHeaderProfile" type="button" title="Profil" aria-label="Profil">👤</button>
-      <button class="btn-menu-open" id="btnMenuOpen" type="button" aria-label="Otwórz menu">
-        <span></span><span></span><span></span>
-      </button>
     </div>
     <!-- Legacy: kept for JS compatibility, not displayed -->
     <div class="header-legacy-hidden">
-      <button class="btn-hamburger" id="btnNavToggle" type="button" aria-expanded="false" aria-controls="headerDrawer"></button>
       <div class="header-drawer" id="headerDrawer">
         <nav class="tab-nav" id="headerTabNav">
           <button class="tab-btn active" data-tab="tracker">Skupienie</button>
@@ -1477,8 +1473,6 @@
 
 <aside id="cmdPalette" role="complementary" aria-label="Paleta Komend">
   <div class="cmd-palette-title">⚙ Command Palette</div>
-  <input id="cmdInput" type="text" placeholder="/woda 250 · /start 25 zadanie · /stop · /zen" autocomplete="off" spellcheck="false"/>
-
   <div class="cmd-section">Sesja</div>
   <button class="cmd-item" data-cmd="start-session">
     <span class="cmd-item__icon">▶</span>Start sesji skupienia
