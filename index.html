@@ -888,53 +888,40 @@
       </div>
     </section>
 
-    <section class="panel panel--settings-theme">
-      <div class="panel-label">Motyw</div>
-      <div class="form-group">
-        <label class="form-label">Wybierz styl aplikacji</label>
-        <select class="form-input" id="themeSelect">
-          <option value="olympus">Krystaliczny fokus</option>
-          <option value="marble">Jasny poranek</option>
-          <option value="ember">Ciepły zmierzch</option>
-          <option value="tide">Spokojny przypływ</option>
-          <option value="poseidon">Głębia Posejdona</option>
-          <option value="hephaestus">Kuźnia Hefajstosa</option>
-        </select>
-      </div>
-    </section>
-
     <section class="panel panel--zeus-config">
-      <div class="panel-label">⚡ Asystent Zeus</div>
-      <div class="zeus-cfg-row">
-        <!-- Mini Zeus avatar -->
-        <div class="zeus-cfg-avatar">
-          <div class="zeus-cfg-orb" id="zeusGodOrb">⚡</div>
+      <div class="panel-label">⚡ Asystent Zeus · Motyw</div>
+      <!-- Clickable deity / theme card -->
+      <div class="god-theme-card" id="godThemeCard" role="button" tabindex="0" aria-label="Zmień motyw aplikacji">
+        <div class="zeus-cfg-orb" id="zeusGodOrb">⚡</div>
+        <div class="god-theme-card__meta">
           <div class="zeus-cfg-name" id="zeusGodName">ZEUS</div>
           <div class="zeus-cfg-tag" id="zeusGodTag">Stróż skupienia</div>
+          <div class="god-theme-card__theme-name" id="zeusGodTheme">Krystaliczny Olimp</div>
         </div>
-        <!-- Controls -->
-        <div class="zeus-cfg-controls">
-          <div class="notif-row">
-            <div class="notif-label">
-              Głos Zeusa
-              <small>Wybierz, jak Zeus ma do Ciebie mówić</small>
-            </div>
-            <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
-              <option value="strict">Dowódca</option>
-              <option value="balanced">Mentor</option>
-              <option value="supportive">Iskra</option>
-            </select>
+        <div class="god-theme-card__nav" aria-hidden="true">›</div>
+      </div>
+      <!-- Controls -->
+      <div class="zeus-cfg-controls">
+        <div class="notif-row">
+          <div class="notif-label">
+            Głos Zeusa
+            <small>Wybierz, jak Zeus ma do Ciebie mówić</small>
           </div>
-          <div class="notif-row" style="margin-top:14px">
-            <div class="notif-label">
-              Hardcore Mode
-              <small>Przycisk Stop jest blokowany podczas aktywnej sesji</small>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="hardcoreModeToggle"/>
-              <span class="toggle-slider"></span>
-            </label>
+          <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
+            <option value="strict">Dowódca</option>
+            <option value="balanced">Mentor</option>
+            <option value="supportive">Iskra</option>
+          </select>
+        </div>
+        <div class="notif-row" style="margin-top:14px">
+          <div class="notif-label">
+            Hardcore Mode
+            <small>Przycisk Stop jest blokowany podczas aktywnej sesji</small>
           </div>
+          <label class="toggle">
+            <input type="checkbox" id="hardcoreModeToggle"/>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </div>
     </section>

@@ -5425,6 +5425,76 @@ select.form-input,
   justify-content: center;
 }
 
+/* ── God Theme Card (interactive theme selector) ────────────────────────── */
+.god-theme-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--god-accent, var(--border));
+  background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.22s, box-shadow 0.22s, transform 0.15s;
+  outline: none;
+}
+
+.god-theme-card:hover,
+.god-theme-card:focus-visible {
+  border-color: var(--god-accent, var(--accent2));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--god-accent, var(--accent2)) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.god-theme-card:active {
+  transform: scale(0.97);
+}
+
+.god-theme-card .zeus-cfg-orb {
+  font-size: 38px;
+  flex-shrink: 0;
+  animation: zeusOrbPulse 3s ease-in-out infinite;
+}
+
+.god-theme-card__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.god-theme-card__theme-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--god-accent, var(--accent2));
+  margin-top: 4px;
+}
+
+.god-theme-card__nav {
+  font-size: 22px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.18s, transform 0.18s;
+}
+
+.god-theme-card:hover .god-theme-card__nav {
+  color: var(--god-accent, var(--accent));
+  transform: translateX(4px);
+}
+
+@keyframes orbPop {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 8px  rgba(244,196,106,0.5)); }
+  40%  { transform: scale(1.45); filter: drop-shadow(0 0 28px rgba(255,220,120,1));   }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 8px  rgba(244,196,106,0.5)); }
+}
+
+.god-theme-card .zeus-cfg-orb.orb--pop {
+  animation: orbPop 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 /* ── Tracker view: 3-column layout (stats | timer | log) ───────────────── */
 .view--tracker:not(.hidden) {
   display: grid !important;

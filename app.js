@@ -1825,22 +1825,44 @@ const App = (() => {
     closeResponsiveHeader();
   }
 
-  const GOD_AVATARS = {
-    poseidon:   { icon: '🔱', name: 'POSEJDON', tag: 'Władca mórz' },
-    hephaestus: { icon: '🔨', name: 'HEFAJSTOS', tag: 'Kowal bogów' },
-  };
+  const THEMES = [
+    { id: 'olympus',    godName: 'ZEUS',      themeName: 'Krystaliczny Olimp',  description: 'Stróż skupienia',      icon: '⚡', accentColor: '#f4c46a' },
+    { id: 'marble',     godName: 'ATENA',     themeName: 'Jasny Poranek',        description: 'Bogini mądrości',      icon: '🦉', accentColor: '#6c8ebf' },
+    { id: 'ember',      godName: 'ARES',      themeName: 'Ciepły Zmierzch',      description: 'Bóg walki i siły',    icon: '🔥', accentColor: '#e05c4b' },
+    { id: 'tide',       godName: 'HELIOS',    themeName: 'Spokojny Przypływ',    description: 'Pan słońca i spokoju', icon: '🌊', accentColor: '#00c4c4' },
+    { id: 'poseidon',   godName: 'POSEJDON',  themeName: 'Głębia Posejdona',     description: 'Władca mórz',          icon: '🔱', accentColor: '#00c8ff' },
+    { id: 'hephaestus', godName: 'HEFAJSTOS', themeName: 'Kuźnia Hefajstosa',    description: 'Kowal bogów',          icon: '🔨', accentColor: '#ff6414' },
+  ];
 
   function applyTheme(themeName) {
     const resolvedTheme = resolveThemeId(themeName);
     S.theme = resolvedTheme;
     document.documentElement.setAttribute('data-theme', resolvedTheme);
-    const god = GOD_AVATARS[resolvedTheme];
-    const orbEl  = document.getElementById('zeusGodOrb');
-    const nameEl = document.getElementById('zeusGodName');
-    const tagEl  = document.getElementById('zeusGodTag');
-    if (orbEl)  orbEl.textContent  = god ? god.icon : '⚡';
-    if (nameEl) nameEl.textContent = god ? god.name : 'ZEUS';
-    if (tagEl)  tagEl.textContent  = god ? god.tag  : 'Stróż skupienia';
+    const td      = THEMES.find(t => t.id === resolvedTheme);
+    const orbEl   = document.getElementById('zeusGodOrb');
+    const nameEl  = document.getElementById('zeusGodName');
+    const tagEl   = document.getElementById('zeusGodTag');
+    const themeEl = document.getElementById('zeusGodTheme');
+    const card    = document.getElementById('godThemeCard');
+    if (orbEl)   orbEl.textContent   = td ? td.icon        : '⚡';
+    if (nameEl)  nameEl.textContent  = td ? td.godName     : 'ZEUS';
+    if (tagEl)   tagEl.textContent   = td ? td.description : 'Stróż skupienia';
+    if (themeEl) themeEl.textContent = td ? td.themeName   : 'Krystaliczny Olimp';
+    if (card && td) card.style.setProperty('--god-accent', td.accentColor);
+    if (orbEl) {
+      orbEl.classList.remove('orb--pop');
+      void orbEl.offsetWidth;
+      orbEl.classList.add('orb--pop');
+      setTimeout(() => orbEl.classList.remove('orb--pop'), 520);
+    }
+  }
+
+  function cycleTheme() {
+    const ids = THEMES.map(th => th.id);
+    const next = THEMES[(ids.indexOf(S.theme) + 1) % THEMES.length];
+    applyTheme(next.id);
+    saveAppSettings({ theme: S.theme });
+    showToast(`Motyw: ${next.themeName}`, 'success');
   }
 
   const I18N = {
@@ -2577,9 +2599,7 @@ const App = (() => {
     setText('#btnBackupOpenSettings', t('backupOpenSettings'));
     setText('.panel--settings-language .panel-label', t('settingsLanguagePanel'));
     setText('.panel--settings-language .form-label', t('settingsLanguageLabel'));
-    setText('.panel--settings-theme .panel-label', t('settingsThemePanel'));
-    setText('.panel--settings-theme .form-label', t('settingsThemeLabel'));
-    const notifLabels = document.querySelectorAll('.panel--settings-theme .notif-label');
+    const notifLabels = document.querySelectorAll('.panel--zeus-config .notif-label');
     if (notifLabels[0]) {
       const small = notifLabels[0].querySelector('small');
       notifLabels[0].childNodes[0].textContent = t('hardcoreLabel');
@@ -3113,7 +3133,7 @@ const App = (() => {
     try {
       const stopped = await DB.stopActiveTask();
       localStorage.removeItem(HARDCORE_ACTIVE_KEY);
-      if (S.pomodoro.running && S.pomodoro.phase === 'focus') {
+      if (S.pomodoro.running || S.pomodoro.interval) {
         if (S.pomodoro.interval) clearInterval(S.pomodoro.interval);
         S.pomodoro.interval = null;
         S.pomodoro.running = false;
@@ -4028,9 +4048,7 @@ const App = (() => {
 
   function loadSettingsView() {
     const languageSelect = $('languageSelect');
-    const themeSelect = $('themeSelect');
     if (languageSelect) languageSelect.value = S.language;
-    if (themeSelect) themeSelect.value = S.theme;
     if ($('headerLangSelect')) $('headerLangSelect').value = S.language;
     refreshConnectionViews();
   }
@@ -4056,13 +4074,13 @@ const App = (() => {
       });
     }
 
-    $('themeSelect')?.addEventListener('change', e => {
-      const theme = e.target.value;
-      applyTheme(theme);
-      saveAppSettings({ theme: S.theme });
-      e.target.value = S.theme;
-      showToast(`${t('settingsThemePanel')}: ${t(`themeNames.${S.theme}`)}`, 'success');
-    });
+    const godCard = $('godThemeCard');
+    if (godCard) {
+      godCard.addEventListener('click', cycleTheme);
+      godCard.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycleTheme(); }
+      });
+    }
 
     const hardcoreToggle = document.getElementById('hardcoreModeToggle');
     if (hardcoreToggle) {
