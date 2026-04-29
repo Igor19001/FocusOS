@@ -113,7 +113,8 @@
   <div class="sidebar-section">
     <div class="sidebar-section-label">Nawigacja</div>
     <nav class="sidebar-nav">
-      <button class="sidebar-nav-btn active" data-tab="tracker" type="button"><span class="sn-icon">⚡</span>Skupienie</button>
+      <button class="sidebar-nav-btn active" data-tab="tracker" type="button"><span class="sn-icon">🏠</span>Home</button>
+      <button class="sidebar-nav-btn" data-tab="tracker" type="button"><span class="sn-icon">⚡</span>Skupienie</button>
       <button class="sidebar-nav-btn" data-tab="daily" type="button"><span class="sn-icon">📊</span>Statystyki</button>
       <button class="sidebar-nav-btn" data-tab="weekly" type="button"><span class="sn-icon">📈</span>Raport tygodniowy</button>
       <button class="sidebar-nav-btn" data-tab="health" data-progressive-module="health" type="button"><span class="sn-icon">💪</span>Zdrowie<span class="sn-lock" id="sidebarHealthLock">🔒</span></button>
@@ -877,17 +878,6 @@
   </div><!-- /view--sleep -->
 
   <div class="view view--settings hidden" data-view="settings">
-    <section class="panel panel--settings-language">
-      <div class="panel-label">Język</div>
-      <div class="form-group">
-        <label class="form-label">Język interfejsu</label>
-        <select class="form-input" id="languageSelect">
-          <option value="pl">Polski (PL)</option>
-          <option value="en">English (EN)</option>
-        </select>
-      </div>
-    </section>
-
     <section class="panel panel--settings-theme">
       <div class="panel-label">Motyw</div>
       <div class="form-group">
@@ -979,7 +969,7 @@
         </div>
       </div>
       <div class="form-actions" style="margin-top:0">
-        <button class="btn-primary hidden" id="installButton">Zainstaluj FocusOS</button>
+        <button class="btn-primary" id="installButton">Zainstaluj FocusOS</button>
         <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup na Google Drive</button>
         <button class="btn-secondary" id="btnShowAccessScreen" style="width:auto;padding:10px 14px">Ekran dostępu</button>
       </div>
@@ -1419,6 +1409,28 @@
     if (btnMobile) btnMobile.addEventListener('click', openSidebar);
     if (btnClose)  btnClose.addEventListener('click', closeSidebar);
     if (backdrop)  backdrop.addEventListener('click', closeSidebar);
+
+    /* Close sidebar when clicking on main content */
+    var main = document.querySelector('main');
+    if (main) {
+      main.addEventListener('click', function() {
+        var sidebar = document.getElementById('appSidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+          closeSidebar();
+        }
+      });
+    }
+
+    /* Open sidebar when clicking on left edge area where it was */
+    document.addEventListener('click', function(e) {
+      var sidebar = document.getElementById('appSidebar');
+      if (!sidebar || sidebar.classList.contains('open')) return;
+      
+      /* Check if click is on the left edge (first 50px from left) */
+      if (e.clientX < 50 && e.target !== document.getElementById('btnMenuOpen')) {
+        openSidebar();
+      }
+    });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeSidebar();

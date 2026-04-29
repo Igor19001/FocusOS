@@ -582,20 +582,21 @@ body.app-locked .main {
 .form-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 .form-input {
   background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text); font-family: var(--font-sans); font-size: 14px; padding: 9px 12px;
+  color: var(--text); font-family: var(--font-sans); font-size: 14px; padding: 12px 14px;
   outline: none; transition: border-color 0.2s; width: 100%; appearance: none;
+  min-height: 44px;
 }
 .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99,255,180,0.1); }
 .form-input::placeholder { color: var(--text-muted); }
 .form-input option { background: var(--bg3); }
 
-.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.form-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
 .btn-primary {
-  flex: 1; padding: 11px; border-radius: var(--radius);
+  flex: 1; padding: 13px 20px; border-radius: var(--radius);
   background: var(--accent); color: #000;
   font-family: var(--font-mono); font-size: 12px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border: none;
-  transition: all 0.2s;
+  transition: all 0.2s; min-width: 140px;
 }
 .btn-primary:hover { background: #80ffcc; box-shadow: var(--glow-sm); }
 
@@ -4900,9 +4901,13 @@ button:disabled {
   text-align: center; width: 100%; max-width: 520px;
 }
 .fc-timer-digits {
-  font-family: var(--font-mono); font-size: clamp(54px, 14vw, 108px);
+  font-family: var(--font-mono); font-size: clamp(54px, 14vw, 140px);
   font-weight: 700; letter-spacing: -0.02em; line-height: 1;
   color: var(--text); display: block; transition: color 0.5s, text-shadow 0.5s;
+  text-align: center; margin: 0 auto;
+}
+:root[data-theme="light"] .fc-timer-digits {
+  font-size: clamp(64px, 16vw, 160px);
 }
 body.session-active .fc-timer-digits {
   color: var(--accent);
