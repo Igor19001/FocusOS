@@ -159,7 +159,7 @@ const MATH = (() => {
     const scores = {};
     for (const t of tasks) {
       if (!t.duration || t.duration <= 0) continue;
-      const d = t.start_time.slice(0, 10);
+      const d = DB.toDateStr(new Date(t.start_time));
       if (!scores[d]) scores[d] = { productive: 0, total: 0 };
       scores[d].total += t.duration;
       if (DB.PRODUCTIVE.has(t.category)) scores[d].productive += t.duration;
@@ -343,7 +343,7 @@ const MATH = (() => {
     // ── Time per day ───────────────────────────────────────────────────────
     const timeByDay = {};
     for (const t of completed) {
-      const d = t.start_time.slice(0, 10);
+      const d = DB.toDateStr(new Date(t.start_time));
       timeByDay[d] = (timeByDay[d] || 0) + t.duration;
     }
 

@@ -536,6 +536,8 @@ body.app-locked .main {
 .glass-btn { width: 40px; height: 40px; border-radius: var(--radius); background: var(--bg3); border: 1px solid var(--border); cursor: pointer; font-size: 18px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
 .glass-btn:hover { border-color: var(--accent5); background: rgba(99,200,255,0.08); transform: translateY(-2px); }
 .glass-btn.filled { background: rgba(99,200,255,0.12); border-color: rgba(99,200,255,0.35); box-shadow: 0 0 10px rgba(99,200,255,0.15); }
+.glass-btn.capped:not(.filled) { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.glass-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .water-info { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
 #waterCount  { font-family: var(--font-mono); font-size: 13px; color: var(--accent5); font-weight: 700; }
@@ -973,7 +975,6 @@ body.app-locked .main {
    Minimal, light, clear hierarchy, trusted product feel
    ═══════════════════════════════════════════════════════════════════════════ */
 
-:root,
 :root[data-theme="cyberpunk"] {
   --bg: #f7f7f5;
   --bg2: #ffffff;
@@ -1609,7 +1610,6 @@ body {
 }
 
 /* Digital Olympus skin */
-:root,
 :root[data-theme="cyberpunk"] {
   --bg: #090d18;
   --bg2: #0f1524;
@@ -2358,25 +2358,15 @@ body[data-ux-mode="zen"] .panel--log {
   color: #f4c46a;
 }
 
-body.deep-work .header,
+/* deep-work: overlay (position:fixed z-index:180) covers .main;
+   only hide chrome elements that would render above the overlay */
 body.deep-work .panel--qs,
 body.deep-work .panel--log,
-body.deep-work .panel--zeus,
 body.deep-work .panel--routines,
 body.deep-work .panel--missions,
 body.deep-work .panel--advstats,
 body.deep-work .panel--achievements {
   display: none !important;
-}
-
-body.deep-work .main {
-  margin: 0 auto;
-  max-width: 720px;
-  padding-top: 60px;
-}
-
-body.deep-work .panel--tracker-main {
-  min-height: 68vh;
 }
 
 body.olympus-champion .zeus-card {
@@ -3938,7 +3928,6 @@ body {
 }
 
 body.deep-work .header,
-body.deep-work .main,
 body.deep-work .mobile-nav,
 body.deep-work .panel--zeus {
   opacity: 0;
@@ -6607,3 +6596,159 @@ body.session-active #zenBreathRing { opacity: 1; }
 }
 #headerPeek.show { opacity: 1; pointer-events: auto; }
 #headerPeek:hover { color: var(--accent, #7ecfff); }
+
+/* ═══════════════════════════════════════════════════════════
+   4A — TIMER HERO: Tabular nums + session radial glow
+   ═══════════════════════════════════════════════════════════ */
+.fc-timer-digits {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+.active-task-card.fc-hero-display {
+  position: relative;
+  overflow: visible;
+}
+.active-task-card.fc-hero-display::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(94,245,255,0.08), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 0;
+}
+body.session-active .active-task-card.fc-hero-display::before {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4B — CHAR COUNTER
+   ═══════════════════════════════════════════════════════════ */
+.char-counter-row { text-align: right; margin-top: 3px; }
+.char-counter {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+.char-counter--warn   { color: #ffd700; }
+.char-counter--danger { color: #ff5050; }
+
+/* ═══════════════════════════════════════════════════════════
+   4C — XP FLOAT + TIMER COMPLETE FLASH
+   ═══════════════════════════════════════════════════════════ */
+.xp-float {
+  position: fixed;
+  pointer-events: none;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  text-shadow: 0 0 14px var(--accent);
+  z-index: 9999;
+  transform: translateX(-50%);
+  animation: xp-float-up 1.4s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+@keyframes xp-float-up {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);   }
+  55%  { opacity: 1; transform: translateX(-50%) translateY(-44px) scale(1.25); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-80px) scale(0.9); }
+}
+.timer-complete-flash {
+  animation: timer-flash 0.9s ease forwards !important;
+}
+@keyframes timer-flash {
+  0%   { color: var(--accent);   text-shadow: var(--glow-sm); }
+  30%  { color: #fff;            text-shadow: 0 0 28px #39ff14, 0 0 52px #39ff14; }
+  70%  { color: #39ff14;         text-shadow: 0 0 18px #39ff14; }
+  100% { color: var(--accent);   text-shadow: var(--glow-sm); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4E — COMPACT ZEUS SIDEBAR CARD
+   ═══════════════════════════════════════════════════════════ */
+.zeus-card--compact {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  background: rgba(244,196,106,0.05);
+  border: 1px solid rgba(244,196,106,0.18);
+  border-radius: 8px;
+  transition: border-color 0.4s;
+}
+.zeus-card--compact:hover { border-color: rgba(244,196,106,0.35); }
+.zeus-compact-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+.zeus-compact-icon { font-size: 14px; line-height: 1; }
+.zeus-compact-badge {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: rgba(244,196,106,0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.zeus-compact-msg {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0 0 9px;
+  font-style: italic;
+}
+.zeus-compact-actions { display: flex; gap: 5px; }
+.zeus-compact-btn {
+  flex: 1;
+  min-width: 0;
+  font-size: 9px;
+  padding: 5px 4px;
+  background: rgba(244,196,106,0.07);
+  border: 1px solid rgba(244,196,106,0.22);
+  border-radius: 4px;
+  color: rgba(244,196,106,0.9);
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zeus-compact-btn:hover {
+  background: rgba(244,196,106,0.16);
+  border-color: rgba(244,196,106,0.45);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4G — FRIENDLY EMPTY STATES
+   ═══════════════════════════════════════════════════════════ */
+.view-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 8px;
+}
+.view-empty-state.hidden { display: none; }
+.view-empty-icon { font-size: 30px; opacity: 0.45; }
+.view-empty-state p { font-size: 14px; font-weight: 500; margin: 0; color: var(--text-dim); }
+.view-empty-state small { font-size: 11px; font-family: var(--font-mono); opacity: 0.65; }
+
+/* ═══════════════════════════════════════════════════════════
+   4H — SETTINGS SINGLE-COLUMN + GROUP SEPARATOR
+   ═══════════════════════════════════════════════════════════ */
+.view--settings .connection-grid { grid-template-columns: 1fr; }
+@media (min-width: 560px) {
+  .view--settings .connection-grid { grid-template-columns: 1fr 1fr; }
+}
+.panel--settings-data .form-actions { flex-wrap: wrap; }
+

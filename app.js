@@ -352,7 +352,10 @@ const App = (() => {
   }
 
   function computeStreakFromTasks(tasks) {
-    const days = new Set((tasks || []).map(t => (t.start_time || '').slice(0, 10)).filter(Boolean));
+    const days = new Set((tasks || []).map(t => {
+      if (!t.start_time) return null;
+      return DB.toDateStr(new Date(t.start_time));
+    }).filter(Boolean));
     let streak = 0;
     const d = new Date();
     while (days.has(DB.toDateStr(d))) { streak++; d.setDate(d.getDate() - 1); }
@@ -940,7 +943,13 @@ const App = (() => {
     });
   }
 
+  const _VIEW_CHARTS = {
+    daily:  ['dailyCatChart', 'dailyHourChart'],
+    weekly: ['weeklyStreamgraph', 'weeklyBarsChart', 'emaChart'],
+  };
+
   function switchTab(view) {
+    (_VIEW_CHARTS[S.currentView] || []).forEach(id => destroyChart(id));
     if (view === 'health' && !isModuleUnlocked('health')) {
       showToast(S.language === 'en' ? 'Health unlocks after your first focus session.' : 'Zdrowie odblokuje się po pierwszej sesji skupienia.', 'info');
       return;
@@ -976,14 +985,32 @@ const App = (() => {
     }
   }
   window.switchTab = switchTab;
+  window.setUxMode  = setUxMode;
+  window.__focusState = {
+    get activeTask()  { return S.activeTask;  },
+    get appMode()     { return S.appMode;     },
+    get uxMode()      { return S.uxMode;      },
+    get currentView() { return S.currentView; },
+    get hardcoreMode(){ return S.hardcoreMode; },
+  };
 
   function getLS(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
     catch { return fallback; }
   }
   function setLS(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-    queueLocalSaveStatus();
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      queueLocalSaveStatus();
+      const used = new Blob(Object.values(localStorage)).size;
+      if (used > 4 * 1024 * 1024) {
+        console.warn(`[FocusOS] localStorage ~${(used/1024/1024).toFixed(1)} MB — approaching quota.`);
+      }
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        showToast('⚠️ Pamięć lokalna pełna. Wyeksportuj dane i zwolnij miejsce.', 'warn', 7000);
+      }
+    }
   }
 
   function getDefaultUserProgress() {
@@ -1440,6 +1467,8 @@ const App = (() => {
     const emojiMap = { 'Approving': '👍', 'Triumphant': '🏆', 'Demanding': '🔥', 'Judging': '⚠️', 'Warning': '⚡', 'Disappointed': '😞', 'Observing': '👁️', 'Neutral': '➖', 'Proud': '😊', 'Fired Up': '🔥', 'Tired': '😴' };
     const emoji = emojiMap[mood] || '⚡';
     window.dispatchEvent(new CustomEvent('zeusMessageUpdate', { detail: { message: payload.line, emoji, mood, intensity } }));
+    const _cc = $('zeusCompactMsg');   if (_cc) _cc.textContent = payload.line;
+    const _cb = $('zeusCompactBadge'); if (_cb) _cb.textContent = payload.label;
     const moodSoundMap = { Triumphant: 'levelup', Demanding: 'start', Approving: 'complete', 'Fired Up': 'start', Judging: 'warn', Warning: 'warn', Disappointed: 'warn' };
     if (intensity === 'high') { const snd = moodSoundMap[mood]; if (snd) zeusPlaySound(snd); }
     zeusTTS(payload.line);
@@ -3001,6 +3030,22 @@ const App = (() => {
   }
 
   // ── Water particle burst ──────────────────────────────────────────────────
+  function spawnXPFloater(xp) {
+    const timerEl = $('activeTimer');
+    const rect = timerEl?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top : window.innerHeight / 3;
+    const p = document.createElement('div');
+    p.className = 'xp-float';
+    p.textContent = `+${xp} XP`;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+    timerEl?.classList.add('timer-complete-flash');
+    setTimeout(() => timerEl?.classList.remove('timer-complete-flash'), 900);
+  }
+
   function spawnWaterParticle(x, y, label) {
     const p = document.createElement('div');
     p.className = 'water-particle';
@@ -3020,7 +3065,8 @@ const App = (() => {
       updateTimerDisplay(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
       const fatigue = MATH.fatigueCurve(Math.floor(elapsed / 60));
       const pct     = Math.round(100 - fatigue.currentEfficiency);
-      $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
+      $('fatigueBar').style.width      = `${Math.min(pct, 100)}%`;
+      $('fatigueBar').style.background = fatigue.currentEfficiency > 75 ? '#39ff14' : fatigue.currentEfficiency > 50 ? '#ffd700' : '#ff5050';
       $('fatigueLabel').textContent = `Wydajność: ${fatigue.currentEfficiency}%`;
       $('fatigueBarWrap').classList.toggle('fatigue--warn', fatigue.shouldBreak);
       // Zeus orb: efficiency ring + state-based pulse
@@ -3097,6 +3143,7 @@ const App = (() => {
               await DB.setSetting('perfect_day_bonus_date', DB.toDateStr());
             }
           }
+          spawnXPFloater(xp + bonusXP);
           const newTotal = await DB.addXP(xp + bonusXP);
           const nextLevel = getLevelInfo(newTotal).level;
           await refreshXPBar();
@@ -3154,6 +3201,7 @@ const App = (() => {
   }
 
   async function loadQuickStats() {
+    try {
     const todayTasks = await DB.getTasksForDay(DB.toDateStr());
     const analysis   = MATH.analyzeDay(todayTasks);
     const [all, latestSleep, waterCount] = await Promise.all([
@@ -3227,6 +3275,9 @@ const App = (() => {
     renderBackupSafetyNet();
     applyProgressiveDisclosure();
     updateFocusFlowState();
+    } catch (e) {
+      console.error('[FocusOS] loadQuickStats:', e);
+    }
   }
 
   // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
@@ -3382,20 +3433,27 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function loadDailyView() {
-    $('dailyDateLabel').textContent = new Date(S.dailyDate).toLocaleDateString('pl-PL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    const tasks    = await DB.getTasksForDay(S.dailyDate);
-    const analysis = MATH.analyzeDay(tasks);
+    try {
+      $('dailyDateLabel').textContent = new Date(S.dailyDate).toLocaleDateString('pl-PL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      const tasks    = await DB.getTasksForDay(S.dailyDate);
+      const analysis = MATH.analyzeDay(tasks);
+      const _noDaily = !tasks.length;
+      $('dailyViewEmpty')?.classList.toggle('hidden', !_noDaily);
 
-    $('dTotalTime').textContent  = fmtSec(analysis.totalSec);
-    $('dEfficiency').textContent = analysis.efficiencyPct + '%';
-    $('dTaskCount').textContent  = analysis.taskCount + ' zadań';
+      $('dTotalTime').textContent  = fmtSec(analysis.totalSec);
+      $('dEfficiency').textContent = analysis.efficiencyPct + '%';
+      $('dTaskCount').textContent  = analysis.taskCount + ' zadań';
 
-    renderDailyCatDonut(analysis.timeByCat);
-    renderDailyHourChart(analysis.hourlyData);
-    renderDailyInsightsList(tasks, analysis);
-    renderGoldenHoursDisplay(tasks);
-    loadDayPlan();
-    applyProgressiveDisclosure();
+      renderDailyCatDonut(analysis.timeByCat);
+      renderDailyHourChart(analysis.hourlyData);
+      renderDailyInsightsList(tasks, analysis);
+      renderGoldenHoursDisplay(tasks);
+      loadDayPlan();
+      applyProgressiveDisclosure();
+    } catch (e) {
+      showToast(`❌ Błąd wczytywania danych dnia: ${e.message}`, 'error');
+      console.error('[FocusOS] loadDailyView:', e);
+    }
   }
 
   function renderDailyCatDonut(timeByCat) {
@@ -3480,12 +3538,14 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function loadWeeklyView() {
+    try {
     const monday = new Date(S.weekStart);
     const sunday = new Date(monday.getTime() + 6 * 86400000);
     $('weekLabel').textContent =
       `${monday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short'})} — ${sunday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short',year:'numeric'})}`;
 
     const tasks    = await DB.getTasksForWeek(S.weekStart);
+    $('weeklyViewEmpty')?.classList.toggle('hidden', !!tasks.length);
     const allTasks = await DB.getTasksLast30Days();
     const analysis = MATH.analyzeAll(tasks);
     const emaData  = MATH.emaProductivityTrend(allTasks, 14);
@@ -3505,6 +3565,10 @@ const App = (() => {
     applyLevelLocks();
     applyProgressiveDisclosure();
     applyInspectModeDefaults();
+    } catch (e) {
+      showToast(`❌ Błąd wczytywania raportu tygodniowego: ${e.message}`, 'error');
+      console.error('[FocusOS] loadWeeklyView:', e);
+    }
   }
 
   function renderStreamgraph(tasks) {
@@ -3724,8 +3788,11 @@ const App = (() => {
 
   async function loadHealthView() {
     const today = DB.toDateStr();
-    const logs  = await DB.getHealthForDay(today);
-    renderWaterTracker(logs.filter(l => l.type === 'water'));
+    const [logs, slotInfo] = await Promise.all([
+      DB.getHealthForDay(today),
+      DB.getTodayWaterSlotsInfo(),
+    ]);
+    renderWaterTracker(logs.filter(l => l.type === 'water'), slotInfo);
     renderMealLog(logs.filter(l => l.type === 'meal'));
     renderMovementLog(logs.filter(l => l.type === 'movement'));
 
@@ -3734,11 +3801,13 @@ const App = (() => {
     applyProgressiveDisclosure();
   }
 
-  function renderWaterTracker(waterLogs) {
-    const WATER_CAP    = 12;
+  function renderWaterTracker(waterLogs, slotInfo = { usedSlots: 0, maxSlots: 12 }) {
+    const WATER_CAP    = slotInfo.maxSlots;
     const GOAL         = 8;
-    const totalGlasses = waterLogs.reduce((s, l) => s + (l.value || 1), 0);
+    const usedSlots    = slotInfo.usedSlots;
+    const totalGlasses = Math.max(waterLogs.reduce((s, l) => s + (l.value || 1), 0), usedSlots);
     const pct          = Math.min(Math.round(totalGlasses / GOAL * 100), 100);
+    const capped       = usedSlots >= WATER_CAP;
 
     $('waterCount').textContent       = S.language === 'en'
       ? `${totalGlasses} / ${GOAL} glasses`
@@ -3750,15 +3819,17 @@ const App = (() => {
     glasses.innerHTML = '';
     for (let i = 1; i <= GOAL; i++) {
       const btn = document.createElement('button');
-      btn.className = `glass-btn ${i <= totalGlasses ? 'filled' : ''}`;
-      btn.title     = `${i * 250}ml`;
-      btn.textContent = i <= totalGlasses ? '250ml' : '+';
+      const filled = i <= usedSlots;
+      btn.className   = `glass-btn ${filled ? 'filled' : ''} ${capped ? 'capped' : ''}`;
+      btn.title       = filled ? `${i * 250}ml` : (capped ? (S.language === 'en' ? 'Daily limit reached' : 'Dzienny limit osiągnięty') : `+${i * 250}ml`);
+      btn.textContent = filled ? '250ml' : '+';
+      btn.disabled    = capped && !filled;
       btn.addEventListener('click', async () => {
         const slotState = await DB.consumeWaterSlot();
         if (!slotState.ok) {
           showToast(S.language === 'en'
-            ? `Hydration slots used today: ${WATER_CAP}/${WATER_CAP}`
-            : `Dzienne sloty nawodnienia wykorzystane: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
+            ? `Daily hydration limit reached: ${WATER_CAP}/${WATER_CAP}`
+            : `Dzienny limit nawodnienia osiągnięty: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
           return;
         }
         await DB.logHealth({ type:'water', value:1, unit:'glass', note:'250ml' });
@@ -4357,6 +4428,7 @@ const App = (() => {
   function scheduleAlarm(timeStr) {
     cancelAlarm();
     S.alarm.time = timeStr;
+    S.alarm.triggeredForDate = null;
     localStorage.setItem('focusos_alarm_time', timeStr);
     updateAlarmStatus(`${t('alarmSet')} ${timeStr}`);
 
@@ -5533,6 +5605,9 @@ const App = (() => {
       }
       zeusSpeak('Protect the streak with one completed session before the day ends.', 'Observing');
     });
+    $('btnZeusCompactFocus')?.addEventListener('click',   () => $('btnZeusFocus')?.click());
+    $('btnZeusCompactStreak')?.addEventListener('click',  () => $('btnZeusStreak')?.click());
+    $('btnZeusCompactRecover')?.addEventListener('click', () => $('btnZeusRecover')?.click());
     $('btnZeusRecover')?.addEventListener('click', async () => {
       switchTab('sleep');
       if (S.activeTask && !S.hardcoreMode) {
@@ -5896,6 +5971,17 @@ const App = (() => {
   }
 
   function initFocusFlow() {
+    const counter = $('taskNameCounter');
+    if (counter) {
+      const syncCounter = () => {
+        const len = $('taskName')?.value.length || 0;
+        counter.textContent = 80 - len;
+        counter.classList.toggle('char-counter--warn', len >= 60);
+        counter.classList.toggle('char-counter--danger', len >= 75);
+      };
+      $('taskName')?.addEventListener('input', syncCounter);
+      syncCounter();
+    }
     $('taskName')?.addEventListener('input', updateFocusFlowState);
     $('taskCategory')?.addEventListener('change', updateFocusFlowState);
     updateFocusFlowState();
@@ -6026,6 +6112,14 @@ const App = (() => {
     setInterval(async () => {
       if (S.currentView === 'tracker') await loadQuickStats();
     }, 30000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (S.alertInterval) { clearInterval(S.alertInterval); S.alertInterval = null; }
+      } else if (document.visibilityState === 'visible') {
+        if (!S.alertInterval) S.alertInterval = setInterval(checkSmartAlerts, 60000);
+      }
+    });
 
     // Navigate to view specified in URL hash (e.g. index.html#settings)
     const _hashView = location.hash.slice(1);

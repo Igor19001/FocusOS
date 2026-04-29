@@ -310,13 +310,14 @@ const ZeusHologram = (() => {
       }
 
       /* Panel Header */
-      .panel-header {
+      .zeus-hologram-container .panel-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         padding: 16px;
         border-bottom: 1px solid rgba(244, 196, 106, 0.2);
         gap: 12px;
+        margin-bottom: 0;
       }
 
       .panel-title {
@@ -424,7 +425,7 @@ const ZeusHologram = (() => {
         font-size: 11px;
       }
 
-      .status-dot {
+      .zeus-hologram-container .status-dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
@@ -654,7 +655,7 @@ const ZeusHologram = (() => {
         .orb-glow,
         .orb-pulse,
         .message-emoji,
-        .status-dot,
+        .zeus-hologram-container .status-dot,
         .title-icon,
         .action-btn {
           animation: none !important;
@@ -825,8 +826,9 @@ const ZeusHologram = (() => {
     const statusEl = document.getElementById('zeusHologramStatus');
     const statusDotEl = document.getElementById('zeusHologramStatusDot');
 
-    // Determine state via DOM class maintained by app.js MutationObserver
-    const isActive = document.body.classList.contains('session-active');
+    // Determine state: prefer explicit window.__focusState, fall back to DOM class
+    const isActive = window.__focusState?.activeTask != null
+      || document.body.classList.contains('session-active');
     const messages = {
       tracker: {
         idle: {
@@ -1053,9 +1055,10 @@ const ZeusHologram = (() => {
 
   // Update mode indicator
   function updateModeIndicator(mode) {
+    const resolvedMode = mode ?? window.__focusState?.appMode ?? 'local';
     const modeEl = document.getElementById('zeusHologramMode');
     if (modeEl) {
-      const modeLabel = mode === 'monad' ? 'Web3' : mode === 'google' ? 'Google' : 'Lokalny';
+      const modeLabel = resolvedMode === 'monad' ? 'Web3' : resolvedMode === 'google' ? 'Google' : 'Lokalny';
       modeEl.textContent = modeLabel;
     }
   }
