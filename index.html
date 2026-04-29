@@ -66,28 +66,12 @@
       </select>
       <button class="header-quick-btn" id="btnHeaderSettings" type="button" title="Ustawienia" aria-label="Ustawienia">⚙️</button>
       <button class="header-quick-btn" id="btnHeaderProfile" type="button" title="Profil" aria-label="Profil">👤</button>
-      <button class="btn-menu-open" id="btnMenuOpen" type="button" aria-label="Otwórz menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-    <!-- Legacy: kept for JS compatibility, not displayed -->
-    <div class="header-legacy-hidden">
-      <button class="btn-hamburger" id="btnNavToggle" type="button" aria-expanded="false" aria-controls="headerDrawer"></button>
-      <div class="header-drawer" id="headerDrawer">
-        <nav class="tab-nav" id="headerTabNav">
-          <button class="tab-btn active" data-tab="tracker">Skupienie</button>
-          <button class="tab-btn" data-tab="daily">Statystyki</button>
-          <button class="tab-btn" data-tab="weekly">Raport</button>
-          <button class="tab-btn" data-tab="health" data-progressive-module="health">Zdrowie</button>
-          <button class="tab-btn" data-tab="sleep" data-progressive-module="sleep">Sen</button>
-          <button class="tab-btn" data-tab="settings">Ustawienia</button>
-          <button class="tab-btn" data-tab="about">O aplikacji</button>
-          <button class="tab-btn" data-tab="profile">Profil</button>
-        </nav>
-      </div>
+      <button class="btn-pro-toggle" id="btnProToggle" type="button" title="Włącz / Wyłącz tryb Pro">Pro</button>
     </div>
   </div>
 </header>
+<div id="headerPeekZone"></div>
+<div id="headerPeek" title="Pokaż pasek">▼</div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      APP SIDEBAR — Navigation, Tools, Progressive Disclosure
@@ -109,6 +93,7 @@
     </div>
   </div>
 
+<<<<<<< HEAD
   <!-- Navigation -->
   <div class="sidebar-section">
     <div class="sidebar-section-label">Nawigacja</div>
@@ -122,7 +107,23 @@
       <button class="sidebar-nav-btn" data-tab="about" type="button"><span class="sn-icon">ℹ️</span>O aplikacji</button>
     </nav>
   </div>
+=======
+>>>>>>> b57f6f63cbd51ba887e03c0f3d4ab8d6346562de
 
+
+  <!-- Compact Zeus Sidebar Card (4E) -->
+  <div class="zeus-card--compact" id="zeusCardCompact">
+    <div class="zeus-compact-header">
+      <span class="zeus-compact-icon">⚡</span>
+      <span class="zeus-compact-badge" id="zeusCompactBadge">Czuwa</span>
+    </div>
+    <p class="zeus-compact-msg" id="zeusCompactMsg">Twój ruch.</p>
+    <div class="zeus-compact-actions">
+      <button class="zeus-compact-btn" id="btnZeusCompactFocus" type="button">Sprint</button>
+      <button class="zeus-compact-btn" id="btnZeusCompactStreak" type="button">Streak</button>
+      <button class="zeus-compact-btn" id="btnZeusCompactRecover" type="button">Recover</button>
+    </div>
+  </div>
 
   <!-- Zeus lives in the bottom-left orb panel (zeus-hologram.js) -->
   <!-- Placeholder keeps IDs accessible to app.js without rendering in sidebar -->
@@ -342,12 +343,13 @@
 
       <!-- HERO: Active task card (JS-controlled display) -->
       <div class="active-task-card fc-hero-display" id="activeCard" style="display:none">
+        <canvas id="zenBreathRing" aria-hidden="true"></canvas>
         <span class="fc-timer-digits" id="activeTimer">00:00:00</span>
         <span class="fc-active-name" id="activeName">Gotowy do skupienia</span>
         <div class="fc-active-cat-row">
           <span class="atc-cat" id="activeCat"></span>
         </div>
-        <div class="fatigue-wrap" id="fatigueBarWrap">
+        <div class="fatigue-wrap" id="fatigueBarWrap" title="Krzywa zmęczenia: wydajność = 100·e^(−λt), λ≈0.0032. Optymalna przerwa po ~90 min.">
           <div class="fatigue-track"><div class="fatigue-fill" id="fatigueBar" style="width:0%"></div></div>
           <div class="fatigue-meta">
             <span id="fatigueLabel"></span>
@@ -372,6 +374,7 @@
       <div class="fc-input-wrap" id="fcInputWrap">
         <div class="input-group">
           <input type="text" id="taskName" placeholder="Co teraz robisz?" maxlength="80" autocomplete="off"/>
+          <div class="char-counter-row"><span class="char-counter" id="taskNameCounter">80</span></div>
           <select id="taskCategory">
             <option value="work">Praca</option>
             <option value="coding">Kodowanie</option>
@@ -463,26 +466,6 @@
 
     </section>
 
-    <!-- Quick Actions -->
-    <section class="panel panel--quick-actions" style="margin-top:24px">
-      <div class="panel-label">Szybkie akcje</div>
-      <div class="quick-action-grid">
-        <button class="quick-action-btn" id="btnQuickWater" type="button">
-          <strong>Wypiłem wodę</strong>
-          <span>+250 ml i szybki wpis zdrowia</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMeal" type="button">
-          <strong>Zjadłem posiłek</strong>
-          <span>Dodaj log bez wchodzenia do zakładki Zdrowie</span>
-        </button>
-        <button class="quick-action-btn" id="btnQuickMove" type="button">
-          <strong>Krótki ruch</strong>
-          <span>+5 min resetu dla ciała i głowy</span>
-        </button>
-      </div>
-      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
-    </section>
-
     <!-- Localization + JS anchors (hidden, IDs needed by app.js) -->
     <div class="fc-loc-anchors" aria-hidden="true">
       <span class="focus-hero-kicker" id="focusHeroKicker"></span>
@@ -515,6 +498,26 @@
       <div class="log-list" id="recentLog">
         <div class="log-empty">Brak sesji. Uruchom pierwszą sesję skupienia.</div>
       </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="panel panel--quick-actions" style="margin-top:24px">
+      <div class="panel-label">Szybkie akcje</div>
+      <div class="quick-action-grid">
+        <button class="quick-action-btn" id="btnQuickWater" type="button">
+          <strong>Wypiłem wodę</strong>
+          <span>+250 ml i szybki wpis zdrowia</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMeal" type="button">
+          <strong>Zjadłem posiłek</strong>
+          <span>Dodaj log bez wchodzenia do zakładki Zdrowie</span>
+        </button>
+        <button class="quick-action-btn" id="btnQuickMove" type="button">
+          <strong>Krótki ruch</strong>
+          <span>+5 min resetu dla ciała i głowy</span>
+        </button>
+      </div>
+      <p class="quick-action-note">FocusOS zapisuje te akcje lokalnie i od razu aktualizuje wskaźniki.</p>
     </section>
 
     <!-- Health strip sidebar (visible only at ≥1640px via CSS) -->
@@ -556,6 +559,12 @@
         <div class="ds-card"><div class="ds-value" id="dTaskCount">—</div><div class="ds-key">Sesji</div></div>
       </div>
     </section>
+
+    <div id="dailyViewEmpty" class="view-empty-state hidden" aria-live="polite">
+      <span class="view-empty-icon">📊</span>
+      <p>Brak danych na ten dzień.</p>
+      <small>Uruchom sesję skupienia, aby zobaczyć statystyki.</small>
+    </div>
 
     <section class="panel panel--daily-donut">
       <div class="panel-label">Czas per kategoria</div>
@@ -640,6 +649,12 @@
         <span class="trend-badge" id="weekTrendBadge">—</span>
       </div>
     </section>
+
+    <div id="weeklyViewEmpty" class="view-empty-state hidden" aria-live="polite">
+      <span class="view-empty-icon">📈</span>
+      <p>Za mało danych — trend pojawi się po kilku dniach.</p>
+      <small>Loguj sesje regularnie, aby zobaczyć wykresy.</small>
+    </div>
 
     <!-- Item 8: Streamgraph 28-day category flow -->
     <section class="panel panel--streamgraph">
@@ -878,6 +893,7 @@
   </div><!-- /view--sleep -->
 
   <div class="view view--settings hidden" data-view="settings">
+<<<<<<< HEAD
     <section class="panel panel--settings-theme">
       <div class="panel-label">Motyw</div>
       <div class="form-group">
@@ -887,42 +903,53 @@
           <option value="marble">Marmurowy poranek</option>
           <option value="ember">Solarny bursztyn</option>
           <option value="tide">Lazurowy przypływ</option>
+=======
+    <section class="panel panel--settings-language">
+      <div class="panel-label">Język</div>
+      <div class="form-group">
+        <label class="form-label">Język interfejsu</label>
+        <select class="form-input" id="languageSelect">
+          <option value="pl">Polski (PL)</option>
+          <option value="en">English (EN)</option>
+>>>>>>> b57f6f63cbd51ba887e03c0f3d4ab8d6346562de
         </select>
       </div>
     </section>
 
     <section class="panel panel--zeus-config">
-      <div class="panel-label">⚡ Asystent Zeus</div>
-      <div class="zeus-cfg-row">
-        <!-- Mini Zeus avatar -->
-        <div class="zeus-cfg-avatar">
-          <div class="zeus-cfg-orb">⚡</div>
-          <div class="zeus-cfg-name">ZEUS</div>
-          <div class="zeus-cfg-tag">Stróż skupienia</div>
+      <div class="panel-label">⚡ Asystent Zeus · Motyw</div>
+      <!-- Clickable deity / theme card -->
+      <div class="god-theme-card" id="godThemeCard" role="button" tabindex="0" aria-label="Zmień motyw aplikacji">
+        <div class="zeus-cfg-orb" id="zeusGodOrb">⚡</div>
+        <div class="god-theme-card__meta">
+          <div class="zeus-cfg-name" id="zeusGodName">ZEUS</div>
+          <div class="zeus-cfg-tag" id="zeusGodTag">Stróż skupienia</div>
+          <div class="god-theme-card__theme-name" id="zeusGodTheme">Krystaliczny Olimp</div>
         </div>
-        <!-- Controls -->
-        <div class="zeus-cfg-controls">
-          <div class="notif-row">
-            <div class="notif-label">
-              Głos Zeusa
-              <small>Wybierz, jak Zeus ma do Ciebie mówić</small>
-            </div>
-            <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
-              <option value="strict">Dowódca</option>
-              <option value="balanced">Mentor</option>
-              <option value="supportive">Iskra</option>
-            </select>
+        <div class="god-theme-card__nav" aria-hidden="true">›</div>
+      </div>
+      <!-- Controls -->
+      <div class="zeus-cfg-controls">
+        <div class="notif-row">
+          <div class="notif-label">
+            Głos Zeusa
+            <small>Wybierz, jak Zeus ma do Ciebie mówić</small>
           </div>
-          <div class="notif-row" style="margin-top:14px">
-            <div class="notif-label">
-              Hardcore Mode
-              <small>Przycisk Stop jest blokowany podczas aktywnej sesji</small>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="hardcoreModeToggle"/>
-              <span class="toggle-slider"></span>
-            </label>
+          <select class="form-input" id="zeusStyleSelect" style="max-width:180px">
+            <option value="strict">Dowódca</option>
+            <option value="balanced">Mentor</option>
+            <option value="supportive">Iskra</option>
+          </select>
+        </div>
+        <div class="notif-row" style="margin-top:14px">
+          <div class="notif-label">
+            Hardcore Mode
+            <small>Przycisk Stop jest blokowany podczas aktywnej sesji</small>
           </div>
+          <label class="toggle">
+            <input type="checkbox" id="hardcoreModeToggle"/>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </div>
     </section>
@@ -973,7 +1000,14 @@
         <button class="btn-secondary" id="btnGoogleBackup" style="width:auto;padding:10px 14px">Backup na Google Drive</button>
         <button class="btn-secondary" id="btnShowAccessScreen" style="width:auto;padding:10px 14px">Ekran dostępu</button>
       </div>
-      <div class="form-actions" style="margin-top:10px">
+      <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
+        Przycisk instalacji pojawia się automatycznie, gdy przeglądarka zgłosi obsługę PWA.
+      </div>
+    </section>
+
+    <section class="panel panel--settings-data">
+      <div class="panel-label">Dane i narzędzia</div>
+      <div class="form-actions">
         <button class="btn-secondary" id="btnOpenBackfill" style="width:auto;padding:10px 14px">Retro</button>
         <button class="btn-secondary" id="btnOpenNotif" style="width:auto;padding:10px 14px">Alerty</button>
         <button class="btn-secondary" id="btnExport" style="width:auto;padding:10px 14px">Eksportuj CSV</button>
@@ -982,9 +1016,6 @@
         <button class="btn-secondary" id="btnExportJSON" style="width:auto;padding:10px 14px">Eksportuj JSON</button>
         <button class="btn-secondary" id="btnImportJSON" style="width:auto;padding:10px 14px">Importuj JSON</button>
         <input type="file" id="importFileInput" accept=".json,application/json" style="display:none"/>
-      </div>
-      <div id="installHint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:10px">
-        Przycisk instalacji pojawia się automatycznie, gdy przeglądarka zgłosi obsługę PWA.
       </div>
     </section>
 
@@ -1489,6 +1520,59 @@
     if (btnHdrPro) btnHdrPro.addEventListener('click', function () {
       if (typeof switchTab === 'function') switchTab('profile');
     });
+
+    /* Header auto-hide */
+    (function () {
+      var hdr      = document.querySelector('.header');
+      var peek     = document.getElementById('headerPeek');
+      var peekZone = document.getElementById('headerPeekZone');
+      var mainEl   = document.querySelector('.main');
+      if (!hdr || !peek || !peekZone) return;
+
+      function hideHeader() {
+        var h = hdr.offsetHeight;
+        hdr.classList.add('header--hidden');
+        if (mainEl) mainEl.style.marginTop = '-' + h + 'px';
+        peekZone.classList.add('active');
+      }
+
+      function showHeader() {
+        hdr.classList.remove('header--hidden');
+        if (mainEl) mainEl.style.marginTop = '';
+        peek.classList.remove('show');
+        peekZone.classList.remove('active');
+      }
+
+      hdr.addEventListener('click', function (e) {
+        if (e.target.closest('button, a, select, input, label')) return;
+        hideHeader();
+      });
+
+      peekZone.addEventListener('mouseenter', function () { peek.classList.add('show'); });
+      peekZone.addEventListener('mouseleave', function () {
+        setTimeout(function () { if (!peek.matches(':hover')) peek.classList.remove('show'); }, 80);
+      });
+      peek.addEventListener('mouseleave', function () { peek.classList.remove('show'); });
+      peek.addEventListener('click', showHeader);
+    })();
+
+    /* Pro / Lite mode toggle */
+    var btnProToggle = document.getElementById('btnProToggle');
+    function syncProToggle() {
+      if (!btnProToggle) return;
+      var isPro = document.body.dataset.uxMode === 'pro';
+      btnProToggle.classList.toggle('is-active', isPro);
+      btnProToggle.textContent = isPro ? 'Pro' : 'Lite';
+    }
+    if (btnProToggle) {
+      btnProToggle.addEventListener('click', function () {
+        var isPro = document.body.dataset.uxMode === 'pro';
+        if (typeof setUxMode === 'function') setUxMode(isPro ? 'zen' : 'pro');
+        syncProToggle();
+      });
+      new MutationObserver(syncProToggle).observe(document.body, { attributeFilter: ['data-ux-mode'] });
+      syncProToggle();
+    }
   });
 })();
 </script>
@@ -1500,18 +1584,6 @@
 
 <aside id="cmdPalette" role="complementary" aria-label="Paleta Komend">
   <div class="cmd-palette-title">⚙ Command Palette</div>
-
-  <div class="cmd-section">Sesja</div>
-  <button class="cmd-item" data-cmd="start-session">
-    <span class="cmd-item__icon">▶</span>Start sesji skupienia
-  </button>
-  <button class="cmd-item" data-cmd="stop-session">
-    <span class="cmd-item__icon">⏹</span>Zatrzymaj sesję
-  </button>
-  <button class="cmd-item" data-cmd="deep-work">
-    <span class="cmd-item__icon">🎯</span>Tryb Deep Work
-  </button>
-
   <div class="cmd-section">Nawigacja</div>
   <button class="cmd-item" data-cmd="nav-tracker">
     <span class="cmd-item__icon">⏱</span>Tracker
@@ -1529,27 +1601,6 @@
     <span class="cmd-item__icon">🔧</span>Ustawienia
   </button>
 
-  <div class="cmd-section">Widok</div>
-  <button class="cmd-item" data-cmd="mode-zen">
-    <span class="cmd-item__icon">🌑</span>Tryb Zen (OLED)
-  </button>
-  <button class="cmd-item" data-cmd="mode-pro">
-    <span class="cmd-item__icon">🛠</span>Tryb Engineer
-  </button>
-
-  <div class="cmd-section">Zaawansowane</div>
-  <button class="cmd-item" data-cmd="show-bayesian">
-    <span class="cmd-item__icon">🧮</span>Bayesian MAB — statystyki
-  </button>
-  <button class="cmd-item" data-cmd="show-markov">
-    <span class="cmd-item__icon">🔗</span>Łańcuch Markowa
-  </button>
-  <button class="cmd-item" data-cmd="export-proof">
-    <span class="cmd-item__icon">🏆</span>Eksport Proof of Productivity
-  </button>
-  <button class="cmd-item" data-cmd="mab-reset">
-    <span class="cmd-item__icon">🔄</span>Reset MAB (przerwy)
-  </button>
 </aside>
 
 <!-- SCRIPTS: order matters — DB → MATH → APP -->

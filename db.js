@@ -52,7 +52,12 @@ const DB = (() => {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  function toDateStr(d = new Date()) { return d.toISOString().slice(0, 10); }
+  function toDateStr(d = new Date()) {
+    const y  = d.getFullYear();
+    const m  = String(d.getMonth() + 1).padStart(2, '0');
+    const dy = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dy}`;
+  }
   function toISO(d = new Date())     { return d.toISOString(); }
   function calcDuration(startISO, endISO) {
     return Math.round((new Date(endISO) - new Date(startISO)) / 1000);

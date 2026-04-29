@@ -8,7 +8,7 @@ export const THEME_ALIASES = {
   retro:     'ember',
 };
 
-export const THEME_IDS = ['olympus', 'marble', 'ember', 'tide'];
+export const THEME_IDS = ['olympus', 'marble', 'ember', 'tide', 'poseidon', 'hephaestus'];
 
 export function resolveThemeId(name) {
   return THEME_ALIASES[name] || (THEME_IDS.includes(name) ? name : 'olympus');

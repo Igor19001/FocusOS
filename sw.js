@@ -4,7 +4,7 @@
  * - Network First: dokumenty i reszta żądań (z fallbackiem offline)
  */
 
-const SW_VERSION = 'focusos-v4';
+const SW_VERSION = 'focusos-v8';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const OFFLINE_URL = '/index.html';
@@ -47,9 +47,9 @@ self.addEventListener('activate', (event) => {
 function isCacheFirstAsset(request) {
   const url = new URL(request.url);
   const pathname = url.pathname.toLowerCase();
+  // Only binary/font assets use cache-first; JS and CSS use network-first
+  // so deployments are always reflected without manual SW refresh.
   return (
-    pathname.endsWith('.css') ||
-    pathname.endsWith('.js') ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||
     pathname.endsWith('.jpeg') ||

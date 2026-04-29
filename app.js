@@ -122,7 +122,7 @@ const App = (() => {
     light: 'marble',
     retro: 'ember',
   };
-  const THEME_IDS = ['olympus', 'marble', 'ember', 'tide'];
+  const THEME_IDS = ['olympus', 'marble', 'ember', 'tide', 'poseidon', 'hephaestus'];
   const MODULE_UNLOCK_RULES = {
     health: { sessions: 1, views: ['health'], panels: ['.panel--quick-actions'] },
     sleep: { sessions: 3, views: ['sleep'], panels: [] },
@@ -352,7 +352,10 @@ const App = (() => {
   }
 
   function computeStreakFromTasks(tasks) {
-    const days = new Set((tasks || []).map(t => (t.start_time || '').slice(0, 10)).filter(Boolean));
+    const days = new Set((tasks || []).map(t => {
+      if (!t.start_time) return null;
+      return DB.toDateStr(new Date(t.start_time));
+    }).filter(Boolean));
     let streak = 0;
     const d = new Date();
     while (days.has(DB.toDateStr(d))) { streak++; d.setDate(d.getDate() - 1); }
@@ -747,7 +750,7 @@ const App = (() => {
         },
       },
       tide: {
-        // Poseidon — raindrops (82%) + tridents (18%)
+        // Calm tide — raindrops (82%) + tridents (18%)
         make(w, h, rY) {
           const size = 12+Math.random()*20;
           return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
@@ -777,6 +780,79 @@ const App = (() => {
             ctx.bezierCurveTo(b.size*0.44,-b.size*0.1, b.size*0.44,b.size*0.32, 0,b.size*0.46);
             ctx.bezierCurveTo(-b.size*0.44,b.size*0.32,-b.size*0.44,-b.size*0.1, 0,-b.size*0.55);
             ctx.fillStyle=col; ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+      poseidon: {
+        // Posejdon — large glowing tridents + bioluminescent bubbles
+        make(w, h, rY) {
+          const size = 18+Math.random()*28;
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*2+Math.random()*h*0.5),
+            speed: 0.9+Math.random()*2.0, size, alpha: 0.18+Math.random()*0.42,
+            glow: Math.random()>0.45, isTrident: Math.random()>0.55,
+            wobble: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.018;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*3, b.y);
+          const col = b.glow?'#00d4ff':'rgba(0,200,255,0.55)';
+          if (b.glow) { ctx.shadowColor='rgba(0,212,255,0.9)'; ctx.shadowBlur=18; }
+          if (b.isTrident) {
+            ctx.strokeStyle=col; ctx.lineWidth=2.5; ctx.lineCap='round';
+            const s=b.size;
+            ctx.beginPath(); ctx.moveTo(0,s*0.35); ctx.lineTo(0,s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-s*0.42,0); ctx.lineTo(s*0.42,0); ctx.stroke();
+            [-s*0.42,0,s*0.42].forEach(px=>{
+              ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,-s*0.52); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.52); ctx.lineTo(px-s*0.12,-s*0.28); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(px,-s*0.52); ctx.lineTo(px+s*0.12,-s*0.28); ctx.stroke();
+            });
+          } else {
+            ctx.beginPath(); ctx.arc(0,0,b.size*0.28,0,Math.PI*2);
+            ctx.fillStyle=col; ctx.fill();
+            const inner = ctx.createRadialGradient(0,0,0,0,0,b.size*0.28);
+            inner.addColorStop(0,'rgba(180,255,255,0.6)'); inner.addColorStop(1,'transparent');
+            ctx.fillStyle=inner; ctx.fill();
+          }
+          ctx.restore();
+        },
+      },
+      hephaestus: {
+        // Hefajstos — falling molten sparks + small hammer shapes
+        make(w, h, rY) {
+          const size = 6+Math.random()*16;
+          const cols = ['#ff7830','#ffb040','#ffd070','#ff4422','#ffcc60'];
+          return { x: Math.random()*w, y: rY?Math.random()*h:-(size*3+Math.random()*h*0.6),
+            speed: 2.8+Math.random()*5.0, size, alpha: 0.22+Math.random()*0.50,
+            glow: Math.random()>0.48, color: cols[Math.floor(Math.random()*cols.length)],
+            isHammer: Math.random()>0.76, wobble: Math.random()*Math.PI*2, rot: Math.random()*Math.PI*2 };
+        },
+        draw(b) {
+          b.wobble += 0.06; b.rot += 0.04;
+          ctx.save(); ctx.globalAlpha = b.alpha;
+          ctx.translate(b.x + Math.sin(b.wobble)*1.8, b.y);
+          if (b.glow) { ctx.shadowColor=b.color; ctx.shadowBlur=16; }
+          if (b.isHammer) {
+            ctx.strokeStyle=b.color; ctx.lineWidth=2; ctx.lineCap='round';
+            ctx.rotate(b.rot);
+            const s=b.size;
+            ctx.beginPath(); ctx.moveTo(0,-s*0.6); ctx.lineTo(0,s*0.5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-s*0.4,-s*0.6); ctx.lineTo(s*0.4,-s*0.6); ctx.stroke();
+            ctx.beginPath(); ctx.rect(-s*0.4,-s*0.9,s*0.8,s*0.36);
+            ctx.fillStyle=b.color; ctx.fill();
+          } else {
+            const grad = ctx.createRadialGradient(0,0,0,0,b.size*0.36,b.size*0.36);
+            grad.addColorStop(0,'rgba(255,255,200,0.9)'); grad.addColorStop(0.5,b.color); grad.addColorStop(1,'transparent');
+            ctx.beginPath(); ctx.arc(0,0,b.size*0.36,0,Math.PI*2);
+            ctx.fillStyle=grad; ctx.fill();
+            const trail = ctx.createLinearGradient(0,-b.size*2.4,0,0);
+            trail.addColorStop(0,'transparent'); trail.addColorStop(1,b.color);
+            ctx.beginPath();
+            ctx.moveTo(-b.size*0.09,-b.size*2.4); ctx.lineTo(b.size*0.09,-b.size*2.4);
+            ctx.lineTo(b.size*0.05,0); ctx.lineTo(-b.size*0.05,0); ctx.closePath();
+            ctx.fillStyle=trail; ctx.fill();
           }
           ctx.restore();
         },
@@ -867,7 +943,13 @@ const App = (() => {
     });
   }
 
+  const _VIEW_CHARTS = {
+    daily:  ['dailyCatChart', 'dailyHourChart'],
+    weekly: ['weeklyStreamgraph', 'weeklyBarsChart', 'emaChart'],
+  };
+
   function switchTab(view) {
+    (_VIEW_CHARTS[S.currentView] || []).forEach(id => destroyChart(id));
     if (view === 'health' && !isModuleUnlocked('health')) {
       showToast(S.language === 'en' ? 'Health unlocks after your first focus session.' : 'Zdrowie odblokuje się po pierwszej sesji skupienia.', 'info');
       return;
@@ -879,31 +961,56 @@ const App = (() => {
     if (view !== 'tracker' && document.body.classList.contains('deep-work')) {
       setDeepWorkMode(false);
     }
-    S.currentView = view;
-    document.body.dataset.currentView = view;
-    document.querySelectorAll('[data-tab]').forEach(b =>
-      b.classList.toggle('active', b.dataset.tab === view)
-    );
-    document.querySelectorAll('[data-view]').forEach(v =>
-      v.classList.toggle('hidden', v.dataset.view !== view)
-    );
-    if (view === 'daily')   loadDailyView();
-    if (view === 'weekly')  loadWeeklyView();
-    if (view === 'health')  loadHealthView();
-    if (view === 'tracker') loadTrackerView();
-    if (view === 'sleep')   { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
-    if (view === 'settings') loadSettingsView();
-    if (view === 'profile') loadProfileView();
+    const doSwitch = () => {
+      S.currentView = view;
+      document.body.dataset.currentView = view;
+      document.querySelectorAll('[data-tab]').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === view)
+      );
+      document.querySelectorAll('[data-view]').forEach(v =>
+        v.classList.toggle('hidden', v.dataset.view !== view)
+      );
+      if (view === 'daily')    loadDailyView();
+      if (view === 'weekly')   loadWeeklyView();
+      if (view === 'health')   loadHealthView();
+      if (view === 'tracker')  loadTrackerView();
+      if (view === 'sleep')    { initSleepView(); loadSleepHistory(); loadSleepNotes(); }
+      if (view === 'settings') loadSettingsView();
+      if (view === 'profile')  loadProfileView();
+    };
+    if (typeof document.startViewTransition === 'function') {
+      document.startViewTransition(doSwitch);
+    } else {
+      doSwitch();
+    }
   }
   window.switchTab = switchTab;
+  window.setUxMode  = setUxMode;
+  window.__focusState = {
+    get activeTask()  { return S.activeTask;  },
+    get appMode()     { return S.appMode;     },
+    get uxMode()      { return S.uxMode;      },
+    get currentView() { return S.currentView; },
+    get hardcoreMode(){ return S.hardcoreMode; },
+  };
 
   function getLS(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
     catch { return fallback; }
   }
   function setLS(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-    queueLocalSaveStatus();
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      queueLocalSaveStatus();
+      const used = new Blob(Object.values(localStorage)).size;
+      if (used > 4 * 1024 * 1024) {
+        console.warn(`[FocusOS] localStorage ~${(used/1024/1024).toFixed(1)} MB — approaching quota.`);
+      }
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        showToast('⚠️ Pamięć lokalna pełna. Wyeksportuj dane i zwolnij miejsce.', 'warn', 7000);
+      }
+    }
   }
 
   function getDefaultUserProgress() {
@@ -1360,6 +1467,8 @@ const App = (() => {
     const emojiMap = { 'Approving': '👍', 'Triumphant': '🏆', 'Demanding': '🔥', 'Judging': '⚠️', 'Warning': '⚡', 'Disappointed': '😞', 'Observing': '👁️', 'Neutral': '➖', 'Proud': '😊', 'Fired Up': '🔥', 'Tired': '😴' };
     const emoji = emojiMap[mood] || '⚡';
     window.dispatchEvent(new CustomEvent('zeusMessageUpdate', { detail: { message: payload.line, emoji, mood, intensity } }));
+    const _cc = $('zeusCompactMsg');   if (_cc) _cc.textContent = payload.line;
+    const _cb = $('zeusCompactBadge'); if (_cb) _cb.textContent = payload.label;
     const moodSoundMap = { Triumphant: 'levelup', Demanding: 'start', Approving: 'complete', 'Fired Up': 'start', Judging: 'warn', Warning: 'warn', Disappointed: 'warn' };
     if (intensity === 'high') { const snd = moodSoundMap[mood]; if (snd) zeusPlaySound(snd); }
     zeusTTS(payload.line);
@@ -1716,10 +1825,44 @@ const App = (() => {
     closeResponsiveHeader();
   }
 
+  const THEMES = [
+    { id: 'olympus',    godName: 'ZEUS',      themeName: 'Krystaliczny Olimp',  description: 'Stróż skupienia',      icon: '⚡', accentColor: '#f4c46a' },
+    { id: 'marble',     godName: 'ATENA',     themeName: 'Jasny Poranek',        description: 'Bogini mądrości',      icon: '🦉', accentColor: '#6c8ebf' },
+    { id: 'ember',      godName: 'ARES',      themeName: 'Ciepły Zmierzch',      description: 'Bóg walki i siły',    icon: '🔥', accentColor: '#e05c4b' },
+    { id: 'tide',       godName: 'HELIOS',    themeName: 'Spokojny Przypływ',    description: 'Pan słońca i spokoju', icon: '🌊', accentColor: '#00c4c4' },
+    { id: 'poseidon',   godName: 'POSEJDON',  themeName: 'Głębia Posejdona',     description: 'Władca mórz',          icon: '🔱', accentColor: '#00c8ff' },
+    { id: 'hephaestus', godName: 'HEFAJSTOS', themeName: 'Kuźnia Hefajstosa',    description: 'Kowal bogów',          icon: '🔨', accentColor: '#ff6414' },
+  ];
+
   function applyTheme(themeName) {
     const resolvedTheme = resolveThemeId(themeName);
     S.theme = resolvedTheme;
     document.documentElement.setAttribute('data-theme', resolvedTheme);
+    const td      = THEMES.find(t => t.id === resolvedTheme);
+    const orbEl   = document.getElementById('zeusGodOrb');
+    const nameEl  = document.getElementById('zeusGodName');
+    const tagEl   = document.getElementById('zeusGodTag');
+    const themeEl = document.getElementById('zeusGodTheme');
+    const card    = document.getElementById('godThemeCard');
+    if (orbEl)   orbEl.textContent   = td ? td.icon        : '⚡';
+    if (nameEl)  nameEl.textContent  = td ? td.godName     : 'ZEUS';
+    if (tagEl)   tagEl.textContent   = td ? td.description : 'Stróż skupienia';
+    if (themeEl) themeEl.textContent = td ? td.themeName   : 'Krystaliczny Olimp';
+    if (card && td) card.style.setProperty('--god-accent', td.accentColor);
+    if (orbEl) {
+      orbEl.classList.remove('orb--pop');
+      void orbEl.offsetWidth;
+      orbEl.classList.add('orb--pop');
+      setTimeout(() => orbEl.classList.remove('orb--pop'), 520);
+    }
+  }
+
+  function cycleTheme() {
+    const ids = THEMES.map(th => th.id);
+    const next = THEMES[(ids.indexOf(S.theme) + 1) % THEMES.length];
+    applyTheme(next.id);
+    saveAppSettings({ theme: S.theme });
+    showToast(`Motyw: ${next.themeName}`, 'success');
   }
 
   const I18N = {
@@ -2000,6 +2143,8 @@ const App = (() => {
         marble: 'Jasny poranek',
         ember: 'Ciepły zmierzch',
         tide: 'Spokojny przypływ',
+        poseidon: 'Głębia Posejdona',
+        hephaestus: 'Kuźnia Hefajstosa',
       },
       zeusVoices: {
         strict: 'Dowódca',
@@ -2294,6 +2439,8 @@ const App = (() => {
         marble: 'Bright morning',
         ember: 'Warm dusk',
         tide: 'Calm tide',
+        poseidon: 'Poseidon\'s Deep',
+        hephaestus: 'Forge of Hephaestus',
       },
       zeusVoices: {
         strict: 'Commander',
@@ -2452,9 +2599,7 @@ const App = (() => {
     setText('#btnBackupOpenSettings', t('backupOpenSettings'));
     setText('.panel--settings-language .panel-label', t('settingsLanguagePanel'));
     setText('.panel--settings-language .form-label', t('settingsLanguageLabel'));
-    setText('.panel--settings-theme .panel-label', t('settingsThemePanel'));
-    setText('.panel--settings-theme .form-label', t('settingsThemeLabel'));
-    const notifLabels = document.querySelectorAll('.panel--settings-theme .notif-label');
+    const notifLabels = document.querySelectorAll('.panel--zeus-config .notif-label');
     if (notifLabels[0]) {
       const small = notifLabels[0].querySelector('small');
       notifLabels[0].childNodes[0].textContent = t('hardcoreLabel');
@@ -2720,12 +2865,14 @@ const App = (() => {
     $('activeCard').classList.remove('timer-emphasis');
     $('activeName').textContent   = S.language === 'en' ? 'Ready to focus' : 'Gotowy do skupienia';
     $('activeCat').textContent    = t('focusCycleFocus');
-    $('activeTimer').textContent  = '00:00:00';
+    const timerEl = $('activeTimer');
+    if (timerEl) { timerEl._fdSpans = null; timerEl._fdPrev = null; timerEl.textContent = '00:00:00'; }
     $('fatigueBar').style.width   = '0%';
     $('fatigueLabel').textContent = '';
     _updateFatigueGauge(100, false);
     $('btnStart').disabled = false;
     $('btnStop').disabled  = true;
+    clearZenOledMode();
     if (document.body.classList.contains('deep-work')) setDeepWorkMode(false);
     updateFocusFlowState();
     updateDeepFocusUI();
@@ -2768,8 +2915,8 @@ const App = (() => {
     zeusSpeak('You fled the trial. Olympus marks this as failure.', 'Judging', 'high');
   }
 
-  const GAUGE_LEN = 131.95;
   function _updateFatigueGauge(efficiencyPct, shouldBreak) {
+    const GAUGE_LEN = 131.95;
     const fill  = $('fatigueGaugeFill');
     const label = $('fatigueGaugeLabel');
     if (!fill) return;
@@ -2799,17 +2946,147 @@ const App = (() => {
     }
   }
 
+  // ── Rolling digit timer display ───────────────────────────────────────────
+  function updateTimerDisplay(timeStr) {
+    const el = $('activeTimer');
+    if (!el) return;
+    if (!el._fdSpans) {
+      el.innerHTML = '';
+      el._fdSpans  = [];
+      el._fdPrev   = '';
+      for (const ch of timeStr) {
+        const span = document.createElement('span');
+        span.className = ch === ':' ? 'fd-sep' : 'fd-digit';
+        span.textContent = ch;
+        el.appendChild(span);
+        el._fdSpans.push(span);
+      }
+      el._fdPrev = timeStr;
+      return;
+    }
+    for (let i = 0; i < timeStr.length; i++) {
+      if (timeStr[i] !== (el._fdPrev || '')[i] && el._fdSpans[i]?.className === 'fd-digit') {
+        const span = el._fdSpans[i];
+        span.textContent = timeStr[i];
+        span.classList.remove('fd-roll');
+        void span.offsetWidth;
+        span.classList.add('fd-roll');
+      }
+    }
+    el._fdPrev = timeStr;
+  }
+
+  // ── OLED Zen Auto-Hide ────────────────────────────────────────────────────
+  function initZenOledMode() {
+    if (S.uxMode !== 'zen') return;
+    document.body.classList.add('zen-oled');
+    let hideTimer = null;
+    const wake = () => {
+      document.body.classList.add('zen-awake');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => document.body.classList.remove('zen-awake'), 3000);
+    };
+    document._zenWake = wake;
+    document.addEventListener('mousemove', wake);
+    document.addEventListener('touchstart', wake, { passive: true });
+    wake();
+  }
+
+  function clearZenOledMode() {
+    document.body.classList.remove('zen-oled', 'zen-awake');
+    if (document._zenWake) {
+      document.removeEventListener('mousemove', document._zenWake);
+      document.removeEventListener('touchstart', document._zenWake);
+      document._zenWake = null;
+    }
+  }
+
+  // ── Breathing ring (canvas, 4-7-8 rhythm) ────────────────────────────────
+  function initBreathRing() {
+    const canvas = $('zenBreathRing');
+    if (!canvas || canvas._rfRunning) return;
+    canvas._rfRunning = true;
+    const IN = 4000, HOLD = 7000, OUT = 8000, TOTAL = IN + HOLD + OUT;
+    let rafId;
+    function draw(ts) {
+      const W = canvas.offsetWidth, H = canvas.offsetHeight;
+      if (!canvas._rfRunning) return;
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, W, H);
+      if (W > 0 && H > 0) {
+        const phase = ts % TOTAL;
+        let r, a;
+        if (phase < IN) {
+          const t = phase / IN;
+          r = Math.min(W, H) * (0.18 + 0.18 * t);
+          a = 0.03 + 0.10 * t;
+        } else if (phase < IN + HOLD) {
+          r = Math.min(W, H) * 0.36; a = 0.13;
+        } else {
+          const t = (phase - IN - HOLD) / OUT;
+          r = Math.min(W, H) * (0.36 - 0.18 * t);
+          a = 0.13 - 0.10 * t;
+        }
+        const cx = W / 2, cy = H / 2;
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, `hsla(180,100%,60%,${(a * 1.5).toFixed(3)})`);
+        g.addColorStop(0.6, `hsla(195,100%,55%,${a.toFixed(3)})`);
+        g.addColorStop(1, `hsla(195,100%,55%,0)`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+      }
+      rafId = requestAnimationFrame(draw);
+    }
+    rafId = requestAnimationFrame(draw);
+    canvas._stopRing = () => {
+      canvas._rfRunning = false;
+      cancelAnimationFrame(rafId);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }
+
+  // ── Water particle burst ──────────────────────────────────────────────────
+  function spawnXPFloater(xp) {
+    const timerEl = $('activeTimer');
+    const rect = timerEl?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top : window.innerHeight / 3;
+    const p = document.createElement('div');
+    p.className = 'xp-float';
+    p.textContent = `+${xp} XP`;
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+    timerEl?.classList.add('timer-complete-flash');
+    setTimeout(() => timerEl?.classList.remove('timer-complete-flash'), 900);
+  }
+
+  function spawnWaterParticle(x, y, label) {
+    const p = document.createElement('div');
+    p.className = 'water-particle';
+    p.textContent = label || '+250ml 💧';
+    p.style.left = x + 'px';
+    p.style.top  = y + 'px';
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove(), { once: true });
+  }
+
   function startLocalTimer(startISO) {
     const startTs = new Date(startISO).getTime();
     clearInterval(S.timerInterval);
     S.timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTs) / 1000);
       const h = Math.floor(elapsed / 3600), m = Math.floor((elapsed % 3600) / 60), s = elapsed % 60;
-      $('activeTimer').textContent =
-        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      updateTimerDisplay(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
       const fatigue = MATH.fatigueCurve(Math.floor(elapsed / 60));
       const pct     = Math.round(100 - fatigue.currentEfficiency);
-      $('fatigueBar').style.width   = `${Math.min(pct, 100)}%`;
+      $('fatigueBar').style.width      = `${Math.min(pct, 100)}%`;
+      $('fatigueBar').style.background = fatigue.currentEfficiency > 75 ? '#39ff14' : fatigue.currentEfficiency > 50 ? '#ffd700' : '#ff5050';
       $('fatigueLabel').textContent = `Wydajność: ${fatigue.currentEfficiency}%`;
       $('fatigueBarWrap').classList.toggle('fatigue--warn', fatigue.shouldBreak);
       // Zeus orb: efficiency ring + state-based pulse
@@ -2838,6 +3115,8 @@ const App = (() => {
       markDayPlanProgress(name);
       setActiveUI(task);
       startLocalTimer(task.start_time);
+      initZenOledMode();
+      initBreathRing();
       playSessionStart(); vibrateClick();
       if (typeof ZeusHologram !== 'undefined') ZeusHologram.setOrbState('focus');
       showToast(`▶ ${t('taskStartToast', { name })}`, 'success');
@@ -2854,7 +3133,7 @@ const App = (() => {
     try {
       const stopped = await DB.stopActiveTask();
       localStorage.removeItem(HARDCORE_ACTIVE_KEY);
-      if (S.pomodoro.running && S.pomodoro.phase === 'focus') {
+      if (S.pomodoro.running || S.pomodoro.interval) {
         if (S.pomodoro.interval) clearInterval(S.pomodoro.interval);
         S.pomodoro.interval = null;
         S.pomodoro.running = false;
@@ -2884,6 +3163,7 @@ const App = (() => {
               await DB.setSetting('perfect_day_bonus_date', DB.toDateStr());
             }
           }
+          spawnXPFloater(xp + bonusXP);
           const newTotal = await DB.addXP(xp + bonusXP);
           const nextLevel = getLevelInfo(newTotal).level;
           await refreshXPBar();
@@ -2941,6 +3221,7 @@ const App = (() => {
   }
 
   async function loadQuickStats() {
+    try {
     const todayTasks = await DB.getTasksForDay(DB.toDateStr());
     const analysis   = MATH.analyzeDay(todayTasks);
     const [all, latestSleep, waterCount] = await Promise.all([
@@ -3014,6 +3295,9 @@ const App = (() => {
     renderBackupSafetyNet();
     applyProgressiveDisclosure();
     updateFocusFlowState();
+    } catch (e) {
+      console.error('[FocusOS] loadQuickStats:', e);
+    }
   }
 
   // ── Leaderboard (Phase 5) ─────────────────────────────────────────────────
@@ -3169,20 +3453,27 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function loadDailyView() {
-    $('dailyDateLabel').textContent = new Date(S.dailyDate).toLocaleDateString('pl-PL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    const tasks    = await DB.getTasksForDay(S.dailyDate);
-    const analysis = MATH.analyzeDay(tasks);
+    try {
+      $('dailyDateLabel').textContent = new Date(S.dailyDate).toLocaleDateString('pl-PL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      const tasks    = await DB.getTasksForDay(S.dailyDate);
+      const analysis = MATH.analyzeDay(tasks);
+      const _noDaily = !tasks.length;
+      $('dailyViewEmpty')?.classList.toggle('hidden', !_noDaily);
 
-    $('dTotalTime').textContent  = fmtSec(analysis.totalSec);
-    $('dEfficiency').textContent = analysis.efficiencyPct + '%';
-    $('dTaskCount').textContent  = analysis.taskCount + ' zadań';
+      $('dTotalTime').textContent  = fmtSec(analysis.totalSec);
+      $('dEfficiency').textContent = analysis.efficiencyPct + '%';
+      $('dTaskCount').textContent  = analysis.taskCount + ' zadań';
 
-    renderDailyCatDonut(analysis.timeByCat);
-    renderDailyHourChart(analysis.hourlyData);
-    renderDailyInsightsList(tasks, analysis);
-    renderGoldenHoursDisplay(tasks);
-    loadDayPlan();
-    applyProgressiveDisclosure();
+      renderDailyCatDonut(analysis.timeByCat);
+      renderDailyHourChart(analysis.hourlyData);
+      renderDailyInsightsList(tasks, analysis);
+      renderGoldenHoursDisplay(tasks);
+      loadDayPlan();
+      applyProgressiveDisclosure();
+    } catch (e) {
+      showToast(`❌ Błąd wczytywania danych dnia: ${e.message}`, 'error');
+      console.error('[FocusOS] loadDailyView:', e);
+    }
   }
 
   function renderDailyCatDonut(timeByCat) {
@@ -3267,12 +3558,14 @@ const App = (() => {
   // ─────────────────────────────────────────────────────────────────────────
 
   async function loadWeeklyView() {
+    try {
     const monday = new Date(S.weekStart);
     const sunday = new Date(monday.getTime() + 6 * 86400000);
     $('weekLabel').textContent =
       `${monday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short'})} — ${sunday.toLocaleDateString('pl-PL',{day:'2-digit',month:'short',year:'numeric'})}`;
 
     const tasks    = await DB.getTasksForWeek(S.weekStart);
+    $('weeklyViewEmpty')?.classList.toggle('hidden', !!tasks.length);
     const allTasks = await DB.getTasksLast30Days();
     const analysis = MATH.analyzeAll(tasks);
     const emaData  = MATH.emaProductivityTrend(allTasks, 14);
@@ -3292,6 +3585,10 @@ const App = (() => {
     applyLevelLocks();
     applyProgressiveDisclosure();
     applyInspectModeDefaults();
+    } catch (e) {
+      showToast(`❌ Błąd wczytywania raportu tygodniowego: ${e.message}`, 'error');
+      console.error('[FocusOS] loadWeeklyView:', e);
+    }
   }
 
   function renderStreamgraph(tasks) {
@@ -3511,8 +3808,11 @@ const App = (() => {
 
   async function loadHealthView() {
     const today = DB.toDateStr();
-    const logs  = await DB.getHealthForDay(today);
-    renderWaterTracker(logs.filter(l => l.type === 'water'));
+    const [logs, slotInfo] = await Promise.all([
+      DB.getHealthForDay(today),
+      DB.getTodayWaterSlotsInfo(),
+    ]);
+    renderWaterTracker(logs.filter(l => l.type === 'water'), slotInfo);
     renderMealLog(logs.filter(l => l.type === 'meal'));
     renderMovementLog(logs.filter(l => l.type === 'movement'));
 
@@ -3521,11 +3821,13 @@ const App = (() => {
     applyProgressiveDisclosure();
   }
 
-  function renderWaterTracker(waterLogs) {
-    const WATER_CAP    = 12;
+  function renderWaterTracker(waterLogs, slotInfo = { usedSlots: 0, maxSlots: 12 }) {
+    const WATER_CAP    = slotInfo.maxSlots;
     const GOAL         = 8;
-    const totalGlasses = waterLogs.reduce((s, l) => s + (l.value || 1), 0);
+    const usedSlots    = slotInfo.usedSlots;
+    const totalGlasses = Math.max(waterLogs.reduce((s, l) => s + (l.value || 1), 0), usedSlots);
     const pct          = Math.min(Math.round(totalGlasses / GOAL * 100), 100);
+    const capped       = usedSlots >= WATER_CAP;
 
     $('waterCount').textContent       = S.language === 'en'
       ? `${totalGlasses} / ${GOAL} glasses`
@@ -3537,15 +3839,17 @@ const App = (() => {
     glasses.innerHTML = '';
     for (let i = 1; i <= GOAL; i++) {
       const btn = document.createElement('button');
-      btn.className = `glass-btn ${i <= totalGlasses ? 'filled' : ''}`;
-      btn.title     = `${i * 250}ml`;
-      btn.textContent = i <= totalGlasses ? '250ml' : '+';
+      const filled = i <= usedSlots;
+      btn.className   = `glass-btn ${filled ? 'filled' : ''} ${capped ? 'capped' : ''}`;
+      btn.title       = filled ? `${i * 250}ml` : (capped ? (S.language === 'en' ? 'Daily limit reached' : 'Dzienny limit osiągnięty') : `+${i * 250}ml`);
+      btn.textContent = filled ? '250ml' : '+';
+      btn.disabled    = capped && !filled;
       btn.addEventListener('click', async () => {
         const slotState = await DB.consumeWaterSlot();
         if (!slotState.ok) {
           showToast(S.language === 'en'
-            ? `Hydration slots used today: ${WATER_CAP}/${WATER_CAP}`
-            : `Dzienne sloty nawodnienia wykorzystane: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
+            ? `Daily hydration limit reached: ${WATER_CAP}/${WATER_CAP}`
+            : `Dzienny limit nawodnienia osiągnięty: ${WATER_CAP}/${WATER_CAP}`, 'warn', 6000);
           return;
         }
         await DB.logHealth({ type:'water', value:1, unit:'glass', note:'250ml' });
@@ -3744,9 +4048,7 @@ const App = (() => {
 
   function loadSettingsView() {
     const languageSelect = $('languageSelect');
-    const themeSelect = $('themeSelect');
     if (languageSelect) languageSelect.value = S.language;
-    if (themeSelect) themeSelect.value = S.theme;
     if ($('headerLangSelect')) $('headerLangSelect').value = S.language;
     refreshConnectionViews();
   }
@@ -3772,13 +4074,13 @@ const App = (() => {
       });
     }
 
-    $('themeSelect')?.addEventListener('change', e => {
-      const theme = e.target.value;
-      applyTheme(theme);
-      saveAppSettings({ theme: S.theme });
-      e.target.value = S.theme;
-      showToast(`${t('settingsThemePanel')}: ${t(`themeNames.${S.theme}`)}`, 'success');
-    });
+    const godCard = $('godThemeCard');
+    if (godCard) {
+      godCard.addEventListener('click', cycleTheme);
+      godCard.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycleTheme(); }
+      });
+    }
 
     const hardcoreToggle = document.getElementById('hardcoreModeToggle');
     if (hardcoreToggle) {
@@ -3868,7 +4170,8 @@ const App = (() => {
     // Tiny local beep sequence generated with Web Audio API.
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    let ctx;
+    try { ctx = new AudioCtx(); } catch { return; }
     const now = ctx.currentTime;
     [0, 0.22, 0.44].forEach(offset => {
       const osc = ctx.createOscillator();
@@ -4143,6 +4446,7 @@ const App = (() => {
   function scheduleAlarm(timeStr) {
     cancelAlarm();
     S.alarm.time = timeStr;
+    S.alarm.triggeredForDate = null;
     localStorage.setItem('focusos_alarm_time', timeStr);
     updateAlarmStatus(`${t('alarmSet')} ${timeStr}`);
 
@@ -4211,10 +4515,56 @@ const App = (() => {
     const panel = $('cmdPalette');
     if (!btn || !panel) return;
 
-    const toggle = () => document.body.classList.toggle('cmd-palette-open');
+    const toggle = () => {
+      document.body.classList.toggle('cmd-palette-open');
+      if (document.body.classList.contains('cmd-palette-open'))
+        setTimeout(() => $('cmdInput')?.focus(), 60);
+    };
     const close  = () => document.body.classList.remove('cmd-palette-open');
 
     btn.addEventListener('click', toggle);
+
+    // Slash-command text input parser
+    const cmdInput = $('cmdInput');
+    if (cmdInput) {
+      cmdInput.addEventListener('keydown', async e => {
+        if (e.key !== 'Enter') return;
+        const raw = cmdInput.value.trim();
+        cmdInput.value = '';
+        close();
+        const [cmd, ...rest] = raw.replace(/^\//,'').split(/\s+/);
+        switch (cmd.toLowerCase()) {
+          case 'woda': {
+            const ml = parseInt(rest[0]) || 250;
+            const slotState = await DB.consumeWaterSlot();
+            if (slotState.ok) {
+              await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: `${ml}ml` });
+              await DB.addXP(20);
+              await loadQuickStats();
+              showToast(`💧 Woda zapisana (+${ml} ml).`, 'success');
+            } else showToast('Dzienny limit wody osiągnięty.', 'warn');
+            break;
+          }
+          case 'start': {
+            const min  = parseInt(rest[0]) || 25;
+            const name = rest.slice(1).join(' ') || 'Sesja skupienia';
+            $('taskName').value    = name;
+            $('taskCategory').value = 'work';
+            switchTab('tracker');
+            await handleStart();
+            break;
+          }
+          case 'stop':
+            if (!$('btnStop')?.disabled) await handleStop();
+            break;
+          case 'zen':  setUxMode('zen');  break;
+          case 'pro':  setUxMode('pro');  break;
+          case 'tab':  if (rest[0]) switchTab(rest[0]); break;
+          default:
+            showToast(`Nieznana komenda: /${cmd}`, 'warn');
+        }
+      });
+    }
 
     // Close on Escape or click-outside
     document.addEventListener('keydown', e => {
@@ -4494,11 +4844,6 @@ const App = (() => {
     const saved = await DB.getSetting('notif_settings');
     if (saved) Object.assign(S.notif, saved);
 
-    if ('Notification' in window && Notification.permission === 'default') {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') showToast(`🔔 ${t('notificationsEnabled')}`, 'success');
-    }
-
     $('btnOpenNotif').addEventListener('click', () => {
       $('notifWater').checked  = S.notif.waterEnabled;
       $('notifWaterH').value   = S.notif.waterIntervalH;
@@ -4621,6 +4966,12 @@ const App = (() => {
     }
     updateModeIndicator();
     refreshConnectionViews();
+    // Request notification permission after explicit user interaction
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') showToast(`🔔 ${t('notificationsEnabled')}`, 'success');
+      });
+    }
     document.body.classList.remove('app-locked');
     $('modeSplash')?.classList.add('hidden');
     switchTab('tracker');
@@ -5272,6 +5623,9 @@ const App = (() => {
       }
       zeusSpeak('Protect the streak with one completed session before the day ends.', 'Observing');
     });
+    $('btnZeusCompactFocus')?.addEventListener('click',   () => $('btnZeusFocus')?.click());
+    $('btnZeusCompactStreak')?.addEventListener('click',  () => $('btnZeusStreak')?.click());
+    $('btnZeusCompactRecover')?.addEventListener('click', () => $('btnZeusRecover')?.click());
     $('btnZeusRecover')?.addEventListener('click', async () => {
       switchTab('sleep');
       if (S.activeTask && !S.hardcoreMode) {
@@ -5390,7 +5744,7 @@ const App = (() => {
       });
     }
 
-    $('btnQuickWater')?.addEventListener('click', async () => {
+    $('btnQuickWater')?.addEventListener('click', async e => {
       const slotState = await DB.consumeWaterSlot();
       if (!slotState.ok) {
         showToast(S.language === 'en' ? 'Water limit reached for today.' : 'Dzisiejszy limit wody jest już wykorzystany.', 'warn');
@@ -5400,6 +5754,7 @@ const App = (() => {
       await DB.logHealth({ type: 'water', value: 1, unit: 'glass', note: '250ml' });
       await DB.addXP(20);
       S.lastWaterLog = new Date();
+      spawnWaterParticle(e.clientX, e.clientY);
       triggerPanelFlash('.panel--water');
       if (S.currentView === 'health') await loadHealthView();
       await loadQuickStats();
@@ -5634,6 +5989,17 @@ const App = (() => {
   }
 
   function initFocusFlow() {
+    const counter = $('taskNameCounter');
+    if (counter) {
+      const syncCounter = () => {
+        const len = $('taskName')?.value.length || 0;
+        counter.textContent = 80 - len;
+        counter.classList.toggle('char-counter--warn', len >= 60);
+        counter.classList.toggle('char-counter--danger', len >= 75);
+      };
+      $('taskName')?.addEventListener('input', syncCounter);
+      syncCounter();
+    }
     $('taskName')?.addEventListener('input', updateFocusFlowState);
     $('taskCategory')?.addEventListener('change', updateFocusFlowState);
     updateFocusFlowState();
@@ -5764,6 +6130,14 @@ const App = (() => {
     setInterval(async () => {
       if (S.currentView === 'tracker') await loadQuickStats();
     }, 30000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (S.alertInterval) { clearInterval(S.alertInterval); S.alertInterval = null; }
+      } else if (document.visibilityState === 'visible') {
+        if (!S.alertInterval) S.alertInterval = setInterval(checkSmartAlerts, 60000);
+      }
+    });
 
     // Navigate to view specified in URL hash (e.g. index.html#settings)
     const _hashView = location.hash.slice(1);
